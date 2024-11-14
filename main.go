@@ -8,6 +8,7 @@ import (
 )
 
 func main() {
+	StartServer()
 	// Initialize the database
 	database, err := db.InitDB()
 	if err != nil {
