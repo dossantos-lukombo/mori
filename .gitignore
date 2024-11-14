@@ -1,0 +1,9 @@
+# Ignore environment variables file
+.env
+
+# Ignore other common files and directories
+/vendor/
+/bin/
+*.log
+*.tmp
+*.out
