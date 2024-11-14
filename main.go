@@ -3,11 +3,12 @@ package main
 import (
 	"fmt"
 	"log"
-
+	app "mori/app"
 	db "mori/database" // Update this import path to match your project structure
 )
 
 func main() {
+	app.StartServer()
 	// Initialize the database
 	database, err := db.InitDB()
 	if err != nil {
