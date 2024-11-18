@@ -4,8 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Mori</title>
-    <link rel="stylesheet" href="login.css" />
-    <link rel="icon" type="image/png" href="../images/mori.png" />
+    <link rel="stylesheet" href="/public/login/login.css" />
+    <link rel="icon" type="image/png" href="/public/images/mori.png" />
   </head>
   <body>
     <div class="container">
@@ -14,7 +14,7 @@
       <div class="title">Mori</div>
 
       <!-- Login Form -->
-      <form id="login-form" action="/login" method="POST">
+      <form id="login-form">
         <input
           type="text"
           name="username_email"
@@ -29,10 +29,11 @@
         />
         <button type="submit">Connexion</button>
         <button type="button" onclick="toggleForms()">Register</button>
+        <div id="login-error" class="error-message"></div>
       </form>
 
       <!-- Register Form -->
-      <form id="register-form" action="/register" method="POST">
+      <form id="register-form">
         <input type="text" name="username" placeholder="Username" required />
         <input type="email" name="email" placeholder="Email" required />
         <input
@@ -49,8 +50,12 @@
         />
         <button type="submit">Register</button>
         <button type="button" onclick="toggleForms()">Login</button>
+        <div id="register-error" class="error-message"></div>
       </form>
     </div>
-    <script src="login.js"></script>
+    <div id="popup" class="popup hidden">
+      <span id="popup-message">Registration successful, please Login.</span>
+    </div>    
+    <script src="/public/login/login.js"></script>
   </body>
 </html>

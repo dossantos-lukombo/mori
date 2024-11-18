@@ -3,43 +3,32 @@ package main
 import (
 	"fmt"
 	"log"
-	app "mori/app"
-	db "mori/database" // Update this import path to match your project structure
+	"mori/app"
+	"mori/database"
+	"mori/public/login"
+	"net/http"
 )
 
 func main() {
-	app.StartServer()
 	// Initialize the database
-	database, err := db.InitDB()
+	db, err := database.InitDB()
 	if err != nil {
-		log.Fatalf("Failed to connect to the database: %v", err)
+		log.Fatalf("Failed to initialize database: %v", err)
 	}
-
-	// Test the database connection
-	sqlDB, err := database.DB()
-	if err != nil {
-		log.Fatalf("Failed to retrieve generic database object: %v", err)
-	}
-
-	err = sqlDB.Ping()
-	if err != nil {
-		log.Fatalf("Database is unreachable: %v", err)
-	}
+	defer db.Close()
 
 	fmt.Println("Successfully connected to the database!")
 
-	// Example usage: Create a new user
-	user := db.User{
-		Username: "testuser",
-		Email:    "testuser@example.com",
-		Password: "securepassword",
-		Session:  "initial_session_token",
-	}
+	// Define routes
+	http.HandleFunc("/login", login.LoginHandler(db))
+	http.HandleFunc("/register", login.RegisterHandler(db))
+	http.HandleFunc("/protected", login.AuthMiddleware(db, protectedHandler))
 
-	result := database.Create(&user)
-	if result.Error != nil {
-		log.Fatalf("Failed to create user: %v", result.Error)
-	}
+	// Start the server
+	app.StartServer()
+}
 
-	fmt.Printf("User %s created successfully!\n", user.Username)
+// Example protected route
+func protectedHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintln(w, "You have accessed a protected route!")
 }
