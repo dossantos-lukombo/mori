@@ -1,21 +1,56 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Mori</title>
-    <link rel="stylesheet" href="login.css">
-    <link rel="icon" type="image/png" href="../images/mori.png">
-</head>
-<body>
-    <h1>Mori</h1>
-    <form action="/login" method="post">
-        <input type="text" name="username" placeholder="Username">
-        <input type="password" name="password" placeholder="Password">
-        <button type="submit">Login</button>
-    </form>
-    <a href="/register">Register</a>
-    <a href="/forgot-password">Forgot Password</a>
+    <link rel="stylesheet" href="login.css" />
+    <link rel="icon" type="image/png" href="../images/mori.png" />
+  </head>
+  <body>
+    <div class="container">
+      <!-- Title -->
+      <div class="small_logo"></div>
+      <div class="title">Mori</div>
+
+      <!-- Login Form -->
+      <form id="login-form" action="/login" method="POST">
+        <input
+          type="text"
+          name="username_email"
+          placeholder="Username or Email"
+          required
+        />
+        <input
+          type="password"
+          name="password"
+          placeholder="Password"
+          required
+        />
+        <button type="submit">Connexion</button>
+        <button type="button" onclick="toggleForms()">Register</button>
+      </form>
+
+      <!-- Register Form -->
+      <form id="register-form" action="/register" method="POST">
+        <input type="text" name="username" placeholder="Username" required />
+        <input type="email" name="email" placeholder="Email" required />
+        <input
+          type="password"
+          name="password"
+          placeholder="Password"
+          required
+        />
+        <input
+          type="password"
+          name="confirm_password"
+          placeholder="Confirm Password"
+          required
+        />
+        <button type="submit">Register</button>
+        <button type="button" onclick="toggleForms()">Login</button>
+      </form>
+    </div>
     <script src="login.js"></script>
-</body>
+  </body>
 </html>
