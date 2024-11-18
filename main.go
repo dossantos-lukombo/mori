@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"log"
 	"mori/app"
+	"mori/captcha"
 	"mori/database"
-	"mori/public/login"
+	login "mori/public/login/loginBack"
 	"net/http"
 )
 
@@ -22,6 +23,7 @@ func main() {
 	// Define routes
 	http.HandleFunc("/login", login.LoginHandler(db))
 	http.HandleFunc("/register", login.RegisterHandler(db))
+	http.HandleFunc("/captcha", captcha.ServeCaptcha)
 	http.HandleFunc("/protected", login.AuthMiddleware(db, protectedHandler))
 	http.HandleFunc("/verify-email", login.VerifyEmailHandler(db))
 

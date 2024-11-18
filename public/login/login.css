@@ -126,7 +126,7 @@ form button[type="button"]:hover {
   top: 20%;
   left: 50%;
   transform: translate(-50%, -50%);
-  background: #2c2c2c; /* Slightly lighter dark background */
+  background: #9146bc; /* Slightly lighter dark background */
   color: #e4e4e4;
   padding: 20px 40px;
   border-radius: 10px;
@@ -137,8 +137,8 @@ form button[type="button"]:hover {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: opacity 0.3s ease, transform 0.3s ease;
-  animation: notification 1s ease;
+  transition: opacity 0.5s ease, transform 0.5s ease;
+  animation: notification 2s ease;
 }
 
 .popup.hidden {
