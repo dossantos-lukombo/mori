@@ -23,6 +23,7 @@ func main() {
 	http.HandleFunc("/login", login.LoginHandler(db))
 	http.HandleFunc("/register", login.RegisterHandler(db))
 	http.HandleFunc("/protected", login.AuthMiddleware(db, protectedHandler))
+	http.HandleFunc("/verify-email", login.VerifyEmailHandler(db))
 
 	// Start the server
 	app.StartServer()

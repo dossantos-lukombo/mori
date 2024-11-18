@@ -13,12 +13,14 @@ import (
 
 // User struct for application-level logic
 type User struct {
-	ID          uint
-	Username    string
-	Email       string
-	Password    string
-	Session     string
-	FavorisJSON string
+	ID                uint
+	Username          string
+	Email             string
+	Password          string
+	Session           string
+	Verified          bool
+	VerificationToken string
+	FavorisJSON       string
 }
 
 // Conversation struct for application-level logic
@@ -82,6 +84,8 @@ func createTables(db *sql.DB) error {
 		email TEXT UNIQUE NOT NULL,
 		password TEXT NOT NULL,
 		session TEXT NOT NULL,
+		verified BOOLEAN DEFAULT FALSE,
+		verification_token TEXT,
 		favoris_json JSONB DEFAULT '[]'
 	);`
 
