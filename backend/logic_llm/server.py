@@ -36,7 +36,7 @@ llm_response = ""
 
 def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
     try:
-        payload = jwt.decode(credentials.credentials, os.getenv("TOKEN_SECRET_KEY_LLM"), algorithms=["HS256"])
+        payload = jwt.decode(credentials.credentials, os.getenv("ACCESS_SECRET_KEY_LLM"), algorithms=["HS256"])
         return payload
     except jwt.ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Token expiré")

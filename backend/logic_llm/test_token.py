@@ -14,7 +14,7 @@ def test_verify_token_valid():
     from datetime import datetime, timedelta,timezone
     from dotenv import load_dotenv
     
-    load_dotenv()
+    load_dotenv("../.env")
 
     # Clé secrète utilisée pour signer le jeton
     secret_key = os.getenv("ACCESS_SECRET_KEY_LLM")
