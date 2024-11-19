@@ -7,13 +7,13 @@ import (
 
 // handler serves the login.html file as the first page
 func handler(w http.ResponseWriter, r *http.Request) {
-	http.ServeFile(w, r, "./frontend/login/login.html")
+	http.ServeFile(w, r, "../frontend/login/login.html")
 }
 
 // StartServer starts the HTTP server and routes
 func StartServer() {
 	// Serve static files (CSS, JS, images, etc.) from the public directory
-	fs := http.FileServer(http.Dir("frontend/"))
+	fs := http.FileServer(http.Dir("../frontend"))
 	http.Handle("/frontend/", http.StripPrefix("/frontend/", fs))
 
 	// Root route serves login.html

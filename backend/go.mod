@@ -1,6 +1,6 @@
 module mori
 
-go 1.22.5
+go 1.19
 
 require (
 	github.com/dchest/captcha v1.0.0
