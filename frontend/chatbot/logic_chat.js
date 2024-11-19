@@ -74,7 +74,7 @@ async function sendData(userID,data) {
     let result = null
     const messageElement = document.createElement("pre");
     
-    const response = await fetch("http://localhost:8080/api/message", {
+    const response = await fetch("http://localhost:8080/api/conversation", {
         method: "POST",
         headers: {
             "Content-Type": "application/json"

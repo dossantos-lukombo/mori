@@ -7,7 +7,7 @@ import (
 
 // handler serves the login.html file as the first page
 func handler(w http.ResponseWriter, r *http.Request) {
-	http.ServeFile(w, r, "./frontend/login/login.html")
+	http.ServeFile(w, r, "frontend/login/login.html")
 }
 
 // StartServer starts the HTTP server and routes
