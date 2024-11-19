@@ -3,7 +3,6 @@ package loginback
 import (
 	"database/sql"
 	"fmt"
-	"log"
 	"mori/captcha"
 	"mori/database"
 	"net/http"
@@ -19,28 +18,17 @@ var registerMutex sync.Mutex
 
 func RegisterHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		registerMutex.Lock()         // Lock the handler
-		defer registerMutex.Unlock() // Unlock when the function ends
+		registerMutex.Lock()
+		defer registerMutex.Unlock()
 
-		captchaID, err := r.Cookie("captcha_id")
-		if err != nil || captchaID.Value == "" {
-			http.Error(w, `{"error": "Captcha is required"}`, http.StatusBadRequest)
-			return
-		}
-
-		captchaInput := strings.TrimSpace(r.FormValue("captcha_input"))
-		if !captcha.VerifyCaptcha(captchaID.Value, captchaInput) {
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusBadRequest)
-			fmt.Fprintln(w, `{"error": "Invalid captcha", "reloadCaptcha": true}`)
-			return
-		}
-
+		// Collect form data
 		username := r.FormValue("username")
 		email := r.FormValue("email")
 		password := r.FormValue("password")
 		confirmPassword := r.FormValue("confirm_password")
+		captchaInput := strings.TrimSpace(r.FormValue("captcha_input"))
 
+		// Validate password confirmation
 		if password != confirmPassword {
 			http.Error(w, `{"error": "Passwords do not match"}`, http.StatusBadRequest)
 			return
@@ -49,7 +37,7 @@ func RegisterHandler(db *sql.DB) http.HandlerFunc {
 		// Hash the password
 		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 		if err != nil {
-			log.Printf("Error hashing password: %v", err)
+			//log.Printf("Error hashing password: %v", err)
 			http.Error(w, `{"error": "Internal server error"}`, http.StatusInternalServerError)
 			return
 		}
@@ -57,7 +45,7 @@ func RegisterHandler(db *sql.DB) http.HandlerFunc {
 		// Generate a verification token
 		token, err := generateToken()
 		if err != nil {
-			log.Printf("Error generating token: %v", err)
+			//log.Printf("Error generating token: %v", err)
 			http.Error(w, `{"error": "Internal server error"}`, http.StatusInternalServerError)
 			return
 		}
@@ -67,9 +55,12 @@ func RegisterHandler(db *sql.DB) http.HandlerFunc {
 		sessionToken := fmt.Sprintf("%x", time.Now().UnixNano())
 		var userID uint
 		err = db.QueryRow(query, username, email, string(hashedPassword), sessionToken, token).Scan(&userID)
+
+		// Handle database constraint violations (e.g., duplicate username/email)
 		if err != nil {
-			// Check for unique constraint violation
-			if pqErr, ok := err.(*pq.Error); ok && pqErr.Code == "23505" { // Unique violation
+			//log.Printf("Error inserting new user: %v", err)
+			if pqErr, ok := err.(*pq.Error); ok && pqErr.Code == "23505" { // Unique constraint violation
+				//log.Printf("Unique constraint violation: %v", pqErr.Constraint)
 				if pqErr.Constraint == "users_username_key" {
 					http.Error(w, `{"error": "Username is already taken"}`, http.StatusConflict)
 					return
@@ -79,15 +70,43 @@ func RegisterHandler(db *sql.DB) http.HandlerFunc {
 					return
 				}
 			}
-			log.Printf("Error inserting new user: %v", err)
 			http.Error(w, `{"error": "Internal server error"}`, http.StatusInternalServerError)
+			return
+		}
+
+		// Validate captcha AFTER database insertion passes
+		captchaID, err := r.Cookie("captcha_id")
+		if err != nil || captchaID.Value == "" {
+			http.Error(w, `{"error": "Captcha is required"}`, http.StatusBadRequest)
+			return
+		}
+
+		if !captcha.VerifyCaptcha(captchaID.Value, captchaInput) {
+			// If captcha fails, delete the newly inserted user to ensure consistency
+			deleteQuery := `DELETE FROM users WHERE id = $1;`
+			_, delErr := db.Exec(deleteQuery, userID)
+			if delErr != nil {
+				//log.Printf("Error deleting user after captcha failure: %v", delErr)
+			}
+
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusBadRequest)
+			fmt.Fprintln(w, `{"error": "Invalid captcha", "reloadCaptcha": true}`)
 			return
 		}
 
 		// Send verification email
 		err = sendVerificationEmail(email, token)
 		if err != nil {
-			log.Printf("Error sending email: %v", err)
+			//log.Printf("Error sending email: %v", err)
+
+			// If email sending fails, delete the newly inserted user to ensure consistency
+			deleteQuery := `DELETE FROM users WHERE id = $1;`
+			_, delErr := db.Exec(deleteQuery, userID)
+			if delErr != nil {
+				//log.Printf("Error deleting user after email failure: %v", delErr)
+			}
+
 			http.Error(w, `{"error": "Failed to send verification email"}`, http.StatusInternalServerError)
 			return
 		}
@@ -115,7 +134,7 @@ func AuthMiddleware(db *sql.DB, next http.HandlerFunc) http.HandlerFunc {
 				http.Error(w, "Unauthorized", http.StatusUnauthorized)
 				return
 			}
-			log.Printf("Error querying user: %v", err)
+			//log.Printf("Error querying user: %v", err)
 			http.Error(w, "Internal server error", http.StatusInternalServerError)
 			return
 		}

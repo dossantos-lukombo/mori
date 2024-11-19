@@ -53,7 +53,10 @@ document
   .addEventListener("submit", async (e) => {
     e.preventDefault();
     const errorDiv = document.getElementById("register-error");
+    const submitButton = e.target.querySelector("button[type='submit']");
     errorDiv.style.display = "none";
+
+    submitButton.disabled = true;
 
     const formData = new FormData(e.target);
     const response = await fetch("/register", {
@@ -63,9 +66,15 @@ document
 
     const result = await response.json();
     if (!response.ok) {
+      submitButton.disabled = false;
+
       errorDiv.textContent =
         result.error || "An error occurred during registration.";
       errorDiv.style.display = "block";
+
+      if (result.reloadCaptcha) {
+        reloadCaptcha();
+      }
     } else {
       errorDiv.style.display = "none";
       errorDiv.textContent = "";
@@ -74,14 +83,14 @@ document
     }
   });
 
-  // Function to reload captcha
+// Function to reload captcha
 function reloadCaptcha() {
-    const captchaImage = document.getElementById("captcha-image");
-    captchaImage.src = "/captcha?" + new Date().getTime(); // Append timestamp to prevent caching
-  }
-  
-  // Handle registration form submission
-  document
+  const captchaImage = document.getElementById("captcha-image");
+  captchaImage.src = "/captcha?" + new Date().getTime(); // Append timestamp to prevent caching
+}
+
+// Handle registration form submission
+document
   .getElementById("register-form")
   .addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -117,4 +126,3 @@ function reloadCaptcha() {
       toggleForms(); // Switch to login form
     }
   });
-
