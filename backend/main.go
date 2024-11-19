@@ -6,11 +6,12 @@ import (
 	"mori/app"
 	"mori/captcha"
 	"mori/database"
-	login "mori/public/login/loginBack"
+	login "mori/loginBack"
 	"net/http"
 )
 
 func main() {
+
 	// Initialize the database
 	db, err := database.InitDB()
 	if err != nil {
@@ -26,6 +27,7 @@ func main() {
 	http.HandleFunc("/captcha", captcha.ServeCaptcha)
 	http.HandleFunc("/protected", login.AuthMiddleware(db, protectedHandler))
 	http.HandleFunc("/verify-email", login.VerifyEmailHandler(db))
+	// API route for llm call
 
 	// Start the server
 	app.StartServer()

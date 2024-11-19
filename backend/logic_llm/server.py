@@ -1,15 +1,19 @@
-from fastapi import FastAPI
+from fastapi import FastAPI,Request, HTTPException, Depends
 from pydantic import BaseModel
 from logic_llm.llm_manager import treating_user_request
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from typing import Literal
 from datetime import datetime
 from fastapi.responses import StreamingResponse
 from datetime import datetime, timezone
-
-import json,time
-
+import json,time,jwt,os
+from dotenv import load_dotenv
 
 app = FastAPI()
+
+security = HTTPBearer()
+
+load_dotenv(".env")
 
 
 """
@@ -29,6 +33,15 @@ class SendData(BaseModel):
     
 global llm_response
 llm_response = ""
+
+def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    try:
+        payload = jwt.decode(credentials.credentials, os.getenv("TOKEN_SECRET_KEY_LLM"), algorithms=["HS256"])
+        return payload
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Token expiré")
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=401, detail="Token invalide")
 
 async def generate_stream(entry_data):
     if entry_data["message"] != "":
@@ -54,7 +67,7 @@ async def generate_stream(entry_data):
         yield f"data: {json.dumps(output)}\n\n"
 
 @app.post("/api/process-message")
-async def receive_data(data: Data):
+async def receive_data(data: Data,credentials: HTTPAuthorizationCredentials = Depends(verify_token)):
     # Exemple de traitement des données
     print(f"Traitement des données pour Data {data.user_id}, {data.conversation_id}, {data.message}")
     entry_data = {
