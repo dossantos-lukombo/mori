@@ -7,6 +7,8 @@ import (
 	"log"
 	"net/http"
 	"net/smtp"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 // sendResetPasswordEmail sends a reset password email to the user.
@@ -52,6 +54,13 @@ func sendResetPasswordEmail(email, token string) error {
             margin: 0;
             color: #9146bc;
         }
+		.header img {
+            width: 100px;
+            height: auto;
+            margin-bottom: 10px;
+            border-radius: 180px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
         .content {
             margin: 20px 0;
             font-size: 16px;
@@ -86,16 +95,17 @@ func sendResetPasswordEmail(email, token string) error {
 <body>
     <div class="container">
         <div class="header">
-            <h1>Password Reset</h1>
+            <img src="https://via.placeholder.com/100x100.png?text=Mori" alt="Mori Logo">
+            <h1>Mori Team</h1>
         </div>
         <div class="content">
             <p>Hello,</p>
             <p>We received a request to reset your password. If you made this request, click the button below to reset your password:</p>
             <p>
-                <a href="http://localhost:8080/reset-password?token=%s" class="button">Reset Password</a>
+                <a href="http://localhost:8080/reset-password-form?token=%s" class="button">Reset Password</a>
             </p>
             <p>If the button doesn't work, copy and paste the link below into your browser:</p>
-            <p>http://localhost:8080/reset-password?token=%s</p>
+            <p>http://localhost:8080/reset-password-form?token=%s</p>
             <p>If you did not request a password reset, you can safely ignore this email.</p>
             <p>Thank you,<br>Mori Team</p>
         </div>
@@ -172,7 +182,7 @@ func ResetPasswordHandler(db *sql.DB) http.HandlerFunc {
 		}
 
 		// Send reset password email
-		err = sendResetPasswordEmail(email, token)
+		err = sendResetPasswordEmail(email, token) // This is where the function is used
 		if err != nil {
 			log.Printf("Error sending reset password email: %v", err)
 			w.WriteHeader(http.StatusInternalServerError)
@@ -183,5 +193,99 @@ func ResetPasswordHandler(db *sql.DB) http.HandlerFunc {
 		// Success response
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(map[string]string{"message": "Password reset email sent successfully"})
+	}
+}
+
+// ServeResetPasswordForm serves the password reset form when accessed with a valid token.
+func ServeResetPasswordForm(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+
+		// Get the token from the query parameters
+		token := r.URL.Query().Get("token")
+		if token == "" {
+			http.ServeFile(w, r, "../frontend/reset_password/invalid_token.html") // Serve an invalid token page
+			return
+		}
+
+		// Validate the token
+		var email string
+		query := `SELECT email FROM users WHERE reset_token = $1`
+		err := db.QueryRow(query, token).Scan(&email)
+		if err == sql.ErrNoRows {
+			http.ServeFile(w, r, "../frontend/reset_password/invalid_token.html") // Serve an invalid token page
+			return
+		} else if err != nil {
+			log.Printf("Error verifying reset token: %v", err)
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			return
+		}
+
+		// If the token is valid, serve the password reset form
+		http.ServeFile(w, r, "../frontend/reset_password/reset_password_form.html")
+	}
+}
+
+// VerifyResetTokenHandler verifies the reset token and updates the password.
+func VerifyResetTokenHandler(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+
+		var data struct {
+			Token       string `json:"token"`
+			NewPassword string `json:"new_password"`
+		}
+
+		if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(map[string]string{"error": "Invalid input"})
+			return
+		}
+
+		if data.Token == "" || data.NewPassword == "" {
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(map[string]string{"error": "Token and new password are required"})
+			return
+		}
+
+		// Validate token
+		var email string
+		query := `SELECT email FROM users WHERE reset_token = $1`
+		err := db.QueryRow(query, data.Token).Scan(&email)
+		if err == sql.ErrNoRows {
+			w.WriteHeader(http.StatusUnauthorized)
+			json.NewEncoder(w).Encode(map[string]string{"error": "Invalid or expired token"})
+			return
+		} else if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(map[string]string{"error": "Internal server error"})
+			return
+		}
+
+		// Hash new password
+		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(data.NewPassword), bcrypt.DefaultCost)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(map[string]string{"error": "Internal server error"})
+			return
+		}
+
+		// Update password and clear token
+		updateQuery := `UPDATE users SET password = $1, reset_token = NULL WHERE email = $2`
+		_, err = db.Exec(updateQuery, hashedPassword, email)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(map[string]string{"error": "Internal server error"})
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(map[string]string{"message": "Password reset successfully"})
 	}
 }
