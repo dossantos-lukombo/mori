@@ -42,7 +42,7 @@ func VerifyEmailHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		token := r.URL.Query().Get("token")
 		if token == "" {
-			http.ServeFile(w, r, "public/error/invalid_token.html") // Serve a custom error page for invalid tokens
+			http.ServeFile(w, r, "../frontend/email_validation/invalid_token.html") // Serve invalid token page
 			return
 		}
 
@@ -51,18 +51,18 @@ func VerifyEmailHandler(db *sql.DB) http.HandlerFunc {
 		result, err := db.Exec(query, token)
 		if err != nil {
 			log.Printf("Error verifying email: %v", err)
-			http.ServeFile(w, r, "public/error/internal_error.html") // Serve an error page for internal server errors
+			http.ServeFile(w, r, "../frontend/email_validation/error.html") // Serve error page
 			return
 		}
 
 		// Check if any rows were updated
 		rowsAffected, err := result.RowsAffected()
 		if err != nil || rowsAffected == 0 {
-			http.ServeFile(w, r, "public/error/expired_token.html") // Serve an error page for expired tokens
+			http.ServeFile(w, r, "../frontend/email_validation/invalid_token.html") // Serve invalid token page
 			return
 		}
 
-		// Serve the success page
-		http.ServeFile(w, r, "public/login/verifyEmailFront/email_verified.css")
+		// Serve success page
+		http.ServeFile(w, r, "../frontend/email_validation/email_validation.html")
 	}
 }

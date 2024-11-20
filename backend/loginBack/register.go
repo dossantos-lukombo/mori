@@ -3,6 +3,7 @@ package loginback
 import (
 	"database/sql"
 	"fmt"
+	"log"
 	"mori/captcha"
 	"mori/database"
 	"net/http"
@@ -86,7 +87,7 @@ func RegisterHandler(db *sql.DB) http.HandlerFunc {
 			deleteQuery := `DELETE FROM users WHERE id = $1;`
 			_, delErr := db.Exec(deleteQuery, userID)
 			if delErr != nil {
-				//log.Printf("Error deleting user after captcha failure: %v", delErr)
+				log.Printf("Error deleting user after captcha failure: %v", delErr)
 			}
 
 			w.Header().Set("Content-Type", "application/json")
@@ -104,7 +105,7 @@ func RegisterHandler(db *sql.DB) http.HandlerFunc {
 			deleteQuery := `DELETE FROM users WHERE id = $1;`
 			_, delErr := db.Exec(deleteQuery, userID)
 			if delErr != nil {
-				//log.Printf("Error deleting user after email failure: %v", delErr)
+				log.Printf("Error deleting user after email failure: %v", delErr)
 			}
 
 			http.Error(w, `{"error": "Failed to send verification email"}`, http.StatusInternalServerError)
