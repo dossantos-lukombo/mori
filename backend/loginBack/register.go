@@ -97,7 +97,7 @@ func RegisterHandler(db *sql.DB) http.HandlerFunc {
 		}
 
 		// Send verification email
-		err = sendVerificationEmail(email, token)
+		err = sendVerificationEmail(email, username, token)
 		if err != nil {
 			//log.Printf("Error sending email: %v", err)
 
