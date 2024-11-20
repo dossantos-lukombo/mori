@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const chatContainer = document.querySelector('.chat-container');
     const chatWindow = document.querySelector('.chat-window');
     const user_input = document.querySelector('.chat-input');
+    const logo = document.querySelector('.small-logo');
   
     toggleButton.addEventListener('click', function() {
         sidebar.classList.toggle('hidden');
@@ -11,6 +12,7 @@ document.addEventListener('DOMContentLoaded', function() {
         chatWindow.scrollTop = chatWindow.scrollHeight;
         chatWindow.classList.toggle('full-width');
         user_input.classList.toggle('full-width');
+        logo.classList.toggle('full-width');
 
     });
   });

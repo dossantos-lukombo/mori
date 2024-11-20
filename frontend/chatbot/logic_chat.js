@@ -39,15 +39,7 @@ function sendBtn_clicked(){
         
     })
     textearea.addEventListener("keydown", (e)=>{
-        // if(e.key === "Enter"){
-        //     e.preventDefault()
-        //     console.log("Enter clicked !")
-
-        //     conversation.user_request = textearea.value
-        //     appendMessage("Utilisateur", textearea.value)
-        //     sendData(userID,textearea.value)
-        //     textearea.value = ""
-        // }
+        
         if(e.key === "Enter" && e.shiftKey){
             e.preventDefault()
             console.log("Shift + Enter clicked !")
@@ -74,10 +66,10 @@ async function sendData(userID,data) {
     let result = null
     const messageElement = document.createElement("pre");
     
-    const response = await fetch("http://localhost:8080/api/conversation", {
+    const response = await fetch("http://localhost:8080/conversation/", {
         method: "POST",
         headers: {
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",            
         },
         body: JSON.stringify({ session: userID, message: data })
     });

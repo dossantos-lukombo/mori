@@ -56,6 +56,20 @@ body {
   margin-right: 10px;
 }
 
+.small-logo.full-width {
+  display: block;
+  width: 50px;
+  height: 50px;
+  background-image: url("../images/mori.png");
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center;
+  border-radius: 50%;
+  margin-right: 10px;
+  transform: translateX(0);
+  transition: transform 0.5s ease;
+}
+
 .title {
   font-size: 24px;
   font-family: "arial";
@@ -171,7 +185,22 @@ body {
 .chat-input {
   display: flex;
   padding: 10px;
+  width: 55%;
+  margin: 0 auto;
   /* background: #2c2c2c; */
+}
+
+#welcome_message{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  font-size: 24px;
+  font-family: Arial;
+}
+
+#welcome_message.hidden{
+  display: none;
 }
 
 #user-input {
