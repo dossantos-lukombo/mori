@@ -123,7 +123,7 @@ form button[type="button"]:hover {
 /* Popup Styling */
 .popup {
   position: fixed;
-  top: 20%;
+  top: 15%;
   left: 50%;
   transform: translate(-50%, -50%);
   background: #9146bc; /* Slightly lighter dark background */
@@ -138,7 +138,7 @@ form button[type="button"]:hover {
   align-items: center;
   justify-content: center;
   transition: opacity 0.5s ease, transform 0.5s ease;
-  animation: notification 2s ease;
+  animation: notification 1.5s ease;
 }
 
 .popup.hidden {
@@ -153,13 +153,32 @@ form button[type="button"]:hover {
   transform: translate(-50%, -50%);
 }
 
+#forgot_password {
+  font-size: 13.5px;
+  color: #e4e4e4;
+  text-decoration: none;
+  text-align: center;
+  transition: all 0.2s;
+}
+
+.info_form{
+  font-size: 15px;
+  color: #e4e4e4;
+  text-align: center;
+  user-select: none;
+}
+
+#forgot_password:hover {
+  cursor: pointer;
+  color: #a75fd1;
+}
 
 @keyframes notification {
   0% {
-    top: 10%;
+    top: 5%;
   }
   100% {
-    top: 20%;
+    top: 15%;
   }
   
 }

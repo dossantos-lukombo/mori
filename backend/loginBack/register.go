@@ -44,7 +44,7 @@ func RegisterHandler(db *sql.DB) http.HandlerFunc {
 		}
 
 		// Generate a verification token
-		token, err := generateToken()
+		token, err := GenerateToken()
 		if err != nil {
 			//log.Printf("Error generating token: %v", err)
 			http.Error(w, `{"error": "Internal server error"}`, http.StatusInternalServerError)

@@ -30,8 +30,8 @@
         <button type="submit">Connexion</button>
         <button type="button" onclick="toggleForms()">Register</button>
         <div id="login-error" class="error-message"></div>
+        <p id="forgot_password" onclick="resetPasswordButton()">Forgot your password ?</p>
       </form>
-
       <!-- Register Form -->
       <form id="register-form">
         <input type="text" name="username" placeholder="Username" required />
@@ -55,6 +55,14 @@
         <button type="submit">Register</button>
         <button type="button" onclick="toggleForms()">Login</button>
         <div id="register-error" class="error-message"></div>
+      </form>
+
+      <form id="reset-password-form">
+        <p class="info_form">A link will be sent in your Email inbox.</p>
+        <input type="email" name="email" placeholder="Email" required />
+        <button type="submit">Send Email</button>
+        <button type="button" onclick="backToLogin()">Login</button>
+        <div id="reset-password-error" class="error-message"></div>
       </form>
     </div>
     <div id="popup" class="popup hidden">

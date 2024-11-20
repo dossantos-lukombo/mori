@@ -12,6 +12,22 @@ function toggleForms() {
   }
 }
 
+function backToLogin() {
+  const loginForm = document.getElementById("login-form");
+  const reset_password_form = document.getElementById("reset-password-form");
+
+  loginForm.style.display = "flex";
+  reset_password_form.style.display = "none";
+}
+
+function resetPasswordButton() {
+  const loginForm = document.getElementById("login-form");
+  const reset_password_form = document.getElementById("reset-password-form");
+
+  loginForm.style.display = "none";
+  reset_password_form.style.display = "flex";
+}
+
 // Function to handle login form submission
 document.getElementById("login-form").addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -124,5 +140,29 @@ document
       errorDiv.textContent = "";
       showPopup("Registration successful, please Login.");
       toggleForms(); // Switch to login form
+    }
+  });
+
+document
+  .getElementById("reset-password-form")
+  .addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const errorDiv = document.getElementById("reset-password-error");
+    errorDiv.style.display = "none";
+
+    const formData = new FormData(e.target);
+    const response = await fetch("/reset-password", {
+      method: "POST",
+      body: formData,
+    });
+
+    const result = await response.json();
+    if (!response.ok) {
+      errorDiv.textContent =
+        result.error || "An error occurred during password reset.";
+      errorDiv.style.display = "block";
+    } else {
+      showPopup("Password reset link sent to your Email.");
+      backToLogin();
     }
   });
