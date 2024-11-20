@@ -3,10 +3,12 @@ package loginback
 import (
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
 	"net/smtp"
+	"unicode"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -130,6 +132,33 @@ func sendResetPasswordEmail(email, token string) error {
 	return smtp.SendMail(smtpHost+":"+smtpPort, auth, from, to, []byte(message))
 }
 
+// validatePassword checks if the password meets the requirements.
+func validatePassword(password string) error {
+	if len(password) < 7 {
+		return errors.New("password must be at least 7 characters long")
+	}
+
+	var hasUppercase, hasNumber bool
+
+	for _, char := range password {
+		switch {
+		case unicode.IsUpper(char):
+			hasUppercase = true
+		case unicode.IsDigit(char):
+			hasNumber = true
+		}
+	}
+
+	if !hasUppercase {
+		return errors.New("password must contain at least one uppercase")
+	}
+	if !hasNumber {
+		return errors.New("password must contain at least one number")
+	}
+
+	return nil
+}
+
 // ResetPasswordHandler handles the reset password request and returns JSON responses.
 func ResetPasswordHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -242,15 +271,24 @@ func VerifyResetTokenHandler(db *sql.DB) http.HandlerFunc {
 			NewPassword string `json:"new_password"`
 		}
 
+		// Decode JSON body
 		if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			json.NewEncoder(w).Encode(map[string]string{"error": "Invalid input"})
 			return
 		}
 
+		// Check if token and password are provided
 		if data.Token == "" || data.NewPassword == "" {
 			w.WriteHeader(http.StatusBadRequest)
 			json.NewEncoder(w).Encode(map[string]string{"error": "Token and new password are required"})
+			return
+		}
+
+		// Validate password strength
+		if err := validatePassword(data.NewPassword); err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
 			return
 		}
 
@@ -268,7 +306,7 @@ func VerifyResetTokenHandler(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-		// Hash new password
+		// Hash the new password
 		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(data.NewPassword), bcrypt.DefaultCost)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -276,7 +314,7 @@ func VerifyResetTokenHandler(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-		// Update password and clear token
+		// Update password and clear token in the database
 		updateQuery := `UPDATE users SET password = $1, reset_token = NULL WHERE email = $2`
 		_, err = db.Exec(updateQuery, hashedPassword, email)
 		if err != nil {
@@ -285,6 +323,7 @@ func VerifyResetTokenHandler(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
+		// Respond with success
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(map[string]string{"message": "Password reset successfully"})
 	}

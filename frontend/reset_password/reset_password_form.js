@@ -42,6 +42,10 @@ function showPopup() {
         errorDiv.textContent = result.error || "An error occurred.";
         errorDiv.style.display = "block";
       } else {
+        const new_password = document.getElementById("new-password");
+        const confirm_password = document.getElementById("confirm-password");
+        new_password.value = "";
+        confirm_password.value = "";
         showPopup();
         setTimeout(() => {
           window.location.href = "/";
