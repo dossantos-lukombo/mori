@@ -2,6 +2,7 @@
 // import markdownToTxt from 'https://cdn.jsdelivr.net/npm/markdown-to-txt@2.0.1/+esm'// import markdownToTxt from 'markdown-to-txt';
 
 const chatBox = document.querySelector(".chat-window");
+const alphanumericRegex = /[a-zA-Z0-9]/;
 
 let conversation = {
     conversation_id: "",
@@ -44,7 +45,7 @@ function sendBtn_clicked(){
             e.preventDefault()
             console.log("Shift + Enter clicked !")
             textearea.value += "\n"
-        }else if(e.key === "Enter"){
+        }else if(e.key === "Enter" && alphanumericRegex.test(textearea.value)){
             e.preventDefault()
             console.log("Enter clicked !")
 

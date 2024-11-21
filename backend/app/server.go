@@ -26,4 +26,5 @@ func StartServer() {
 	if err := http.ListenAndServe(port, nil); err != nil {
 		fmt.Printf("Error starting server: %s\n", err)
 	}
+
 }
