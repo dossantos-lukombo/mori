@@ -20,6 +20,7 @@ type User struct {
 	Session           string
 	Verified          bool
 	VerificationToken string
+	Reset_token       string
 	FavorisJSON       string
 }
 
@@ -86,6 +87,7 @@ func createTables(db *sql.DB) error {
 		session TEXT NOT NULL,
 		verified BOOLEAN DEFAULT FALSE,
 		verification_token TEXT,
+		reset_token TEXT,
 		favoris_json JSONB DEFAULT '[]'
 	);`
 

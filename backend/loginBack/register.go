@@ -3,6 +3,7 @@ package loginback
 import (
 	"database/sql"
 	"fmt"
+	"log"
 	"mori/captcha"
 	"mori/database"
 	"net/http"
@@ -34,18 +35,22 @@ func RegisterHandler(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
+		// Validate password strength
+		if err := validatePassword(password); err != nil {
+			http.Error(w, fmt.Sprintf(`{"error": "%s"}`, err.Error()), http.StatusBadRequest)
+			return
+		}
+
 		// Hash the password
 		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 		if err != nil {
-			//log.Printf("Error hashing password: %v", err)
 			http.Error(w, `{"error": "Internal server error"}`, http.StatusInternalServerError)
 			return
 		}
 
 		// Generate a verification token
-		token, err := generateToken()
+		token, err := GenerateToken()
 		if err != nil {
-			//log.Printf("Error generating token: %v", err)
 			http.Error(w, `{"error": "Internal server error"}`, http.StatusInternalServerError)
 			return
 		}
@@ -58,9 +63,7 @@ func RegisterHandler(db *sql.DB) http.HandlerFunc {
 
 		// Handle database constraint violations (e.g., duplicate username/email)
 		if err != nil {
-			//log.Printf("Error inserting new user: %v", err)
 			if pqErr, ok := err.(*pq.Error); ok && pqErr.Code == "23505" { // Unique constraint violation
-				//log.Printf("Unique constraint violation: %v", pqErr.Constraint)
 				if pqErr.Constraint == "users_username_key" {
 					http.Error(w, `{"error": "Username is already taken"}`, http.StatusConflict)
 					return
@@ -86,7 +89,7 @@ func RegisterHandler(db *sql.DB) http.HandlerFunc {
 			deleteQuery := `DELETE FROM users WHERE id = $1;`
 			_, delErr := db.Exec(deleteQuery, userID)
 			if delErr != nil {
-				//log.Printf("Error deleting user after captcha failure: %v", delErr)
+				log.Printf("Error deleting user after captcha failure: %v", delErr)
 			}
 
 			w.Header().Set("Content-Type", "application/json")
@@ -96,15 +99,13 @@ func RegisterHandler(db *sql.DB) http.HandlerFunc {
 		}
 
 		// Send verification email
-		err = sendVerificationEmail(email, token)
+		err = sendVerificationEmail(email, username, token)
 		if err != nil {
-			//log.Printf("Error sending email: %v", err)
-
 			// If email sending fails, delete the newly inserted user to ensure consistency
 			deleteQuery := `DELETE FROM users WHERE id = $1;`
 			_, delErr := db.Exec(deleteQuery, userID)
 			if delErr != nil {
-				//log.Printf("Error deleting user after email failure: %v", delErr)
+				log.Printf("Error deleting user after email failure: %v", delErr)
 			}
 
 			http.Error(w, `{"error": "Failed to send verification email"}`, http.StatusInternalServerError)
