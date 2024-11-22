@@ -118,29 +118,29 @@ func RegisterHandler(db *sql.DB) http.HandlerFunc {
 	}
 }
 
-// Middleware to protect routes
-func AuthMiddleware(db *sql.DB, next http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		cookie, err := r.Cookie("session_token")
-		if err != nil {
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
-			return
-		}
-
-		var user database.User
-		query := `SELECT id, username, email FROM users WHERE session = $1;`
-		err = db.QueryRow(query, cookie.Value).Scan(&user.ID, &user.Username, &user.Email)
-		if err != nil {
-			if err == sql.ErrNoRows {
+func AuthMiddleware(db *sql.DB) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			cookie, err := r.Cookie("session_token")
+			if err != nil {
 				http.Error(w, "Unauthorized", http.StatusUnauthorized)
 				return
 			}
-			//log.Printf("Error querying user: %v", err)
-			http.Error(w, "Internal server error", http.StatusInternalServerError)
-			return
-		}
 
-		// Proceed to the next handler
-		next.ServeHTTP(w, r)
+			var user database.User
+			query := `SELECT id, username, email FROM users WHERE session = $1;`
+			err = db.QueryRow(query, cookie.Value).Scan(&user.ID, &user.Username, &user.Email)
+			if err != nil {
+				if err == sql.ErrNoRows {
+					http.Error(w, "Unauthorized", http.StatusUnauthorized)
+					return
+				}
+				http.Error(w, "Internal server error", http.StatusInternalServerError)
+				return
+			}
+
+			// Proceed to the next handler
+			next.ServeHTTP(w, r)
+		})
 	}
 }
