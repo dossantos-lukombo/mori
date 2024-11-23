@@ -2,6 +2,7 @@ package loginback
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"log"
 	"mori/captcha"
@@ -22,6 +23,12 @@ func RegisterHandler(db *sql.DB) http.HandlerFunc {
 		registerMutex.Lock()
 		defer registerMutex.Unlock()
 
+		// Verify the CSRF token (we'll handle this in a separate function)
+		if err := VerifyCSRFToken(r); err != nil {
+			http.Error(w, "Forbidden: "+err.Error(), http.StatusForbidden)
+			return
+		}
+
 		// Collect form data
 		username := r.FormValue("username")
 		email := r.FormValue("email")
@@ -31,12 +38,14 @@ func RegisterHandler(db *sql.DB) http.HandlerFunc {
 
 		// Validate password confirmation
 		if password != confirmPassword {
+			w.Header().Set("Content-Type", "application/json")
 			http.Error(w, `{"error": "Passwords do not match"}`, http.StatusBadRequest)
 			return
 		}
 
 		// Validate password strength
 		if err := validatePassword(password); err != nil {
+			w.Header().Set("Content-Type", "application/json")
 			http.Error(w, fmt.Sprintf(`{"error": "%s"}`, err.Error()), http.StatusBadRequest)
 			return
 		}
@@ -44,6 +53,7 @@ func RegisterHandler(db *sql.DB) http.HandlerFunc {
 		// Hash the password
 		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 		if err != nil {
+			w.Header().Set("Content-Type", "application/json")
 			http.Error(w, `{"error": "Internal server error"}`, http.StatusInternalServerError)
 			return
 		}
@@ -51,6 +61,7 @@ func RegisterHandler(db *sql.DB) http.HandlerFunc {
 		// Generate a verification token
 		token, err := GenerateToken()
 		if err != nil {
+			w.Header().Set("Content-Type", "application/json")
 			http.Error(w, `{"error": "Internal server error"}`, http.StatusInternalServerError)
 			return
 		}
@@ -64,6 +75,7 @@ func RegisterHandler(db *sql.DB) http.HandlerFunc {
 		// Handle database constraint violations (e.g., duplicate username/email)
 		if err != nil {
 			if pqErr, ok := err.(*pq.Error); ok && pqErr.Code == "23505" { // Unique constraint violation
+				w.Header().Set("Content-Type", "application/json")
 				if pqErr.Constraint == "users_username_key" {
 					http.Error(w, `{"error": "Username is already taken"}`, http.StatusConflict)
 					return
@@ -73,6 +85,7 @@ func RegisterHandler(db *sql.DB) http.HandlerFunc {
 					return
 				}
 			}
+			w.Header().Set("Content-Type", "application/json")
 			http.Error(w, `{"error": "Internal server error"}`, http.StatusInternalServerError)
 			return
 		}
@@ -80,6 +93,7 @@ func RegisterHandler(db *sql.DB) http.HandlerFunc {
 		// Validate captcha AFTER database insertion passes
 		captchaID, err := r.Cookie("captcha_id")
 		if err != nil || captchaID.Value == "" {
+			w.Header().Set("Content-Type", "application/json")
 			http.Error(w, `{"error": "Captcha is required"}`, http.StatusBadRequest)
 			return
 		}
@@ -108,6 +122,7 @@ func RegisterHandler(db *sql.DB) http.HandlerFunc {
 				log.Printf("Error deleting user after email failure: %v", delErr)
 			}
 
+			w.Header().Set("Content-Type", "application/json")
 			http.Error(w, `{"error": "Failed to send verification email"}`, http.StatusInternalServerError)
 			return
 		}
@@ -116,6 +131,27 @@ func RegisterHandler(db *sql.DB) http.HandlerFunc {
 		w.WriteHeader(http.StatusCreated)
 		fmt.Fprintln(w, `{"message": "Registration successful, please check your email to verify your account."}`)
 	}
+}
+
+func VerifyCSRFToken(r *http.Request) error {
+	// Get the CSRF token from the form
+	csrfToken := r.FormValue("csrf_token")
+	if csrfToken == "" {
+		return errors.New("missing CSRF token in the form")
+	}
+
+	// Get the CSRF token from the cookies
+	csrfCookie, err := r.Cookie("csrf_token")
+	if err != nil {
+		return errors.New("missing CSRF token in the cookies")
+	}
+
+	// Compare the tokens
+	if csrfToken != csrfCookie.Value {
+		return errors.New("CSRF token mismatch")
+	}
+
+	return nil
 }
 
 func AuthMiddleware(db *sql.DB) func(http.Handler) http.Handler {
