@@ -19,6 +19,12 @@ func LoginHandler(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
+		// Verify the CSRF token (we'll handle this in a separate function)
+		if err := VerifyCSRFToken(r); err != nil {
+			http.Error(w, "Forbidden: "+err.Error(), http.StatusForbidden)
+			return
+		}
+
 		usernameOrEmail := r.FormValue("username_email")
 		password := r.FormValue("password")
 

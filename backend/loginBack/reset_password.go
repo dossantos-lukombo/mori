@@ -167,6 +167,12 @@ func ResetPasswordHandler(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
+		// Verify the CSRF token (we'll handle this in a separate function)
+		if err := VerifyCSRFToken(r); err != nil {
+			http.Error(w, "Forbidden: "+err.Error(), http.StatusForbidden)
+			return
+		}
+
 		email := r.FormValue("email")
 		if email == "" {
 			w.WriteHeader(http.StatusBadRequest)

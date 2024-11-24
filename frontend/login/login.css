@@ -153,18 +153,19 @@ form button[type="button"]:hover {
   transform: translate(-50%, -50%);
 }
 
+.info_form {
+  font-size: 15px;
+  color: #e4e4e4;
+  text-align: center;
+  user-select: none;
+}
+
 #forgot_password {
   font-size: 13.5px;
   color: #e4e4e4;
   text-decoration: none;
   text-align: center;
   transition: all 0.2s;
-}
-
-.info_form{
-  font-size: 15px;
-  color: #e4e4e4;
-  text-align: center;
   user-select: none;
 }
 
@@ -180,5 +181,4 @@ form button[type="button"]:hover {
   100% {
     top: 15%;
   }
-  
 }
