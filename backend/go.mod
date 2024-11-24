@@ -15,7 +15,4 @@ require (
 	github.com/gorilla/mux v1.8.1
 )
 
-require (
-	github.com/gorilla/csrf v1.7.2 
-	github.com/gorilla/securecookie v1.1.2 
-)
+require github.com/google/uuid v1.6.0

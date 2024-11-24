@@ -129,14 +129,18 @@ async function sendData(userID,data) {
 
 async function sendConversation(){
 
-    conversation.session = window.location.href.split("/").pop()
+    home_url = window.location.href.split("/chat/")[0]
+    conversation.session = home_url.split("/").pop()
+
+    
 
     console.log("CONVERSATION: ",conversation)
 
-    const response = await fetch("http://localhost:8080/api/conversation", {
+    const response = await fetch(`http://localhost:8080/${window.location.href}`, {
         method: "POST",
         headers: {
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            
         },
         body: JSON.stringify(conversation)
     });

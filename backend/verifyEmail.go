@@ -1,4 +1,4 @@
-package loginback
+package main
 
 import (
 	"crypto/rand"
@@ -11,7 +11,7 @@ import (
 )
 
 func GenerateToken() (string, error) {
-	bytes := make([]byte, 16)
+	bytes := make([]byte, 32)
 	_, err := rand.Read(bytes)
 	if err != nil {
 		return "", err

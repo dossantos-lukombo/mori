@@ -14,23 +14,23 @@ var accessSecret = os.Getenv("ACCESS_SECRET_KEY_LLM")
 var refreshSecret = os.Getenv("REFRESH_SECRET_KEY_LLM")
 
 type CustomClaims struct {
-	UserID         string `json:"user_id"`
+	Username       string `json:"username"`
 	ConversationID string `json:"conversation_id"`
 	jwt.RegisteredClaims
 }
 
 // Fonction pour générer un JWT
-func GenerateJWT(userID, conversationID string) (string, error) {
+func GenerateJWT(username, conversationID string) (string, error) {
 	// Définir les claims
 	claims := CustomClaims{
-		UserID:         userID,
+		Username:       username,
 		ConversationID: conversationID,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Minute * 7)), // Expire dans 1 heure
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 			NotBefore: jwt.NewNumericDate(time.Now()),
 			Issuer:    "mori",
-			Subject:   userID,
+			Subject:   username,
 		},
 	}
 
@@ -46,17 +46,17 @@ func GenerateJWT(userID, conversationID string) (string, error) {
 	return tokenString, nil
 }
 
-func GenerateRefreshJWT(userID, conversationID string) (string, error) {
+func GenerateRefreshJWT(username, conversationID string) (string, error) {
 	// Définir les claims
 	claims := CustomClaims{
-		UserID:         userID,
+		Username:       username,
 		ConversationID: conversationID,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 24 * 7)), // Expire dans 1 heure
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 			NotBefore: jwt.NewNumericDate(time.Now()),
 			Issuer:    "mori",
-			Subject:   userID,
+			Subject:   username,
 		},
 	}
 

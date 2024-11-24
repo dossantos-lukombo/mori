@@ -5,7 +5,6 @@ import (
 	"log"
 	"mori/app"
 	"mori/database"
-	config "mori/router"
 )
 
 func main() {
@@ -19,8 +18,8 @@ func main() {
 	fmt.Println("Successfully connected to the database!")
 
 	// Initialize the router and pass the db object
-	config.InitializeRouter(db)
+	InitializeRouter(db)
 
 	// Pass the router to server.go to start the server
-	app.StartServer(config.Router)
+	app.StartServer(Router)
 }

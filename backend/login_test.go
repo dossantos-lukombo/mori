@@ -1,4 +1,4 @@
-package loginback
+package main
 
 import (
 	"database/sql"

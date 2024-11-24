@@ -1,14 +1,14 @@
-package loginback
+package main
 
 import (
 	"database/sql"
-	"fmt"
 	"log"
 	"net/http"
 	"time"
 
 	"mori/database"
 
+	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -54,17 +54,55 @@ func LoginHandler(db *sql.DB) http.HandlerFunc {
 		}
 
 		// Generate a new session token
-		sessionToken := fmt.Sprintf("%x", time.Now().UnixNano())
-		updateQuery := `UPDATE users SET session = $1 WHERE id = $2;`
-		_, err = db.Exec(updateQuery, sessionToken, user.ID)
+		// sessionToken := fmt.Sprintf("%x", time.Now().UnixNano())
+		sessionToken := uuid.New().String()
+		chatSessionToken := uuid.New().String()
+		userID := user.ID
+		updateUserStmt, err := db.Prepare(`UPDATE users SET session = $1 WHERE id = $2;`)
 		if err != nil {
-			log.Printf("Error updating session: %v", err)
-			http.Error(w, `{"error": "Internal server error"}`, http.StatusInternalServerError)
+			http.Error(w, `{"error": "can not set session into users"}`, http.StatusInternalServerError)
+			return
+		}
+		defer updateUserStmt.Close()
+
+		// Exécuter la requête préparée pour l'utilisateur
+		_, err = updateUserStmt.Exec(sessionToken, userID)
+		if err != nil {
+			http.Error(w, `{"error": "can not execute request"}`, http.StatusInternalServerError)
+			return
+		}
+
+		// Préparer la requête pour mettre à jour la conversation de l'utilisateur
+		updateConversationStmt, err := db.Prepare(`UPDATE conversations SET conversation_uuid = $1 WHERE user_id = $2;`)
+		if err != nil {
+			http.Error(w, `{"error": "can not set conversation_uuid into conversations"}`, http.StatusInternalServerError)
+			return
+		}
+		defer updateConversationStmt.Close()
+
+		// Exécuter la requête préparée pour la conversation
+		_, err = updateConversationStmt.Exec(chatSessionToken, userID)
+		if err != nil {
+			http.Error(w, `{"error": "can not execute request"}`, http.StatusInternalServerError)
 			return
 		}
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		fmt.Fprintln(w, `{"message": "Login successful"}`)
+		// fmt.Fprintln(w, `{"message": "Login successful"}`)
+
+		// Set the session token as a cookie
+
+		http.SetCookie(w, &http.Cookie{
+			Name:     "session_token",
+			Value:    sessionToken,
+			Expires:  time.Now().Add(7 * 24 * time.Hour),
+			HttpOnly: true,
+		})
+
+		// Redirect to the home page
+		Mu.Lock()
+		Router.HandleFunc("/home/"+sessionToken+"/chat/"+chatSessionToken, HomeHandler()).Methods("GET", "POST")
+		Mu.Unlock()
 	}
 }
