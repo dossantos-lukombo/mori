@@ -2,6 +2,7 @@ package loginback
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 )
 
@@ -21,6 +22,10 @@ func VerifyCSRFToken(r *http.Request) error {
 	// Compare the tokens
 	if csrfToken != csrfCookie.Value {
 		return errors.New("CSRF token mismatch")
+	}
+
+	if csrfToken == csrfCookie.Value {
+		fmt.Println("CSRF token matched")
 	}
 
 	return nil
