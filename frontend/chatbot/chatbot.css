@@ -29,14 +29,26 @@ body {
   flex-direction: column;
   padding: 10px;
   overflow-y: auto;
+  animation: appearFromLeft 0.5s ease;
   transition: transform 0.3s ease;
+  animation: grow 0.5s ease;
 }
 
 .sidebar.hidden {
+  animation: none;
   display: none;
   transform: translateX(-100%);
   transition: transform 0.3s ease;
   
+}
+
+#sidebar_content{
+  display: flex;
+  width: 100%;
+  height: 100%;
+  flex-direction: column;
+  opacity: 0;
+  animation: opacity 0.5s ease 0.5s forwards;
 }
 
 .sidebar-header {
@@ -56,6 +68,20 @@ body {
   margin-right: 10px;
 }
 
+.small-logo.full-width {
+  display: block;
+  width: 50px;
+  height: 50px;
+  background-image: url("../images/mori.png");
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center;
+  border-radius: 50%;
+  margin-right: 10px;
+  transform: translateX(0);
+  transition: transform 0.5s ease;
+}
+
 .title {
   font-size: 24px;
   font-family: "arial";
@@ -73,7 +99,6 @@ body {
   margin-bottom: 10px;
   border-radius: 8px;
   cursor: pointer;
-  transition: background 0.3s ease;
 }
 
 .conversation-item:hover {
@@ -86,13 +111,15 @@ body {
   background: #1a1a1a;
   display: flex;
   flex-direction: column;
-  transition: width 0.3s ease;
+  margin-left: 0px;
+  animation: shrink 0.5s ease;
 }
 
 .chat-container.full-width {
   width: 100%;
   transform: translateX(0);
   transition: transform 0.5s ease;
+  animation: none;
 }
 
 .chat-header {
@@ -100,6 +127,7 @@ body {
   align-items: center;
   padding: 10px;
   background: #9146bc;
+  height: 55px;
 }
 
 .toggle-button {
@@ -171,7 +199,22 @@ body {
 .chat-input {
   display: flex;
   padding: 10px;
+  width: 55%;
+  margin: 0 auto;
   /* background: #2c2c2c; */
+}
+
+#welcome_message{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  font-size: 24px;
+  font-family: Arial;
+}
+
+#welcome_message.hidden{
+  display: none;
 }
 
 #user-input {
@@ -182,6 +225,11 @@ body {
   background: #444;
   color: #e4e4e4;
   font-size: 14px;
+  font-family: Arial, Helvetica, sans-serif
+}
+
+#user-input:focus {
+  outline: 2px solid #9146bc;
 }
 
 .chat-input.full-width {
@@ -205,10 +253,9 @@ body {
   color: #fff;
   font-size: 16px;
   cursor: pointer;
-  transition: background 0.3s;
 }
 
-#send-button:hover {
+#send-btn:hover {
   background: #7d3aa6;
 }
 
@@ -233,5 +280,42 @@ pre {
   .chat-container {
     width: 100%;
     height: 70%;
+  }
+}
+
+@keyframes appearFromLeft {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes shrink {
+  from {
+    width: 100%;
+  }
+  to {
+    width: 70%;
+  }
+  
+}
+
+@keyframes grow {
+  from {
+    width: 0%;
+  }
+  to {
+    width: 30%;
+  }
+}
+
+@keyframes opacity {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
   }
 }
