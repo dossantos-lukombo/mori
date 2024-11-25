@@ -21,6 +21,7 @@ func InitializeRouter(db *sql.DB) {
 
 	// Define API routes
 	Router.HandleFunc("/login", LoginHandler(db)).Methods("GET", "POST")
+	Router.HandleFunc("/home/{sessionToken}/chat/{chatSessionToken}", HomeHandler).Methods("GET", "POST")
 	Router.HandleFunc("/register", RegisterHandler(db)).Methods("GET", "POST")
 	Router.HandleFunc("/captcha", captcha.ServeCaptcha).Methods("GET", "POST")
 	Router.HandleFunc("/verify-email", VerifyEmailHandler(db)).Methods("GET", "POST")
@@ -31,6 +32,8 @@ func InitializeRouter(db *sql.DB) {
 	// Protected routes
 	protectedRoutes := Router.PathPrefix("/protected").Subrouter()
 	protectedRoutes.Use(AuthMiddleware(db))
+	// llmProtectedRoutes := Router.PathPrefix("/llm-protected").Subrouter()
+	// llmProtectedRoutes.Use(SendRequestWithToken())
 
 	// Static file serving
 	Router.PathPrefix("/frontend/").Handler(http.StripPrefix("/frontend/", http.FileServer(http.Dir("../frontend"))))

@@ -5,6 +5,7 @@ const chatBox = document.querySelector(".chat-window");
 const alphanumericRegex = /[a-zA-Z0-9]/;
 
 let conversation = {
+    user_id: "",
     conversation_id: "",
     user_request: "",
     llm_response: "",
@@ -26,7 +27,7 @@ function appendMessage(sender, message) {
 // Fonction pour envoyer des données au serveur Go
 function sendBtn_clicked(){
     // let userID = window.location.href.split("/").pop()
-    let userID = "0001"
+    conversation.user_id = "0001"
     let buttonSend = document.getElementById("send-btn")
     let textearea = document.getElementById("user-input")
     buttonSend.addEventListener("click", (e)=>{
@@ -35,7 +36,7 @@ function sendBtn_clicked(){
 
         conversation.user_request = textearea.value
         appendMessage("Utilisateur", textearea.value)
-        sendData(userID,textearea.value)
+        sendData(conversation.user_id,textearea.value)
         textearea.value = ""
         
     })
@@ -51,7 +52,7 @@ function sendBtn_clicked(){
 
             conversation.user_request = textearea.value
             appendMessage("Utilisateur", textearea.value)
-            sendData(userID,textearea.value)
+            sendData(conversation.user_id,textearea.value)
             textearea.value = ""
         }
     })
@@ -63,16 +64,18 @@ async function sendData(userID,data) {
 
     console.log("session: ",userID)
     console.log("data: ", data)
+    conversation.conversation_id = window.location.pathname.split("/").pop()
+    conversation.session = window.location.pathname.split("/")[2]
 
     let result = null
     const messageElement = document.createElement("pre");
     
-    const response = await fetch("http://localhost:8080/conversation/", {
+    const response = await fetch(`${window.location.pathname}`, {
         method: "POST",
         headers: {
-            "Content-Type": "application/json",            
+            "Content-Type": "application/json",          
         },
-        body: JSON.stringify({ session: userID, message: data })
+        body: JSON.stringify(conversation)
     });
 
     if (!response.ok || !response.body) {
@@ -104,7 +107,7 @@ async function sendData(userID,data) {
                         console.log(jsonData)
                         let parsedData = JSON.parse(jsonData);
                         // responseMessage = parsedData.response; 
-                        messageElement.innerText += parsedData.response;
+                        messageElement.innerText += parsedData.response.message.content;
                     } catch (e) {
                         console.error("Erreur de parsing JSON :", e);
                     }
@@ -129,14 +132,14 @@ async function sendData(userID,data) {
 
 async function sendConversation(){
 
-    home_url = window.location.href.split("/chat/")[0]
-    conversation.session = home_url.split("/").pop()
+    // home_url = window.location.href.split("/chat/")[0]
+    // conversation.session = home_url.split("/").pop()
 
-    
+
 
     console.log("CONVERSATION: ",conversation)
 
-    const response = await fetch(`http://localhost:8080/${window.location.href}`, {
+    const response = await fetch(`http://localhost:8080/${window.location.pathname}`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json",

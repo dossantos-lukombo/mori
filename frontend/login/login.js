@@ -60,12 +60,20 @@ document.getElementById("login-form").addEventListener("submit", async (e) => {
     body: formData,
   });
 
-  const result = await response.json();
+  const result = await response.text();
   if (!response.ok) {
     errorDiv.textContent = result.error || "An error occurred during login.";
     errorDiv.style.display = "block";
   } else {
-    window.location.href = "/dashboard"; // Redirect to dashboard on success
+    console.log("Login successful");
+    console.log("Redirecting to home chat...");
+    console.log("result : ", result);
+    console.log("response : ", response);
+    console.log("response.body : ", response.body);
+    console.log("url path : ", window.location.pathname);
+    window.location.href = response.url; // Redirect to dashboard on successful login
+
+
   }
 });
 
