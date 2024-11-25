@@ -22,11 +22,15 @@ func RegisterHandler(db *sql.DB) http.HandlerFunc {
 		registerMutex.Lock()
 		defer registerMutex.Unlock()
 
-		// Verify the CSRF token (we'll handle this in a separate function)
-		if err := VerifyCSRFToken(r); err != nil {
-			http.Error(w, "Forbidden: "+err.Error(), http.StatusForbidden)
+		// Rate limiting check
+		ip := r.RemoteAddr
+		rateLimitMutex.Lock()
+		if rateLimit[ip] >= 5 {
+			http.Error(w, `{"error": "Too many attempts. Please try again later."}`, http.StatusTooManyRequests)
+			rateLimitMutex.Unlock()
 			return
 		}
+		rateLimitMutex.Unlock()
 
 		// Collect form data
 		username := r.FormValue("username")
@@ -37,22 +41,25 @@ func RegisterHandler(db *sql.DB) http.HandlerFunc {
 
 		// Validate password confirmation
 		if password != confirmPassword {
-			w.Header().Set("Content-Type", "application/json")
 			http.Error(w, `{"error": "Passwords do not match"}`, http.StatusBadRequest)
+			rateLimitMutex.Lock()
+			rateLimit[ip]++
+			rateLimitMutex.Unlock()
 			return
 		}
 
 		// Validate password strength
 		if err := validatePassword(password); err != nil {
-			w.Header().Set("Content-Type", "application/json")
 			http.Error(w, fmt.Sprintf(`{"error": "%s"}`, err.Error()), http.StatusBadRequest)
+			rateLimitMutex.Lock()
+			rateLimit[ip]++
+			rateLimitMutex.Unlock()
 			return
 		}
 
 		// Hash the password
 		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 		if err != nil {
-			w.Header().Set("Content-Type", "application/json")
 			http.Error(w, `{"error": "Internal server error"}`, http.StatusInternalServerError)
 			return
 		}
@@ -60,7 +67,6 @@ func RegisterHandler(db *sql.DB) http.HandlerFunc {
 		// Generate a verification token
 		token, err := GenerateToken()
 		if err != nil {
-			w.Header().Set("Content-Type", "application/json")
 			http.Error(w, `{"error": "Internal server error"}`, http.StatusInternalServerError)
 			return
 		}
@@ -74,17 +80,12 @@ func RegisterHandler(db *sql.DB) http.HandlerFunc {
 		// Handle database constraint violations (e.g., duplicate username/email)
 		if err != nil {
 			if pqErr, ok := err.(*pq.Error); ok && pqErr.Code == "23505" { // Unique constraint violation
-				w.Header().Set("Content-Type", "application/json")
-				if pqErr.Constraint == "users_username_key" {
-					http.Error(w, `{"error": "Username is already taken"}`, http.StatusConflict)
-					return
-				}
-				if pqErr.Constraint == "users_email_key" {
-					http.Error(w, `{"error": "Email is already registered"}`, http.StatusConflict)
-					return
-				}
+				http.Error(w, `{"error": "Username or Email already taken"}`, http.StatusConflict)
+				rateLimitMutex.Lock()
+				rateLimit[ip]++
+				rateLimitMutex.Unlock()
+				return
 			}
-			w.Header().Set("Content-Type", "application/json")
 			http.Error(w, `{"error": "Internal server error"}`, http.StatusInternalServerError)
 			return
 		}
@@ -92,8 +93,10 @@ func RegisterHandler(db *sql.DB) http.HandlerFunc {
 		// Validate captcha AFTER database insertion passes
 		captchaID, err := r.Cookie("captcha_id")
 		if err != nil || captchaID.Value == "" {
-			w.Header().Set("Content-Type", "application/json")
 			http.Error(w, `{"error": "Captcha is required"}`, http.StatusBadRequest)
+			rateLimitMutex.Lock()
+			rateLimit[ip]++
+			rateLimitMutex.Unlock()
 			return
 		}
 
@@ -108,6 +111,9 @@ func RegisterHandler(db *sql.DB) http.HandlerFunc {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusBadRequest)
 			fmt.Fprintln(w, `{"error": "Invalid captcha", "reloadCaptcha": true}`)
+			rateLimitMutex.Lock()
+			rateLimit[ip]++
+			rateLimitMutex.Unlock()
 			return
 		}
 
@@ -121,7 +127,6 @@ func RegisterHandler(db *sql.DB) http.HandlerFunc {
 				log.Printf("Error deleting user after email failure: %v", delErr)
 			}
 
-			w.Header().Set("Content-Type", "application/json")
 			http.Error(w, `{"error": "Failed to send verification email"}`, http.StatusInternalServerError)
 			return
 		}

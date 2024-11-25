@@ -4,13 +4,17 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
-	"net/http"
-	"time"
-
 	"mori/database"
+	"net/http"
+	"sync"
+	"time"
 
 	"golang.org/x/crypto/bcrypt"
 )
+
+// Rate limiter - store failed attempts
+var rateLimit = make(map[string]int)
+var rateLimitMutex sync.Mutex
 
 func LoginHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -18,6 +22,16 @@ func LoginHandler(db *sql.DB) http.HandlerFunc {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 			return
 		}
+
+		// Rate limiting check
+		ip := r.RemoteAddr
+		rateLimitMutex.Lock()
+		if rateLimit[ip] >= 5 {
+			http.Error(w, `{"error": "Too many attempts. Please try again later."}`, http.StatusTooManyRequests)
+			rateLimitMutex.Unlock()
+			return
+		}
+		rateLimitMutex.Unlock()
 
 		// Verify the CSRF token (we'll handle this in a separate function)
 		if err := VerifyCSRFToken(r); err != nil {
@@ -34,6 +48,9 @@ func LoginHandler(db *sql.DB) http.HandlerFunc {
 		if err != nil {
 			if err == sql.ErrNoRows {
 				http.Error(w, `{"error": "Invalid username/email or password"}`, http.StatusUnauthorized)
+				rateLimitMutex.Lock()
+				rateLimit[ip]++
+				rateLimitMutex.Unlock()
 				return
 			}
 			log.Printf("Error querying user: %v", err)
@@ -50,6 +67,9 @@ func LoginHandler(db *sql.DB) http.HandlerFunc {
 		err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
 		if err != nil {
 			http.Error(w, `{"error": "Invalid username/email or password"}`, http.StatusUnauthorized)
+			rateLimitMutex.Lock()
+			rateLimit[ip]++
+			rateLimitMutex.Unlock()
 			return
 		}
 
