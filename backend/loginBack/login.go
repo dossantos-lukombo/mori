@@ -12,7 +12,6 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-// Rate limiter - store failed attempts
 var rateLimit = make(map[string]int)
 var rateLimitMutex sync.Mutex
 
@@ -82,6 +81,17 @@ func LoginHandler(db *sql.DB) http.HandlerFunc {
 			http.Error(w, `{"error": "Internal server error"}`, http.StatusInternalServerError)
 			return
 		}
+
+		// Set the session cookie with the session token (valid for 3 days)
+		http.SetCookie(w, &http.Cookie{
+			Name:     "session_token",
+			Value:    sessionToken,
+			Path:     "/",
+			Expires:  time.Now().Add(72 * time.Hour), // Cookie expires in 3 days
+			HttpOnly: true,                           // Prevent access to the cookie via JavaScript
+			Secure:   false,                          // Set to true in production (requires HTTPS)
+			SameSite: http.SameSiteStrictMode,        // Strict cookie policy
+		})
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
