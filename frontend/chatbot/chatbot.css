@@ -146,6 +146,8 @@ body {
   border: none;
 }
 
+
+
 .chat-window.full-width{
   display: flex;
   flex-direction: column;
