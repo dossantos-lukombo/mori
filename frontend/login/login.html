@@ -66,6 +66,7 @@
       </form>
 
       <form id="reset-password-form">
+        <input type="hidden" name="csrf_token" value="{{.CSRFToken}}" />
         <p class="info_form">A link will be sent in your Email inbox.</p>
         <input type="email" name="email" placeholder="Email" required />
         <button type="submit">Send Email</button>

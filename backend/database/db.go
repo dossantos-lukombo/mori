@@ -22,6 +22,7 @@ type User struct {
 	VerificationToken string
 	Reset_token       string
 	FavorisJSON       string
+	CreationDate      string
 }
 
 // Conversation struct for application-level logic
@@ -88,7 +89,8 @@ func createTables(db *sql.DB) error {
 		verified BOOLEAN DEFAULT FALSE,
 		verification_token TEXT,
 		reset_token TEXT,
-		favoris_json JSONB DEFAULT '[]'
+		favoris_json JSONB DEFAULT '[]',
+		create_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 	);`
 
 	conversationTable := `
