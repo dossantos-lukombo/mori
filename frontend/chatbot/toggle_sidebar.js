@@ -5,7 +5,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const chatWindow = document.querySelector('.chat-window');
     const user_input = document.querySelector('.chat-input');
     const logo = document.querySelector('.small-logo');
-  
+    const sidebar_header = document.querySelector('.sidebar-header');
+    
     toggleButton.addEventListener('click', function() {
         sidebar.classList.toggle('hidden');
         chatContainer.classList.toggle('full-width');
@@ -15,5 +16,5 @@ document.addEventListener('DOMContentLoaded', function() {
         logo.classList.toggle('full-width');
 
     });
-  });
+});
   

@@ -1,6 +1,6 @@
 from fastapi import FastAPI,Request, HTTPException, Depends
 from pydantic import BaseModel
-from logic_llm.llm_manager import treating_user_request
+from llm_manager import treating_user_request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from typing import Literal
 from datetime import datetime
@@ -66,7 +66,7 @@ async def generate_stream(entry_data):
         }
         yield f"data: {json.dumps(output)}\n\n"
 
-@app.post("/api/process-message")
+@app.post("/llm-protected")
 async def receive_data(data: Data,credentials: HTTPAuthorizationCredentials = Depends(verify_token)):
     # Exemple de traitement des données
     print(f"Traitement des données pour Data {data.user_id}, {data.conversation_id}, {data.message}")
