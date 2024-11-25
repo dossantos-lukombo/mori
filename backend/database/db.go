@@ -97,8 +97,9 @@ func createTables(db *sql.DB) error {
 	CREATE TABLE IF NOT EXISTS conversations (
 		id SERIAL PRIMARY KEY,
 		user_id INTEGER NOT NULL REFERENCES users(id),
+		conversation_uuid TEXT NOT NULL,
 		title TEXT NOT NULL,
-		echanges TEXT,
+		echanges JSONB,
 		dates TEXT
 	);`
 

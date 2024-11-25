@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"mori/app"
 	"net/http"
 	"net/smtp"
 	"unicode"
@@ -198,7 +199,7 @@ func ResetPasswordHandler(db *sql.DB) http.HandlerFunc {
 		}
 
 		// Generate reset token
-		token, err := GenerateToken()
+		token, err := app.GenerateToken()
 		if err != nil {
 			log.Printf("Error generating token: %v", err)
 			w.WriteHeader(http.StatusInternalServerError)

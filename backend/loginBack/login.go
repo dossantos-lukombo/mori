@@ -47,6 +47,9 @@ func LoginHandler(db *sql.DB) http.HandlerFunc {
 			if err != nil {
 				if err == sql.ErrNoRows {
 					http.Error(w, `{"error": "Invalid username/email or password"}`, http.StatusUnauthorized)
+					rateLimitMutex.Lock()
+					rateLimit[ip]++
+					rateLimitMutex.Unlock()
 					return
 				}
 				log.Printf("Error querying user: %v", err)
@@ -63,6 +66,9 @@ func LoginHandler(db *sql.DB) http.HandlerFunc {
 			err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
 			if err != nil {
 				http.Error(w, `{"error": "Invalid username/email or password"}`, http.StatusUnauthorized)
+				rateLimitMutex.Lock()
+				rateLimit[ip]++
+				rateLimitMutex.Unlock()
 				return
 			}
 

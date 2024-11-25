@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"mori/app"
 	"mori/captcha"
+	"mori/home"
 	loginback "mori/loginBack"
 	"net/http"
 
@@ -26,7 +27,7 @@ func InitializeRouter(db *sql.DB) {
 	Router.HandleFunc("/reset-password", loginback.ResetPasswordHandler(db))
 	Router.HandleFunc("/reset-password-form", loginback.ServeResetPasswordForm(db))
 	Router.HandleFunc("/verify-reset-token", loginback.VerifyResetTokenHandler(db))
-
+	Router.HandleFunc("/home/{sessionToken}/chat/{chatSessionToken}", home.HomeHandler).Methods("GET", "POST")
 	// Protected routes
 	protectedRoutes := Router.PathPrefix("/protected").Subrouter()
 	protectedRoutes.Use(loginback.AuthMiddleware(db))

@@ -1,17 +1,18 @@
 package app
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"fmt"
 	"html/template"
 	"log"
-	loginBack "mori/loginBack"
 	"net/http"
 )
 
 // loginPageHandler serves the login page with a CSRF token
 func LoginPageHandler(w http.ResponseWriter, r *http.Request) {
 	// Generate a CSRF token
-	csrfToken, err := loginBack.GenerateToken()
+	csrfToken, err := GenerateToken()
 	if err != nil {
 		http.Error(w, "Error generating CSRF token", http.StatusInternalServerError)
 		return
@@ -52,4 +53,14 @@ func StartServer(router http.Handler) {
 	if err := http.ListenAndServe(port, router); err != nil {
 		log.Fatalf("Error starting server: %v", err)
 	}
+
+}
+
+func GenerateToken() (string, error) {
+	bytes := make([]byte, 32)
+	_, err := rand.Read(bytes)
+	if err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(bytes), nil
 }

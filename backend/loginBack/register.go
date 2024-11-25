@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"mori/app"
 	"mori/captcha"
 	"mori/database"
 	"net/http"
@@ -65,7 +66,7 @@ func RegisterHandler(db *sql.DB) http.HandlerFunc {
 		}
 
 		// Generate a verification token
-		token, err := GenerateToken()
+		token, err := app.GenerateToken()
 		if err != nil {
 			http.Error(w, `{"error": "Internal server error"}`, http.StatusInternalServerError)
 			return

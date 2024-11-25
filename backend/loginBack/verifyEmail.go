@@ -1,23 +1,12 @@
 package loginback
 
 import (
-	"crypto/rand"
 	"database/sql"
-	"encoding/hex"
 	"fmt"
 	"log"
 	"net/http"
 	"net/smtp"
 )
-
-func GenerateToken() (string, error) {
-	bytes := make([]byte, 16)
-	_, err := rand.Read(bytes)
-	if err != nil {
-		return "", err
-	}
-	return hex.EncodeToString(bytes), nil
-}
 
 func sendVerificationEmail(email, name, token string) error {
 	from := "mori.team.contact@gmail.com"
