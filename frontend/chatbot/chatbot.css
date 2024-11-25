@@ -134,8 +134,9 @@ body {
 
 .chat-window {
   /* flex-grow: 1;
-  padding: 20px;
-  overflow-y: auto; */
+  padding: 20px;*/
+  /* overflow-y: auto;  */
+  height: 100vh;
   display: flex;
   flex-direction: column;
   gap: 5px;
@@ -149,7 +150,7 @@ body {
   display: flex;
   flex-direction: column;
   padding: 10px;
-  height: 800px;
+  height: 100vh;
   width: 70%;
   margin: 0 auto;
   overflow-y: scroll;
