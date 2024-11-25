@@ -16,47 +16,52 @@ var refreshSecret = os.Getenv("REFRESH_SECRET_KEY_LLM")
 type CustomClaims struct {
 	UserID         string `json:"user_id"`
 	ConversationID string `json:"conversation_id"`
+	Message        string `json:"message"`
+
 	jwt.RegisteredClaims
 }
 
 // Fonction pour générer un JWT
-func GenerateJWT(userID, conversationID string) (string, error) {
+func GenerateJWT(username, conversationID, message string) (string, error) {
 	// Définir les claims
 	claims := CustomClaims{
-		UserID:         userID,
+		UserID:         username,
 		ConversationID: conversationID,
+		Message:        message,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Minute * 7)), // Expire dans 1 heure
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 			NotBefore: jwt.NewNumericDate(time.Now()),
 			Issuer:    "mori",
-			Subject:   userID,
+			Subject:   username,
 		},
 	}
 
 	// Créer le token avec les claims et la méthode de signature
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
+	signingKey := []byte(accessSecret)
 	// Signer le token avec la clé secrète
-	tokenString, err := token.SignedString(accessSecret)
+	tokenString, err := token.SignedString(signingKey)
 	if err != nil {
-		return "", fmt.Errorf("erreur lors de la génération du token : %v", err)
+		return "", fmt.Errorf("%v", err)
 	}
 
 	return tokenString, nil
 }
 
-func GenerateRefreshJWT(userID, conversationID string) (string, error) {
+func GenerateRefreshJWT(username, conversationID, message string) (string, error) {
 	// Définir les claims
 	claims := CustomClaims{
-		UserID:         userID,
+		UserID:         username,
 		ConversationID: conversationID,
+		Message:        message,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 24 * 7)), // Expire dans 1 heure
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 			NotBefore: jwt.NewNumericDate(time.Now()),
 			Issuer:    "mori",
-			Subject:   userID,
+			Subject:   username,
 		},
 	}
 
