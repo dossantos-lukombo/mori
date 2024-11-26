@@ -4,7 +4,10 @@
 
 ### Poetry: 
 
-#### Installation:
+### Installation Ollama for linux:
+-->run `curl -fsSL https://ollama.com/install.sh | sh`
+
+#### Installation Poetry:
 --> run `pipx install poetry`
 --> run `poetry --version` pour voir si Poetry est installée
 --> run `poetry install` à la racine du projet
@@ -19,7 +22,8 @@
 --> run `poetry install` à la racine du projet
 --> run `poetry show` pour voir si les dépendances ont été installées
 
-
+## Run your environnement
+--> run `poetry shell`
 
 
 ### Llama3.1:8b :

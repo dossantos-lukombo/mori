@@ -77,3 +77,4 @@ async def receive_data(data: Data,credentials: HTTPAuthorizationCredentials = De
     }
 
     return StreamingResponse(generate_stream(entry_data),media_type="text/event-stream")
+

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"html/template"
 	"log"
+	"mori/middleware"
 	"net/http"
 )
 
@@ -48,6 +49,21 @@ func StartServer(router http.Handler) {
 	// Server port
 	port := ":8080"
 	fmt.Printf("Server started on port %s\n", port)
+
+	// Start the server
+	if err := http.ListenAndServe(port, router); err != nil {
+		log.Fatalf("Error starting server: %v", err)
+	}
+
+}
+
+func StartServerLLMProtected(router http.Handler) {
+
+	// Server port
+	port := ":8000"
+	fmt.Printf("Server LLM started on port %s\n", port)
+
+	http.HandleFunc("/auth/refresh", middleware.VerifyAndRefreshTokenHandler)
 
 	// Start the server
 	if err := http.ListenAndServe(port, router); err != nil {

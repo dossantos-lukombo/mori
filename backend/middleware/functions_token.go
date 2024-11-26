@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
@@ -69,7 +70,7 @@ func GenerateRefreshJWT(username, conversationID, message string) (string, error
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
 	// Signer le token avec la clé secrète
-	tokenString, err := token.SignedString(refreshSecret)
+	tokenString, err := token.SignedString([]byte(refreshSecret))
 	if err != nil {
 		return "", fmt.Errorf("erreur lors de la génération du token : %v", err)
 	}
@@ -97,4 +98,100 @@ func SendRequestWithToken(url string, token string, jsonData []byte) {
 	defer resp.Body.Close()
 
 	fmt.Println("Statut de la réponse :", resp.Status)
+}
+
+func RefreshTokenHandler(w http.ResponseWriter, r *http.Request) {
+	// Lire le refresh token envoyé par le client
+	cookie, err := r.Cookie("refreshToken")
+	if err != nil {
+		http.Error(w, "Refresh token manquant", http.StatusUnauthorized)
+		return
+	}
+
+	refreshToken := cookie.Value
+
+	// Valider le refresh token
+	claims := &CustomClaims{}
+	_, err = jwt.ParseWithClaims(refreshToken, claims, func(token *jwt.Token) (interface{}, error) {
+		return []byte(refreshSecret), nil
+	})
+
+	if err != nil {
+		http.Error(w, "Refresh token invalide ou expiré", http.StatusUnauthorized)
+		return
+	}
+
+	// Générer un nouvel access token
+	newAccessToken, err := GenerateJWT(claims.UserID, claims.ConversationID, claims.Message)
+	if err != nil {
+		http.Error(w, "Erreur lors de la génération du nouvel access token", http.StatusInternalServerError)
+		return
+	}
+
+	// Retourner le nouvel access token
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{
+		"accessToken": newAccessToken,
+	})
+}
+
+func VerifyAndRefreshTokenHandler(w http.ResponseWriter, r *http.Request) {
+	// Récupérer les tokens depuis les cookies
+	accessTokenCookie, err := r.Cookie("accessToken")
+	if err != nil {
+		http.Error(w, "Access token manquant", http.StatusUnauthorized)
+		return
+	}
+	refreshTokenCookie, err := r.Cookie("refreshToken")
+	if err != nil {
+		http.Error(w, "Refresh token manquant", http.StatusUnauthorized)
+		return
+	}
+
+	accessToken := accessTokenCookie.Value
+	refreshToken := refreshTokenCookie.Value
+
+	// Vérifier l'expiration de l'access token
+	claims := &CustomClaims{}
+	token, err := jwt.ParseWithClaims(accessToken, claims, func(token *jwt.Token) (interface{}, error) {
+		return accessSecret, nil
+	})
+
+	// Si le token est valide, vérifier s'il est proche de l'expiration
+	if err == nil && token.Valid {
+		timeRemaining := time.Until(claims.ExpiresAt.Time)
+		if timeRemaining > 2*time.Minute {
+			// Token encore valide, pas besoin de le renouveler
+			w.WriteHeader(http.StatusOK)
+			json.NewEncoder(w).Encode(map[string]string{
+				"status":      "valid",
+				"accessToken": accessToken,
+			})
+			return
+		}
+	}
+
+	// Si l'access token est expiré ou proche de l'expiration, vérifier le refresh token
+	refreshClaims := &CustomClaims{}
+	_, err = jwt.ParseWithClaims(refreshToken, refreshClaims, func(token *jwt.Token) (interface{}, error) {
+		return refreshSecret, nil
+	})
+	if err != nil {
+		http.Error(w, "Refresh token invalide ou expiré", http.StatusUnauthorized)
+		return
+	}
+
+	// Générer un nouveau access token
+	newAccessToken, err := GenerateJWT(refreshClaims.UserID, refreshClaims.ConversationID, refreshClaims.Message)
+	if err != nil {
+		http.Error(w, "Erreur lors de la génération du nouveau token", http.StatusInternalServerError)
+		return
+	}
+
+	// Retourner le nouveau access token
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{
+		"status":      "refreshed",
+		"accessToken": newAccessToken,
+	})
 }
