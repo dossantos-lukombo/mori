@@ -12,26 +12,67 @@ function toggleForms() {
   }
 }
 
-// Function to handle login form submission
+function backToLogin() {
+  const loginForm = document.getElementById("login-form");
+  const reset_password_form = document.getElementById("reset-password-form");
+
+  loginForm.style.display = "flex";
+  reset_password_form.style.display = "none";
+}
+
+function resetPasswordButton() {
+  const loginForm = document.getElementById("login-form");
+  const reset_password_form = document.getElementById("reset-password-form");
+
+  loginForm.style.display = "none";
+  reset_password_form.style.display = "flex";
+}
+
+// Utility to get a cookie by name
+function getCookie(name) {
+  const cookies = document.cookie.split("; ");
+  for (let i = 0; i < cookies.length; i++) {
+    const [key, value] = cookies[i].split("=");
+    if (key === name) return value;
+  }
+  return null;
+}
+
 document.getElementById("login-form").addEventListener("submit", async (e) => {
   e.preventDefault();
   const errorDiv = document.getElementById("login-error");
   errorDiv.style.display = "none";
 
+  // Get the CSRF token from the cookie
+  const csrfToken = getCookie("csrf_token");
+
+  if (!csrfToken) {
+    errorDiv.textContent = "CSRF token is missing.";
+    errorDiv.style.display = "block";
+    return;
+  }
+
   const formData = new FormData(e.target);
+  formData.append("csrf_token", csrfToken);
+  
+  // Send the POST request to the server
   const response = await fetch("/login", {
     method: "POST",
     body: formData,
   });
 
-  const result = await response.json();
   if (!response.ok) {
+    // Try to parse the response as JSON in case of error
+    const result = await response.json();
     errorDiv.textContent = result.error || "An error occurred during login.";
     errorDiv.style.display = "block";
   } else {
-    window.location.href = "/dashboard"; // Redirect to dashboard on success
+    // Successful login - use response.text() to get the redirect URL
+    const result = await response.text();
+    window.location.href = response.url; // Redirect to the URL from the response
   }
 });
+
 
 function showPopup(message) {
   const popup = document.getElementById("popup");
@@ -48,38 +89,47 @@ function showPopup(message) {
   }, 3000);
 }
 
+// Register form submission
 document
   .getElementById("register-form")
   .addEventListener("submit", async (e) => {
     e.preventDefault();
     const errorDiv = document.getElementById("register-error");
-    const submitButton = e.target.querySelector("button[type='submit']");
     errorDiv.style.display = "none";
 
-    submitButton.disabled = true;
+    // Get the CSRF token from the cookie
+    const csrfToken = getCookie("csrf_token"); // Ensure this is the right cookie
+
+    if (!csrfToken) {
+      errorDiv.textContent = "CSRF token is missing.";
+      errorDiv.style.display = "block";
+      return;
+    }
 
     const formData = new FormData(e.target);
-    const response = await fetch("/register", {
-      method: "POST",
-      body: formData,
-    });
+    formData.append("csrf_token", csrfToken); // Append the CSRF token to the form data
 
-    const result = await response.json();
-    if (!response.ok) {
-      submitButton.disabled = false;
+    try {
+      const response = await fetch("/register", {
+        method: "POST",
+        body: formData,
+      });
 
-      errorDiv.textContent =
-        result.error || "An error occurred during registration.";
-      errorDiv.style.display = "block";
-
-      if (result.reloadCaptcha) {
-        reloadCaptcha();
+      const result = await response.json(); // Always parse the response as JSON
+      if (!response.ok) {
+        errorDiv.textContent =
+          result.error || "An error occurred during registration.";
+        errorDiv.style.display = "block";
+        if (result.reloadCaptcha) {
+          reloadCaptcha();
+        }
+      } else {
+        showPopup("Registration successful, please verify your email.");
+        toggleForms(); // Switch to login form
       }
-    } else {
-      errorDiv.style.display = "none";
-      errorDiv.textContent = "";
-      showPopup("Registration successful, please verify your email.");
-      toggleForms(); // Switch to login form
+    } catch (err) {
+      errorDiv.textContent = err.message;
+      errorDiv.style.display = "block";
     }
   });
 
@@ -89,40 +139,26 @@ function reloadCaptcha() {
   captchaImage.src = "/captcha?" + new Date().getTime(); // Append timestamp to prevent caching
 }
 
-// Handle registration form submission
 document
-  .getElementById("register-form")
+  .getElementById("reset-password-form")
   .addEventListener("submit", async (e) => {
     e.preventDefault();
-    const errorDiv = document.getElementById("register-error");
-    const submitButton = e.target.querySelector("button[type='submit']");
+    const errorDiv = document.getElementById("reset-password-error");
     errorDiv.style.display = "none";
 
-    // Disable the button to prevent multiple submissions
-    submitButton.disabled = true;
-
     const formData = new FormData(e.target);
-    const response = await fetch("/register", {
+    const response = await fetch("/reset-password", {
       method: "POST",
       body: formData,
     });
 
     const result = await response.json();
     if (!response.ok) {
-      // Enable the button again if there's an error
-      submitButton.disabled = false;
-
       errorDiv.textContent =
-        result.error || "An error occurred during registration.";
+        result.error || "An error occurred during password reset.";
       errorDiv.style.display = "block";
-
-      if (result.reloadCaptcha) {
-        reloadCaptcha();
-      }
     } else {
-      errorDiv.style.display = "none";
-      errorDiv.textContent = "";
-      showPopup("Registration successful, please Login.");
-      toggleForms(); // Switch to login form
+      showPopup("Password reset link sent to your Email.");
+      backToLogin();
     }
   });

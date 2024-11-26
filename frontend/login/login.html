@@ -30,10 +30,14 @@
         <button type="submit">Connexion</button>
         <button type="button" onclick="toggleForms()">Register</button>
         <div id="login-error" class="error-message"></div>
+        <p id="forgot_password" onclick="resetPasswordButton()">
+          Forgot your password ?
+        </p>
       </form>
-
       <!-- Register Form -->
       <form id="register-form">
+        <!-- CSRF token -->
+        <input type="hidden" name="csrf_token" value="{{.CSRFToken}}" />
         <input type="text" name="username" placeholder="Username" required />
         <input type="email" name="email" placeholder="Email" required />
         <input
@@ -49,17 +53,32 @@
           required
         />
         <img id="captcha-image" src="/captcha" alt="Captcha" />
-        <input type="text" name="captcha_input" placeholder="Enter Captcha" required />
-      
-  
+        <input
+          type="text"
+          name="captcha_input"
+          placeholder="Enter Captcha"
+          required
+        />
+
         <button type="submit">Register</button>
         <button type="button" onclick="toggleForms()">Login</button>
         <div id="register-error" class="error-message"></div>
       </form>
+
+      <form id="reset-password-form">
+        <input type="hidden" name="csrf_token" value="{{.CSRFToken}}" />
+        <p class="info_form">A link will be sent in your Email inbox.</p>
+        <input type="email" name="email" placeholder="Email" required />
+        <button type="submit">Send Email</button>
+        <button type="button" onclick="backToLogin()">Login</button>
+        <div id="reset-password-error" class="error-message"></div>
+      </form>
     </div>
     <div id="popup" class="popup hidden">
-      <span id="popup-message">Registration successful, please Login.</span>
-    </div>    
+      <span id="popup-message"
+        >Registration successful, please verify your email.</span
+      >
+    </div>
     <script src="/frontend/login/login.js"></script>
   </body>
 </html>

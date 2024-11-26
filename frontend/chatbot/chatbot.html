@@ -1,35 +1,44 @@
 <!DOCTYPE html>
 <html lang="fr">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mori Chatbot</title>
-  <link rel="stylesheet" href="/frontend/chatbot/chatbot.css">
-  <link rel="icon" type="image/png" href="/frontend/images/mori.png">
-</head>
-<body>
-  <div class="app-container">
-    <aside class="sidebar" id="sidebar">
-      <div class="sidebar-header">
-        <div class="small_logo"></div>
-        <div class="title">Conversations</div>
-      </div>
-      <div class="conversation-list" id="conversation-list">
-        <!-- Les conversations précédentes seront listées ici -->
-      </div>
-    </aside>
-    <main class="chat-container">
-      <div class="chat-header">
-        <button class="toggle-button" id="toggle-button">☰</button>
-        <div class="small-logo"></div>
-        <div class="title">Mori Chatbot</div>
-      </div>
-      <div class="chat-window" id="chat-window">
-        <!-- Les messages du chatbot et de l'utilisateur apparaîtront ici -->
-      </div>
-      <div class="chat-input">
-        <!-- <input type="text" id="user-input" placeholder="Tapez votre message..." autocomplete="off"> -->
-        <textarea type="text" style="resize: none;" cols="71" rows="2" id="user-input" placeholder="Tapez votre message..."></textarea>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mori Chatbot</title>
+    <link rel="stylesheet" href="/frontend/chatbot/chatbot.css" />
+    <link rel="icon" type="image/png" href="/frontend/images/mori.png" />
+  </head>
+  <body>
+    <div class="app-container">
+      <aside class="sidebar" id="sidebar">
+        <div id="sidebar_content">
+          <div class="sidebar-header">
+            <div class="small_logo"></div>
+            <div class="title">Conversations</div>
+          </div>
+          <div class="conversation-list" id="conversation-list">
+            <!-- Les conversations précédentes seront listées ici -->
+          </div>
+        </div>
+      </aside>
+      <main class="chat-container">
+        <div class="chat-header">
+          <button class="toggle-button" id="toggle-button">☰</button>
+          <div class="small-logo"></div>
+          <div class="title">Mori Chatbot</div>
+        </div>
+        <div class="chat-window" id="chat-window">
+          <!-- Les messages du chatbot et de l'utilisateur apparaîtront ici -->
+        </div>
+        <div class="chat-input">
+          <!-- <input type="text" id="user-input" placeholder="Tapez votre message..." autocomplete="off"> -->
+          <textarea
+            type="text"
+            style="resize: none"
+            cols="71"
+            rows="2"
+            id="user-input"
+            placeholder="Tapez votre message..."
+          ></textarea>
 
         <button id="send-btn">Envoyer</button>
       </div>
@@ -38,6 +47,5 @@
   <!-- <script src="/frontend/chatbot/chatbot.js"></script> -->
   <script type="module" src="/frontend/chatbot/logic_chat.js"></script>
   <script src="/frontend/chatbot/toggle_sidebar.js"></script>
-  <script src="/frontend/chatbot/chat_window.js"></script>
 </body>
 </html>

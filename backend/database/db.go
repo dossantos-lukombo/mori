@@ -20,7 +20,9 @@ type User struct {
 	Session           string
 	Verified          bool
 	VerificationToken string
+	Reset_token       string
 	FavorisJSON       string
+	CreationDate      string
 }
 
 // Conversation struct for application-level logic
@@ -86,15 +88,18 @@ func createTables(db *sql.DB) error {
 		session TEXT NOT NULL,
 		verified BOOLEAN DEFAULT FALSE,
 		verification_token TEXT,
-		favoris_json JSONB DEFAULT '[]'
+		reset_token TEXT,
+		favoris_json JSONB DEFAULT '[]',
+		create_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 	);`
 
 	conversationTable := `
 	CREATE TABLE IF NOT EXISTS conversations (
 		id SERIAL PRIMARY KEY,
 		user_id INTEGER NOT NULL REFERENCES users(id),
+		conversation_uuid TEXT NOT NULL,
 		title TEXT NOT NULL,
-		echanges TEXT,
+		echanges JSONB,
 		dates TEXT
 	);`
 

@@ -4,14 +4,13 @@ import (
 	"fmt"
 	"log"
 	"mori/app"
-	"mori/captcha"
 	"mori/database"
-	login "mori/loginBack"
-	"net/http"
+	loginback "mori/loginBack"
+	"mori/router"
+	"time"
 )
 
 func main() {
-
 	// Initialize the database
 	db, err := database.InitDB()
 	if err != nil {
@@ -21,19 +20,29 @@ func main() {
 
 	fmt.Println("Successfully connected to the database!")
 
-	// Define routes
-	http.HandleFunc("/login", login.LoginHandler(db))
-	http.HandleFunc("/register", login.RegisterHandler(db))
-	http.HandleFunc("/captcha", captcha.ServeCaptcha)
-	http.HandleFunc("/protected", login.AuthMiddleware(db, protectedHandler))
-	http.HandleFunc("/verify-email", login.VerifyEmailHandler(db))
-	// API route for llm call
+	// Initialize the router and pass the db object
+	router.InitializeRouter(db)
 
-	// Start the server
-	app.StartServer()
-}
+	// Start a ticker that runs the DeleteNonVerifiedAccounts every 48 hours
+	go func() {
+		ticker := time.NewTicker(48 * time.Hour) // 48 hours interval
+		defer ticker.Stop()
 
-// Example protected route
-func protectedHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintln(w, "You have accessed a protected route!")
+		// Run it initially once at the start
+		err := loginback.DeleteNonVerifiedAccounts(db)
+		if err != nil {
+			log.Printf("Error deleting non-verified accounts: %v", err)
+		}
+
+		// Run it every 48 hours
+		for range ticker.C {
+			err := loginback.DeleteNonVerifiedAccounts(db)
+			if err != nil {
+				log.Printf("Error deleting non-verified accounts: %v", err)
+			}
+		}
+	}()
+
+	// Pass the router to server.go to start the server
+	app.StartServer(router.Router)
 }
