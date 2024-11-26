@@ -255,6 +255,10 @@ body {
   cursor: pointer;
 }
 
+#send-btn:focus {
+  outline: none;
+}
+
 #send-btn:hover {
   background: #7d3aa6;
 }
