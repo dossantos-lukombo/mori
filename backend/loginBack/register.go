@@ -23,16 +23,6 @@ func RegisterHandler(db *sql.DB) http.HandlerFunc {
 		registerMutex.Lock()
 		defer registerMutex.Unlock()
 
-		// Rate limiting check
-		ip := r.RemoteAddr
-		rateLimitMutex.Lock()
-		if rateLimit[ip] >= 5 {
-			http.Error(w, `{"error": "Too many attempts. Please try again later."}`, http.StatusTooManyRequests)
-			rateLimitMutex.Unlock()
-			return
-		}
-		rateLimitMutex.Unlock()
-
 		// Collect form data
 		username := r.FormValue("username")
 		email := r.FormValue("email")
@@ -43,18 +33,12 @@ func RegisterHandler(db *sql.DB) http.HandlerFunc {
 		// Validate password confirmation
 		if password != confirmPassword {
 			http.Error(w, `{"error": "Passwords do not match"}`, http.StatusBadRequest)
-			rateLimitMutex.Lock()
-			rateLimit[ip]++
-			rateLimitMutex.Unlock()
 			return
 		}
 
 		// Validate password strength
 		if err := validatePassword(password); err != nil {
 			http.Error(w, fmt.Sprintf(`{"error": "%s"}`, err.Error()), http.StatusBadRequest)
-			rateLimitMutex.Lock()
-			rateLimit[ip]++
-			rateLimitMutex.Unlock()
 			return
 		}
 
@@ -82,9 +66,6 @@ func RegisterHandler(db *sql.DB) http.HandlerFunc {
 		if err != nil {
 			if pqErr, ok := err.(*pq.Error); ok && pqErr.Code == "23505" { // Unique constraint violation
 				http.Error(w, `{"error": "Username or Email already taken"}`, http.StatusConflict)
-				rateLimitMutex.Lock()
-				rateLimit[ip]++
-				rateLimitMutex.Unlock()
 				return
 			}
 			http.Error(w, `{"error": "Internal server error"}`, http.StatusInternalServerError)
@@ -95,9 +76,6 @@ func RegisterHandler(db *sql.DB) http.HandlerFunc {
 		captchaID, err := r.Cookie("captcha_id")
 		if err != nil || captchaID.Value == "" {
 			http.Error(w, `{"error": "Captcha is required"}`, http.StatusBadRequest)
-			rateLimitMutex.Lock()
-			rateLimit[ip]++
-			rateLimitMutex.Unlock()
 			return
 		}
 
@@ -112,9 +90,6 @@ func RegisterHandler(db *sql.DB) http.HandlerFunc {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusBadRequest)
 			fmt.Fprintln(w, `{"error": "Invalid captcha", "reloadCaptcha": true}`)
-			rateLimitMutex.Lock()
-			rateLimit[ip]++
-			rateLimitMutex.Unlock()
 			return
 		}
 

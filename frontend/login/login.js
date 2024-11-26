@@ -38,14 +38,13 @@ function getCookie(name) {
   return null;
 }
 
-// Function to handle login form submission
 document.getElementById("login-form").addEventListener("submit", async (e) => {
   e.preventDefault();
   const errorDiv = document.getElementById("login-error");
   errorDiv.style.display = "none";
 
   // Get the CSRF token from the cookie
-  const csrfToken = getCookie("csrf_token"); // Ensure this is the right cookie
+  const csrfToken = getCookie("csrf_token");
 
   if (!csrfToken) {
     errorDiv.textContent = "CSRF token is missing.";
@@ -55,27 +54,25 @@ document.getElementById("login-form").addEventListener("submit", async (e) => {
 
   const formData = new FormData(e.target);
   formData.append("csrf_token", csrfToken);
+  
+  // Send the POST request to the server
   const response = await fetch("/login", {
     method: "POST",
     body: formData,
   });
 
-  const result = await response.text();
   if (!response.ok) {
+    // Try to parse the response as JSON in case of error
+    const result = await response.json();
     errorDiv.textContent = result.error || "An error occurred during login.";
     errorDiv.style.display = "block";
   } else {
-    console.log("Login successful");
-    console.log("Redirecting to home chat...");
-    console.log("result : ", result);
-    console.log("response : ", response);
-    console.log("response.body : ", response.body);
-    console.log("url path : ", window.location.pathname);
-    window.location.href = response.url; // Redirect to dashboard on successful login
-
-
+    // Successful login - use response.text() to get the redirect URL
+    const result = await response.text();
+    window.location.href = response.url; // Redirect to the URL from the response
   }
 });
+
 
 function showPopup(message) {
   const popup = document.getElementById("popup");
