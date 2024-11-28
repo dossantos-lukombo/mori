@@ -8,5 +8,5 @@
 *.tmp
 *.out
 not_int_gitignore.txt
-
+different_users.txt
 __pycache__
