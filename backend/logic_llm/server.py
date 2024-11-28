@@ -13,7 +13,7 @@ app = FastAPI()
 
 security = HTTPBearer()
 
-load_dotenv(".env")
+load_dotenv("../.env")
 
 
 """

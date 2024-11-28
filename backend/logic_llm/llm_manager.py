@@ -9,7 +9,7 @@ def treating_user_request(output:dict):
     historique.append({"role": "user", "content": output["message"]})
     
     response = client.chat(
-    model="llama3.1:8b",
+    model="llama3.2:3b",
     messages=historique,
     stream=True,
     )
@@ -36,7 +36,7 @@ def conversation_resumed(output:dict):
     historique.append({"role": "user", "content": "résume moi ce que nous avons dit précédemment une phrase de maximum 5 mots dans la langue de la conversation."}) 
     
     response = client.chat(
-    model="llama3.1:8b",
+    model="llama3.2:3b",
     messages=historique,
     )
     
