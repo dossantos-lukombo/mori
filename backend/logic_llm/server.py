@@ -13,7 +13,7 @@ app = FastAPI()
 
 security = HTTPBearer()
 
-load_dotenv(".env")
+load_dotenv("../.env")
 
 
 """
@@ -33,14 +33,21 @@ class SendData(BaseModel):
     
 global llm_response
 llm_response = ""
+# global payload
+# payload = Any
 
 def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
     try:
         payload = jwt.decode(credentials.credentials, os.getenv("ACCESS_SECRET_KEY_LLM"), algorithms=["HS256"])
         return payload
     except jwt.ExpiredSignatureError:
+        print("payload",jwt.decode(credentials.credentials, os.getenv("ACCESS_SECRET_KEY_LLM"), algorithms=["HS256"])
+ )
         raise HTTPException(status_code=401, detail="Token expiré")
     except jwt.InvalidTokenError:
+        print("payload",jwt.decode(credentials.credentials, os.getenv("ACCESS_SECRET_KEY_LLM"), algorithms=["HS256"])
+ )
+
         raise HTTPException(status_code=401, detail="Token invalide")
 
 async def generate_stream(entry_data):
@@ -77,3 +84,4 @@ async def receive_data(data: Data,credentials: HTTPAuthorizationCredentials = De
     }
 
     return StreamingResponse(generate_stream(entry_data),media_type="text/event-stream")
+

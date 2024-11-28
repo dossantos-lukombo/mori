@@ -1,4 +1,4 @@
-// import { marked } from "https://cdn.jsdelivr.net/npm/marked/lib/marked.esm.js";
+// import { removeMarked } from "https://cdn.jsdelivr.net/npm/remove-markdown/index.js";
 // import markdownToTxt from 'https://cdn.jsdelivr.net/npm/markdown-to-txt@2.0.1/+esm'// import markdownToTxt from 'markdown-to-txt';
 
 const chatBox = document.querySelector(".chat-window");
@@ -33,11 +33,12 @@ function sendBtn_clicked(){
     buttonSend.addEventListener("click", (e)=>{
         e.preventDefault()
         console.log("btn clicked !")
-
-        conversation.user_request = textearea.value
-        appendMessage("Utilisateur", textearea.value)
-        sendData(conversation.user_id,textearea.value)
-        textearea.value = ""
+        if(textearea.value !== "" && alphanumericRegex.test(textearea.value)){
+            conversation.user_request = textearea.value
+            appendMessage("Utilisateur", textearea.value)
+            sendData(conversation.user_id,textearea.value)
+            textearea.value = ""
+    }
         
     })
     textearea.addEventListener("keydown", (e)=>{
@@ -50,10 +51,13 @@ function sendBtn_clicked(){
             e.preventDefault()
             console.log("Enter clicked !")
 
-            conversation.user_request = textearea.value
-            appendMessage("Utilisateur", textearea.value)
-            sendData(conversation.user_id,textearea.value)
-            textearea.value = ""
+            if(textearea.value !== ""){
+                
+                conversation.user_request = textearea.value
+                appendMessage("Utilisateur", textearea.value)
+                sendData(conversation.user_id,textearea.value)
+                textearea.value = ""
+            }
         }
     })
 
@@ -107,6 +111,7 @@ async function sendData(userID,data) {
                         console.log(jsonData)
                         let parsedData = JSON.parse(jsonData);
                         // responseMessage = parsedData.response; 
+                        // messageElement.innerText += removeMarked(parsedData.response.message.content);
                         messageElement.innerText += parsedData.response.message.content;
                     } catch (e) {
                         console.error("Erreur de parsing JSON :", e);
@@ -117,6 +122,7 @@ async function sendData(userID,data) {
             
             // Lire le prochain chunk
             ({ done, value } = await reader.read());
+            
             chatBox.appendChild(messageElement);
             chatBox.scrollTop = chatBox.scrollHeight;
         }

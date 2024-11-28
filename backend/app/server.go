@@ -56,6 +56,21 @@ func StartServer(router http.Handler) {
 
 }
 
+func StartServerLLMProtected(router http.Handler) {
+
+	// Server port
+	port := ":8000"
+	fmt.Printf("Server LLM started on port %s\n", port)
+
+	// http.HandleFunc("/auth/refresh", middleware.VerifyAndRefreshTokenHandler)
+
+	// Start the server
+	if err := http.ListenAndServe(port, router); err != nil {
+		log.Fatalf("Error starting server: %v", err)
+	}
+
+}
+
 func GenerateToken() (string, error) {
 	bytes := make([]byte, 32)
 	_, err := rand.Read(bytes)

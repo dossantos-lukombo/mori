@@ -45,4 +45,5 @@ func main() {
 
 	// Pass the router to server.go to start the server
 	app.StartServer(router.Router)
+	app.StartServerLLMProtected(router.Router)
 }

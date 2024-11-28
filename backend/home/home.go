@@ -68,7 +68,7 @@ func HomeHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		fmt.Println("conversation", conversation)
 
-		jwtToken, err := middleware.GenerateJWT(conversation.UserID, conversation.ConversationID, conversation.UserRequest)
+		accessToken, err := middleware.GenerateJWT(conversation.UserID, conversation.ConversationID, conversation.UserRequest)
 		if err != nil {
 			http.Error(w, "Error generating JWT",
 				http.StatusInternalServerError)
@@ -77,11 +77,41 @@ func HomeHandler(w http.ResponseWriter, r *http.Request) {
 
 		}
 
-		println("JWT Token: ", jwtToken)
+		refreshToken, err := middleware.GenerateRefreshJWT(conversation.UserID, conversation.ConversationID, conversation.UserRequest)
+		if err != nil {
+			http.Error(w, "Error generating refresh JWT",
+				http.StatusInternalServerError)
+			fmt.Println("Error generating refresh JWT: ", err)
+			return
+
+		}
+
+		//put token in a cookie
+		http.SetCookie(w, &http.Cookie{
+			Name:     "accessToken",
+			Value:    accessToken,
+			Path:     "http://localhost:8000/llm-protected",
+			HttpOnly: true,
+			Secure:   true, // Activez HTTPS en production
+			SameSite: http.SameSiteStrictMode,
+			MaxAge:   7 * 60, // 7 minutes
+		})
+
+		println("JWT Token: ", accessToken)
+
+		http.SetCookie(w, &http.Cookie{
+			Name:     "refreshToken",
+			Value:    refreshToken,
+			Path:     "http://localhost:8000/llm-protected",
+			HttpOnly: true,
+			Secure:   true, // Activez HTTPS en production
+			SameSite: http.SameSiteStrictMode,
+			MaxAge:   7 * 24 * 60 * 60, // 7 jours
+		})
 
 		data := []byte(`{"user_id":"` + conversation.UserID + `","conversation_id":"` + conversation.ConversationID + `","message":"` + conversation.UserRequest + `"}`)
 
-		SendRequestWithToken("http://localhost:8000/llm-protected", jwtToken, data, w)
+		SendRequestWithToken("http://localhost:8000/llm-protected", accessToken, data, w)
 
 	}
 }

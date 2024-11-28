@@ -10,3 +10,5 @@
 not_int_gitignore.txt
 *.png
 *.jpeg
+different_users.txt
+__pycache__

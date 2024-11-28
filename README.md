@@ -1,14 +1,36 @@
+# Mori
+
+## Installation Environnement
+
+### Poetry: 
+
+### Installation Ollama for linux:
+-->run `curl -fsSL https://ollama.com/install.sh | sh`
+
+#### Installation Poetry:
+--> run `pipx install poetry`
+--> run `poetry --version` pour voir si Poetry est installée
 --> run `poetry install` à la racine du projet
 --> run `poetry show` pour voir si les dépendances ont été installées
 
-!!! Il faut lancer l'environnement python avant de lancer le server ou même d'installer des dépendances python:
+#### Installation avec Curl:
+--> faire dans le terminal `curl -sSL https://install.python-poetry.org | python3 -`
+--> Ajoutez cette ligne à votre fichier ~/.bashrc, ~/.zshrc:
+    --> `export PATH="$HOME/.local/bin:$PATH"`
+--> puis run `source ~/.bashrc` ou `source ~/.zshrc`
+--> run `poetry --version` pour voir si poetry est bien installé
+--> run `poetry install` à la racine du projet
+--> run `poetry show` pour voir si les dépendances ont été installées
 
---> aller à la racine du projet : run `poetry shell`
---> vérifier que l'environnement de développement est lancé dans VSCode et dans le terminale:
---> dans le terminale regardé si le nom du projet avec un id est écrit avant le chemin du terminal: exemple `(mori-oECxa7P-py3.11) (base) ~/mori`
---> vérifier si VSCode a bien pris en compre l'environnement de développement: 
-![fichier_python](image.png) 
-![Alt text](image-1.png)
+## Run your environnement
+--> run `poetry shell`
 
 
 ### Llama3.1:8b :
+--> Aller dans le terminal est run `ollama pull llama3.1:8b` pour download le model en local
+
+## Lancer le server python FastAPI pour le llm: 
+
+--> taper `cd backend/logic_llm`
+--> ensuite lancer la commande suivante `uvicorn server:app --host 127.0.0.1 --port 8000`
+--> le server FastAPI devrait se lancer.

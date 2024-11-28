@@ -34,6 +34,9 @@ func InitializeRouter(db *sql.DB) {
 	protectedRoutes := Router.PathPrefix("/protected").Subrouter()
 	protectedRoutes.Use(loginback.AuthMiddleware(db))
 
+	// refreshRoutes := Router.PathPrefix("/auth/refresh").Subrouter()
+	// refreshRoutes.Use(middleware.RefreshMiddleware)
+
 	// Static file serving
 	Router.PathPrefix("/frontend/").Handler(http.StripPrefix("/frontend/", http.FileServer(http.Dir("../frontend"))))
 

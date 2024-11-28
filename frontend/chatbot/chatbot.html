@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Mori Chatbot</title>
     <link rel="stylesheet" href="/frontend/chatbot/chatbot.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/github-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
     <link rel="icon" type="image/png" href="/frontend/images/mori.png" />
   </head>
   <body>
@@ -40,12 +42,14 @@
             placeholder="Tapez votre message..."
           ></textarea>
 
-        <button id="send-btn">Envoyer</button>
-      </div>
-    </main>
-  </div>
-  <!-- <script src="/frontend/chatbot/chatbot.js"></script> -->
-  <script type="module" src="/frontend/chatbot/logic_chat.js"></script>
-  <script src="/frontend/chatbot/toggle_sidebar.js"></script>
-</body>
+          <button id="send-btn">Envoyer</button>
+        </div>
+      </main>
+    </div>
+    <!-- <script src="/frontend/chatbot/chatbot.js"></script> -->
+    <script type="module" src="/frontend/chatbot/logic_chat.js"></script>
+    <script src="/frontend/chatbot/toggle_sidebar.js"></script>
+    <script src="/frontend/chatbot/chat_window.js"></script>
+    <!-- <script src="/frontend/chatbot/manage_refresh_token.js"></script> -->
+  </body>
 </html>
