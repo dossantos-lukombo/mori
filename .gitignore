@@ -1,5 +1,5 @@
 # Ignore environment variables file
-.env
+*.env
 
 # Ignore other common files and directories
 /vendor/
@@ -11,4 +11,4 @@ not_int_gitignore.txt
 *.png
 *.jpeg
 different_users.txt
-__pycache__
+__pycache__/

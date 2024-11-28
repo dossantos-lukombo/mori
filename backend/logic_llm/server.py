@@ -33,8 +33,7 @@ class SendData(BaseModel):
     
 global llm_response
 llm_response = ""
-# global payload
-# payload = Any
+
 
 def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
     try:
