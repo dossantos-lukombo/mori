@@ -4,15 +4,17 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/joho/godotenv"
 )
 
-var accessSecret = os.Getenv("ACCESS_SECRET_KEY_LLM")
-var refreshSecret = os.Getenv("REFRESH_SECRET_KEY_LLM")
+var accessSecret string
+var refreshSecret string
 
 type CustomClaims struct {
 	UserID         string `json:"user_id"`
@@ -25,6 +27,11 @@ type CustomClaims struct {
 // Fonction pour générer un JWT
 func GenerateJWT(username, conversationID, message string) (string, error) {
 	// Définir les claims
+	err := godotenv.Load()
+	if err != nil {
+		log.Printf("Erreur lors du chargement du fichier .env : %v", err)
+	}
+	accessSecret = os.Getenv("ACCESS_SECRET_KEY_LLM")
 	claims := CustomClaims{
 		UserID:         username,
 		ConversationID: conversationID,
@@ -52,6 +59,12 @@ func GenerateJWT(username, conversationID, message string) (string, error) {
 }
 
 func GenerateRefreshJWT(username, conversationID, message string) (string, error) {
+	err := godotenv.Load()
+	if err != nil {
+		log.Printf("Erreur lors du chargement du fichier .env : %v", err)
+	}
+	refreshSecret = os.Getenv("REFRESH_SECRET_KEY_LLM")
+
 	// Définir les claims
 	claims := CustomClaims{
 		UserID:         username,
