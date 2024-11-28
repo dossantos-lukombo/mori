@@ -8,3 +8,5 @@
 *.tmp
 *.out
 not_int_gitignore.txt
+
+__pycache__
