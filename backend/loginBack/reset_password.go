@@ -184,7 +184,16 @@ func ResetPasswordHandler(db *sql.DB) http.HandlerFunc {
 		// Check if the email exists in the database
 		var userExists bool
 		query := `SELECT EXISTS(SELECT 1 FROM users WHERE email = $1)`
-		err := db.QueryRow(query, email).Scan(&userExists)
+		stmt, err := db.Prepare(query)
+		if err != nil {
+			log.Printf("Error preparing statement: %v", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(map[string]string{"error": "Internal server error"})
+			return
+		}
+		defer stmt.Close()
+
+		err = stmt.QueryRow(email).Scan(&userExists)
 		if err != nil {
 			log.Printf("Error checking email existence: %v", err)
 			w.WriteHeader(http.StatusInternalServerError)
@@ -209,7 +218,16 @@ func ResetPasswordHandler(db *sql.DB) http.HandlerFunc {
 
 		// Store the token in the database
 		storeTokenQuery := `UPDATE users SET reset_token = $1 WHERE email = $2`
-		_, err = db.Exec(storeTokenQuery, token, email)
+		stmt, err = db.Prepare(storeTokenQuery)
+		if err != nil {
+			log.Printf("Error preparing statement: %v", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(map[string]string{"error": "Internal server error"})
+			return
+		}
+		defer stmt.Close()
+
+		_, err = stmt.Exec(token, email)
 		if err != nil {
 			log.Printf("Error storing reset token: %v", err)
 			w.WriteHeader(http.StatusInternalServerError)
@@ -218,7 +236,7 @@ func ResetPasswordHandler(db *sql.DB) http.HandlerFunc {
 		}
 
 		// Send reset password email
-		err = sendResetPasswordEmail(email, token) // This is where the function is used
+		err = sendResetPasswordEmail(email, token)
 		if err != nil {
 			log.Printf("Error sending reset password email: %v", err)
 			w.WriteHeader(http.StatusInternalServerError)
@@ -250,7 +268,15 @@ func ServeResetPasswordForm(db *sql.DB) http.HandlerFunc {
 		// Validate the token
 		var email string
 		query := `SELECT email FROM users WHERE reset_token = $1`
-		err := db.QueryRow(query, token).Scan(&email)
+		stmt, err := db.Prepare(query)
+		if err != nil {
+			log.Printf("Error preparing statement: %v", err)
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			return
+		}
+		defer stmt.Close()
+
+		err = stmt.QueryRow(token).Scan(&email)
 		if err == sql.ErrNoRows {
 			http.ServeFile(w, r, "../frontend/reset_password/invalid_token.html") // Serve an invalid token page
 			return
@@ -302,7 +328,16 @@ func VerifyResetTokenHandler(db *sql.DB) http.HandlerFunc {
 		// Validate token
 		var email string
 		query := `SELECT email FROM users WHERE reset_token = $1`
-		err := db.QueryRow(query, data.Token).Scan(&email)
+		stmt, err := db.Prepare(query)
+		if err != nil {
+			log.Printf("Error preparing statement: %v", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(map[string]string{"error": "Internal server error"})
+			return
+		}
+		defer stmt.Close()
+
+		err = stmt.QueryRow(data.Token).Scan(&email)
 		if err == sql.ErrNoRows {
 			w.WriteHeader(http.StatusUnauthorized)
 			json.NewEncoder(w).Encode(map[string]string{"error": "Invalid or expired token"})
@@ -323,7 +358,15 @@ func VerifyResetTokenHandler(db *sql.DB) http.HandlerFunc {
 
 		// Update password and clear token in the database
 		updateQuery := `UPDATE users SET password = $1, reset_token = NULL WHERE email = $2`
-		_, err = db.Exec(updateQuery, hashedPassword, email)
+		stmt, err = db.Prepare(updateQuery)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(map[string]string{"error": "Internal server error"})
+			return
+		}
+		defer stmt.Close()
+
+		_, err = stmt.Exec(hashedPassword, email)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			json.NewEncoder(w).Encode(map[string]string{"error": "Internal server error"})

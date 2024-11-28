@@ -13,7 +13,7 @@ app = FastAPI()
 
 security = HTTPBearer()
 
-load_dotenv(".env")
+load_dotenv("../.env")
 
 
 """
@@ -41,7 +41,7 @@ def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
     except jwt.ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Token expiré")
     except jwt.InvalidTokenError:
-        raise HTTPException(status_code=401, detail="Token invalide")
+        raise HTTPException(status_code=402, detail="Token invalide")
 
 async def generate_stream(entry_data):
     if entry_data["message"] != "":

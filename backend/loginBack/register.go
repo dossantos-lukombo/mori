@@ -60,7 +60,14 @@ func RegisterHandler(db *sql.DB) http.HandlerFunc {
 		query := `INSERT INTO users (username, email, password, session, verification_token) VALUES ($1, $2, $3, $4, $5) RETURNING id;`
 		sessionToken := fmt.Sprintf("%x", time.Now().UnixNano())
 		var userID uint
-		err = db.QueryRow(query, username, email, string(hashedPassword), sessionToken, token).Scan(&userID)
+		stmt, err := db.Prepare(query)
+		if err != nil {
+			http.Error(w, `{"error": "Internal server error"}`, http.StatusInternalServerError)
+			return
+		}
+		defer stmt.Close()
+
+		err = stmt.QueryRow(username, email, string(hashedPassword), sessionToken, token).Scan(&userID)
 
 		// Handle database constraint violations (e.g., duplicate username/email)
 		if err != nil {
@@ -124,7 +131,14 @@ func AuthMiddleware(db *sql.DB) func(http.Handler) http.Handler {
 
 			var user database.User
 			query := `SELECT id, username, email FROM users WHERE session = $1;`
-			err = db.QueryRow(query, cookie.Value).Scan(&user.ID, &user.Username, &user.Email)
+			stmt, err := db.Prepare(query)
+			if err != nil {
+				http.Error(w, "Internal server error", http.StatusInternalServerError)
+				return
+			}
+			defer stmt.Close()
+
+			err = stmt.QueryRow(cookie.Value).Scan(&user.ID, &user.Username, &user.Email)
 			if err != nil {
 				if err == sql.ErrNoRows {
 					http.Error(w, "Unauthorized", http.StatusUnauthorized)

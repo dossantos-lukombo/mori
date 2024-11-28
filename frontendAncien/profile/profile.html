@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile Page</title>
+    <link rel="stylesheet" href="/frontend/profile/profile.css">
+    <link rel="icon" type="image/png" href="/frontend/images/mori.png">
+</head>
+<body>
+    <div class="container">
+        <div class="small_logo"></div>
+        <div class="title">Mori Profile</div>
+        
+        <!-- Avatar Section -->
+        <form id="avatar-form">
+            <label for="avatar">Change Avatar:</label>
+            <input type="file" id="avatar" name="avatar">
+            <button type="submit">Upload Avatar</button>
+        </form>
+        
+        <!-- Update User Info -->
+        <form id="update-info-form">
+            <label for="username">Change Username:</label>
+            <input type="text" id="username" name="username" placeholder="New Username">
+            
+            <label for="email">Change Email:</label>
+            <input type="email" id="email" name="email" placeholder="New Email">
+            
+            <button type="submit">Update Information</button>
+        </form>
+        
+        <!-- Change Password -->
+        <form id="password-form">
+            <label for="current-password">Current Password:</label>
+            <input type="password" id="current-password" name="current_password" placeholder="Current Password">
+            
+            <label for="new-password">New Password:</label>
+            <input type="password" id="new-password" name="new_password" placeholder="New Password">
+            
+            <label for="confirm-password">Confirm New Password:</label>
+            <input type="password" id="confirm-password" name="confirm_password" placeholder="Confirm Password">
+            
+            <button type="submit">Change Password</button>
+        </form>
+        
+        <!-- Delete Account -->
+        <form id="delete-account-form">
+            <button type="submit">Delete Account</button>
+        </form>
+
+        <!-- Delete Favorites -->
+        <form id="delete-favorites-form">
+            <button type="submit">Delete All Favorites</button>
+        </form>
+        
+        <!-- Delete Conversations -->
+        <form id="delete-conversations-form">
+            <button type="submit">Delete All Conversations</button>
+        </form>
+    </div>
+    <script src="/frontend/profile/profile.js"></script>
+</body>
+</html>

@@ -19,10 +19,17 @@ func DeleteNonVerifiedAccounts(db *sql.DB) error {
 		AND create_date < $1
 		RETURNING id, username, email;`
 
-	// Execute the query
-	rows, err := db.Query(query, thresholdTime)
+	// Prepare the statement
+	stmt, err := db.Prepare(query)
 	if err != nil {
-		return fmt.Errorf("failed to query non-verified users: %v", err)
+		return fmt.Errorf("failed to prepare statement: %v", err)
+	}
+	defer stmt.Close()
+
+	// Execute the query
+	rows, err := stmt.Query(thresholdTime)
+	if err != nil {
+		return fmt.Errorf("failed to execute query: %v", err)
 	}
 	defer rows.Close()
 

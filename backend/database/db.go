@@ -41,6 +41,7 @@ func InitDB() (*sql.DB, error) {
 	if err != nil {
 		log.Printf("Error loading .env file: %v", err)
 	}
+	fmt.Println("DB_HOST", os.Getenv("DB_PASSWORD"))
 
 	// Build DSN
 	dsn := fmt.Sprintf(
@@ -126,24 +127,40 @@ func UpdateFavoris(db *sql.DB, userID uint, newFavoris []uint) error {
 	}
 
 	query := `UPDATE users SET favoris_json = $1 WHERE id = $2;`
-	_, err = db.Exec(query, string(favorisJSON), userID)
-	return err
+	stmt, err := db.Prepare(query)
+	if err != nil {
+		return fmt.Errorf("failed to prepare statement: %v", err)
+	}
+	defer stmt.Close()
+
+	_, err = stmt.Exec(string(favorisJSON), userID)
+	if err != nil {
+		return fmt.Errorf("failed to execute prepared statement: %v", err)
+	}
+
+	return nil
 }
 
 // GetFavoris retrieves the FavorisJSON field and converts it to a []uint
 func GetFavoris(db *sql.DB, userID uint) ([]uint, error) {
 	query := `SELECT favoris_json FROM users WHERE id = $1;`
-	var favorisJSON string
-	err := db.QueryRow(query, userID).Scan(&favorisJSON)
+	stmt, err := db.Prepare(query)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to prepare statement: %v", err)
+	}
+	defer stmt.Close()
+
+	var favorisJSON string
+	err = stmt.QueryRow(userID).Scan(&favorisJSON)
+	if err != nil {
+		return nil, fmt.Errorf("failed to execute query: %v", err)
 	}
 
 	// Parse JSON into []uint
 	var favoris []uint
 	err = json.Unmarshal([]byte(favorisJSON), &favoris)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to unmarshal favoris JSON: %v", err)
 	}
 
 	return favoris, nil

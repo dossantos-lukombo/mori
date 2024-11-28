@@ -30,6 +30,12 @@ func InitializeRouter(db *sql.DB) {
 	Router.HandleFunc("/reset-password", loginback.ResetPasswordHandler(db)).Methods("POST", "GET")
 	Router.HandleFunc("/reset-password-form", loginback.ServeResetPasswordForm(db)).Methods("POST", "GET")
 	Router.HandleFunc("/verify-reset-token", loginback.VerifyResetTokenHandler(db)).Methods("POST", "GET")
+	Router.HandleFunc("/profile/avatar", loginback.UpdateAvatarHandler(db)).Methods("POST")
+	Router.HandleFunc("/profile/update", loginback.UpdateUserInfoHandler(db)).Methods("PUT")
+	Router.HandleFunc("/profile/change-password", loginback.ChangePasswordHandler(db)).Methods("PUT")
+	Router.HandleFunc("/profile/delete-account", loginback.DeleteAccountHandler(db)).Methods("DELETE")
+	Router.HandleFunc("/profile/delete-favorites", loginback.DeleteFavoritesHandler(db)).Methods("DELETE")
+	Router.HandleFunc("/profile/delete-conversations", loginback.DeleteConversationsHandler(db)).Methods("DELETE")
 	// Protected routes
 	protectedRoutes := Router.PathPrefix("/protected").Subrouter()
 	protectedRoutes.Use(loginback.AuthMiddleware(db))
