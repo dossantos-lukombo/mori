@@ -37,7 +37,7 @@ func GenerateJWT(username, conversationID, message string) (string, error) {
 		ConversationID: conversationID,
 		Message:        message,
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Minute * 1)), // Expire dans 1 heure
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Minute * 7)), // Expire dans 1 heure
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 			NotBefore: jwt.NewNumericDate(time.Now()),
 			Issuer:    "mori",

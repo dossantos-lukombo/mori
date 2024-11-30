@@ -29,6 +29,11 @@ type ServerPython struct {
 	Timestamp      string `json:"timestamp"`
 }
 
+type ConversationResponse struct {
+	Type string       `json:"type"`
+	Data Conversation `json:"data"`
+}
+
 func HomeHandler(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Println("Method: ", r.Method)
@@ -43,9 +48,6 @@ func HomeHandler(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, path)
 		return
 
-		// fmt.Fprintf(w, "GET request received")
-		// Do something
-
 	}
 
 	if r.Method == http.MethodPost {
@@ -59,6 +61,7 @@ func HomeHandler(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Error reading request body",
 				http.StatusInternalServerError)
 		}
+		fmt.Println("Body: ", string(body))
 
 		err = json.Unmarshal(body, &conversation)
 		if err != nil {
@@ -97,7 +100,7 @@ func HomeHandler(w http.ResponseWriter, r *http.Request) {
 			MaxAge:   7 * 60, // 7 minutes
 		})
 
-		println("JWT Token: ", accessToken)
+		// println("JWT Token: ", accessToken)
 
 		http.SetCookie(w, &http.Cookie{
 			Name:     "refreshToken",
@@ -109,16 +112,29 @@ func HomeHandler(w http.ResponseWriter, r *http.Request) {
 			MaxAge:   7 * 24 * 60 * 60, // 7 jours
 		})
 
-		data := []byte(`{"user_id":"` + conversation.UserID + `","conversation_id":"` + conversation.ConversationID + `","message":"` + conversation.UserRequest + `"}`)
+		llmConversation := map[string]interface{}{
+			"user_id":         conversation.UserID,
+			"conversation_id": conversation.ConversationID,
+			"message":         conversation.UserRequest,
+		}
+
+		data, err := json.Marshal(llmConversation)
+		if err != nil {
+			http.Error(w, "Error marshalling JSON",
+				http.StatusInternalServerError)
+			return
+
+		}
+
+		// data := []byte(`{"user_id":"` + conversation.UserID + `","conversation_id":"` + conversation.ConversationID + `","message":"` + conversation.UserRequest + `"}`)
 
 		SendRequestWithToken("http://localhost:8000/llm-protected", accessToken, data, w)
-
+		return
 	}
 }
 
 func SendRequestWithToken(url string, token string, jsonData []byte, w http.ResponseWriter) {
-	// var data []byte
-	// var serverPython ServerPython
+
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
 	if err != nil {
 		fmt.Println("Error creating request:", err)
@@ -128,10 +144,9 @@ func SendRequestWithToken(url string, token string, jsonData []byte, w http.Resp
 	// Add the Authorization header with the JWT token
 	req.Header.Set("Authorization", "Bearer "+token)
 	req.Header.Set("Content-Type", "application/json")
-	// req.Header.Set("Content-Type", "application/json")
 	w.Header().Set("Content-Type", "text/event-stream")
 	w.Header().Set("Cache-Control", "no-cache")
-	w.Header().Set("Connection", "keep-alive")
+	// w.Header().Set("Connection", "keep-alive")
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
@@ -139,24 +154,7 @@ func SendRequestWithToken(url string, token string, jsonData []byte, w http.Resp
 		fmt.Println("Error sending request:", err)
 		return
 	}
-	// body, err := io.ReadAll(resp.Body)
-	// if err != nil {
-	// 	fmt.Println("Error reading response body:", err)
-	// 	http.Error(w, "Error reading response body", http.StatusInternalServerError)
-	// 	return
-	// }
-	// defer resp.Body.Close()
-	// fmt.Println("Response body:", string(body))
-	// flusher, ok := w.(http.Flusher)
-	// if !ok {
-	// 	http.Error(w, "Streaming non supporté", http.StatusInternalServerError)
-	// 	return
-	// }
-	// _, err = resp.Body.Read(data)
-	// if err != nil {
-	// 	fmt.Println("Error reading response body:", err)
-	// 	return
-	// }
+
 	flusher, ok := w.(http.Flusher)
 	if !ok {
 		http.Error(w, "Streaming non supporté", http.StatusInternalServerError)
@@ -176,9 +174,10 @@ func SendRequestWithToken(url string, token string, jsonData []byte, w http.Resp
 
 		// Envoyer chaque chunk au frontend
 		fmt.Fprintf(w, "%s", line)
+		// fmt.Println("Response body:", string(line))
 		flusher.Flush() // Envoyer immédiatement les données au client
 	}
 
-	fmt.Println("Response status:", resp.Status)
+	fmt.Println("Response status stream:", resp.Status)
 	// fmt.Println("Response body:", string(responseBody))
 }

@@ -26,8 +26,9 @@ function appendMessage(sender, message) {
 
 // Fonction pour envoyer des données au serveur Go
 function sendBtn_clicked(){
-    // let userID = window.location.href.split("/").pop()
-    conversation.user_id = "0001"
+    let userID = window.location.href.split("/").pop()
+    console.log("userID: ",userID)
+    conversation.user_id = userID
     let buttonSend = document.getElementById("send-btn")
     let textearea = document.getElementById("user-input")
     buttonSend.addEventListener("click", (e)=>{
@@ -37,6 +38,7 @@ function sendBtn_clicked(){
             conversation.user_request = textearea.value
             appendMessage("Utilisateur", textearea.value)
             sendData(conversation.user_id,textearea.value)
+            
             textearea.value = ""
     }
         
@@ -56,6 +58,7 @@ function sendBtn_clicked(){
                 conversation.user_request = textearea.value
                 appendMessage("Utilisateur", textearea.value)
                 sendData(conversation.user_id,textearea.value)
+                
                 textearea.value = ""
             }
         }
@@ -73,6 +76,8 @@ async function sendData(userID,data) {
 
     let result = null
     const messageElement = document.createElement("pre");
+
+    console.log("json data conversation: ",JSON.stringify(conversation))
     
     const response = await fetch(`${window.location.pathname}`, {
         method: "POST",
@@ -124,28 +129,30 @@ async function sendData(userID,data) {
             ({ done, value } = await reader.read());
             
             chatBox.appendChild(messageElement);
-            chatBox.scrollTop = chatBox.scrollHeight;
+            // chatBox.scrollTop = chatBox.scrollHeight;
+            conversation.llm_response = messageElement.innerText
         }
-        conversation.llm_response = messageElement.innerText
+        conversation.history.push(messageElement.innerText)
         sendConversation()
+        // messageElement.innerText = ""
     } catch (error) {
         console.error("Erreur de lecture du flux", error);
     } finally {
         reader.releaseLock();
     }
+    
 
 }
 
 async function sendConversation(){
 
-    // home_url = window.location.href.split("/chat/")[0]
-    // conversation.session = home_url.split("/").pop()
+    console.log("path: ",window.location.pathname)
+    // data_to_golang = {
+    //     "type": "conversation",
+    //     "data": conversation
+    // }
 
-
-
-    console.log("CONVERSATION: ",conversation)
-
-    const response = await fetch(`http://localhost:8080/${window.location.pathname}`, {
+    const response = await fetch(`${window.location.pathname}`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
@@ -159,9 +166,9 @@ async function sendConversation(){
         return;
     }else{
         console.log("Conversation envoyée avec succès !")
-
-        // const reader = response.json();
-        // console.log("reader server response : ",reader)
+        console.log("response : ",response)
+        const reader = response.text();
+        console.log("reader server response : ",reader)
     }
 }
 

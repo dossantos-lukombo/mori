@@ -50,7 +50,8 @@ def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
         raise HTTPException(status_code=401, detail="Token invalide")
 
 async def generate_stream(entry_data):
-    if entry_data["message"] != "":
+    
+    if entry_data["message"]!= "":
         for chunk in treating_user_request(entry_data):
             if chunk is not None:
                 output = {
