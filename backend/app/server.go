@@ -1,66 +1,37 @@
 package app
 
 import (
-	"crypto/rand"
-	"encoding/hex"
-	"fmt"
-	"html/template"
-	"log"
-	"net/http"
+    "fmt"
+    "github.com/gorilla/csrf"
+    "github.com/gorilla/mux"
+    "log"
+    "net/http"
 )
 
-// loginPageHandler serves the login page with a CSRF token
-func LoginPageHandler(w http.ResponseWriter, r *http.Request) {
-	// Generate a CSRF token
-	csrfToken, err := GenerateToken()
-	if err != nil {
-		http.Error(w, "Error generating CSRF token", http.StatusInternalServerError)
-		return
-	}
+func StartServer() {
+    // Clé secrète pour CSRF
+    csrfKey := []byte("32-byte-long-auth-key")
 
-	// Set CSRF token as a cookie
-	http.SetCookie(w, &http.Cookie{
-		Name:     "csrf_token", // Name of the cookie
-		Value:    csrfToken,    // The CSRF token value
-		Path:     "/",          // Available throughout the application
-		HttpOnly: false,        // Allow JS to access the cookie
-		Secure:   false,        // Set to true if you're using HTTPS
-		SameSite: http.SameSiteStrictMode,
-	})
+    csrfMiddleware := csrf.Protect(csrfKey,
+        csrf.Secure(false), // Passez à true en production (HTTPS requis)
+        csrf.HttpOnly(true),
+        csrf.SameSite(csrf.SameSiteStrictMode),
+    )
 
-	// Use Go templates to pass CSRF token to the HTML form
-	tmpl, err := template.ParseFiles("../frontend/login/login.html")
-	if err != nil {
-		http.Error(w, "Error parsing template", http.StatusInternalServerError)
-		return
-	}
+    // Créer le routeur
+    r := mux.NewRouter()
 
-	// Pass the CSRF token to the HTML form (used as a hidden input)
-	err = tmpl.Execute(w, map[string]interface{}{"CSRFToken": csrfToken})
-	if err != nil {
-		http.Error(w, "Error executing template", http.StatusInternalServerError)
-		return
-	}
-}
+    // Utiliser le middleware CSRF pour protéger les routes
+    r.Use(csrfMiddleware)
 
-// StartServer starts the HTTP server with the given router
-func StartServer(router http.Handler) {
-	// Server port
-	port := ":8080"
-	fmt.Printf("Server started on port %s\n", port)
+    // Route pour obtenir le token CSRF
+    r.HandleFunc("/api/csrf-token", func(w http.ResponseWriter, r *http.Request) {
+        w.Header().Set("Content-Type", "application/json")
+        w.Write([]byte(`{"csrfToken": "` + csrf.Token(r) + `"}`))
+    }).Methods("GET")
 
-	// Start the server
-	if err := http.ListenAndServe(port, router); err != nil {
-		log.Fatalf("Error starting server: %v", err)
-	}
-
-}
-
-func GenerateToken() (string, error) {
-	bytes := make([]byte, 32)
-	_, err := rand.Read(bytes)
-	if err != nil {
-		return "", err
-	}
-	return hex.EncodeToString(bytes), nil
+    fmt.Println("Server started on port :8080")
+    if err := http.ListenAndServe(":8080", r); err != nil {
+        log.Fatalf("Error starting server: %v", err)
+    }
 }

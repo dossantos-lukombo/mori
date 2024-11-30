@@ -18,7 +18,7 @@ func ServeCaptcha(w http.ResponseWriter, r *http.Request) {
 		Path:     "/",
 		SameSite: http.SameSiteStrictMode,
 	})
-	captcha.WriteImage(w, captchaID, 240, 80) // Image de taille 240x80 pixels
+	captcha.WriteImage(w, captchaID, 240, 80) 
 }
 
 // VerifyCaptcha vérifie si l'utilisateur a correctement rempli le captcha
