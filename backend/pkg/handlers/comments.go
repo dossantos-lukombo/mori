@@ -2,8 +2,9 @@ package handlers
 
 import (
 	"net/http"
-	"social-network/pkg/models"
-	"social-network/pkg/utils"
+
+	"mori/pkg/models"
+	"mori/pkg/utils"
 )
 
 func (handler *Handler) NewComment(w http.ResponseWriter, r *http.Request) {

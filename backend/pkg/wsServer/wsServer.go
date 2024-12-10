@@ -1,6 +1,6 @@
 package ws
 
-import "social-network/pkg/models"
+import "mori/pkg/models"
 
 // represent websocket server
 type Server struct {

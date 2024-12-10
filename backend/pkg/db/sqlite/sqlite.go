@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 
-	"social-network/pkg/models"
+	"mori/pkg/models"
 
 	_ "github.com/mattn/go-sqlite3"
 	migrate "github.com/rubenv/sql-migrate"

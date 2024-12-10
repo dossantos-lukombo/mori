@@ -3,8 +3,9 @@ package handlers
 import (
 	"context"
 	"net/http"
-	"social-network/pkg/utils"
 	"time"
+
+	"mori/pkg/utils"
 )
 
 // basic authentification/ check if user logged in

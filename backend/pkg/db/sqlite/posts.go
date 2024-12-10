@@ -2,14 +2,15 @@ package db
 
 import (
 	"database/sql"
-	"social-network/pkg/models"
+
+	"mori/pkg/models"
 )
 
 type PostRepository struct {
 	DB *sql.DB
 }
 
-//Returns all posts for user ->
+// Returns all posts for user ->
 // group posts if is a member
 // all public posts
 // Private posts if is a follower

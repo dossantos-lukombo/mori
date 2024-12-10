@@ -3,8 +3,8 @@ package handlers
 import (
 	"log"
 	"net/http"
-	"social-network/pkg/utils"
-	ws "social-network/pkg/wsServer"
+	"mori/pkg/utils"
+	ws "mori/pkg/wsServer"
 
 	"github.com/gorilla/websocket"
 )

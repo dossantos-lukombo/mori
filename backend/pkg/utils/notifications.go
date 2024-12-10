@@ -1,6 +1,6 @@
 package utils
 
-import "social-network/pkg/models"
+import "mori/pkg/models"
 
 // replace notification message content based on type
 func DefineNotificationMsg(notif *models.Notification) {

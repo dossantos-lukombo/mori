@@ -3,8 +3,8 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
-	"social-network/pkg/models"
-	"social-network/pkg/utils"
+	"mori/pkg/models"
+	"mori/pkg/utils"
 	"time"
 
 	"golang.org/x/crypto/bcrypt"

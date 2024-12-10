@@ -2,7 +2,8 @@ package db
 
 import (
 	"database/sql"
-	"social-network/pkg/models"
+
+	"mori/pkg/models"
 )
 
 type UserRepository struct {

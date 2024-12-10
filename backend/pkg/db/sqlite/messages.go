@@ -2,7 +2,8 @@ package db
 
 import (
 	"database/sql"
-	"social-network/pkg/models"
+
+	"mori/pkg/models"
 )
 
 type MsgRepository struct {
@@ -93,16 +94,12 @@ func (repo *MsgRepository) GetUnread(userId string) ([]models.ChatStats, error) 
 func (repo *MsgRepository) GetUnreadGroup(userId string) ([]models.ChatStats, error) {
 	var messages []models.ChatStats
 	rows, err := repo.DB.Query("SELECT receiver_id, type, COUNT(*) FROM messages WHERE type = 'GROUP'AND ((SELECT administrator FROM groups WHERE group_id = messages.receiver_id) = ? OR (SELECT COUNT(*) FROM group_users WHERE group_id = messages.receiver_id AND user_id = ?) = 1) AND (SELECT is_read FROM group_messages WHERE message_id = messages.message_id AND receiver_id = ?) = 0 GROUP BY receiver_id;", userId, userId, userId)
-	
 	/*
-	SELECT receiver_id, type, COUNT(*) FROM messages WHERE type = 'GROUP' AND					
-		// is user group admin ?																	-- is group member? --
-	((SELECT administrator FROM groups WHERE group_id = messages.receiver_id) = ? OR (SELECT COUNT(*) FROM group_users WHERE group_id = messages.receiver_id AND user_id = ?) = 1) 
-		AND (SELECT is_read FROM group_messages WHERE message_id = messages.message_id AND receiver_id = ?) = 0 GROUP BY receiver_id;
-	*/
-	
-	
-	if err != nil {
+		SELECT receiver_id, type, COUNT(*) FROM messages WHERE type = 'GROUP' AND
+			// is user group admin ?																	-- is group member? --
+		((SELECT administrator FROM groups WHERE group_id = messages.receiver_id) = ? OR (SELECT COUNT(*) FROM group_users WHERE group_id = messages.receiver_id AND user_id = ?) = 1)
+			AND (SELECT is_read FROM group_messages WHERE message_id = messages.message_id AND receiver_id = ?) = 0 GROUP BY receiver_id;
+	*/if err != nil {
 		return messages, err
 	}
 	for rows.Next() {
@@ -113,8 +110,8 @@ func (repo *MsgRepository) GetUnreadGroup(userId string) ([]models.ChatStats, er
 	return messages, nil
 }
 
-func (repo *MsgRepository)GetChatHistoryIds(userId string)(map[string]bool, error){
-	var idmap  = make(map[string]bool)
+func (repo *MsgRepository) GetChatHistoryIds(userId string) (map[string]bool, error) {
+	idmap := make(map[string]bool)
 	// select ids if current is receiver
 	rowsReceiver, err := repo.DB.Query("SELECT sender_id FROM messages WHERE receiver_id = ? AND type = 'PERSON';", userId)
 	if err != nil {
@@ -137,8 +134,9 @@ func (repo *MsgRepository)GetChatHistoryIds(userId string)(map[string]bool, erro
 	}
 	return idmap, nil
 }
-func (repo *MsgRepository)HasHistory(senderId, receiverId string) (bool, error){
-	row := repo.DB.QueryRow("SELECT COUNT() FROM messages WHERE sender_id = ? AND receiver_id = ? OR sender_id = ? AND receiver_id = ?;", senderId, receiverId,receiverId, senderId)
+
+func (repo *MsgRepository) HasHistory(senderId, receiverId string) (bool, error) {
+	row := repo.DB.QueryRow("SELECT COUNT() FROM messages WHERE sender_id = ? AND receiver_id = ? OR sender_id = ? AND receiver_id = ?;", senderId, receiverId, receiverId, senderId)
 	var result int
 	if err := row.Scan(&result); err != nil {
 		return false, err
