@@ -1,6 +1,6 @@
 package handlers
 
-import "social-network/pkg/models"
+import "mori/pkg/models"
 
 // handler contains all repositories
 type Handler struct {

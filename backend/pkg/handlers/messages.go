@@ -3,10 +3,10 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
+	"mori/pkg/models"
+	"mori/pkg/utils"
+	ws "mori/pkg/wsServer"
 	"net/http"
-	"social-network/pkg/models"
-	"social-network/pkg/utils"
-	ws "social-network/pkg/wsServer"
 	"strings"
 )
 

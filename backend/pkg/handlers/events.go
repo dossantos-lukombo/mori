@@ -2,10 +2,10 @@ package handlers
 
 import (
 	"encoding/json"
+	"mori/pkg/models"
+	"mori/pkg/utils"
+	ws "mori/pkg/wsServer"
 	"net/http"
-	"social-network/pkg/models"
-	"social-network/pkg/utils"
-	ws "social-network/pkg/wsServer"
 	"strings"
 )
 
@@ -80,10 +80,10 @@ func (handler *Handler) NewEvent(wsServer *ws.Server, w http.ResponseWriter, r *
 				return
 			}
 		}
-		
+
 		// NOTIFY  GROUP MEMBER ABOUT THE NEW EVENT IF ONLINE
 		for client := range wsServer.Clients {
-			if client.ID == members[i].ID && client.ID != event.AuthorID{
+			if client.ID == members[i].ID && client.ID != event.AuthorID {
 				client.SendNotification(newNotif)
 			}
 		}
@@ -107,7 +107,7 @@ func (handler *Handler) Participate(w http.ResponseWriter, r *http.Request) {
 	type Response struct {
 		EventID   string `json:"eventId"`
 		RequestID string `json:"requestId"` //notif id
-		Response  string `json:"response"` //YES || NO
+		Response  string `json:"response"`  //YES || NO
 	}
 	var response Response
 	err := json.NewDecoder(r.Body).Decode(&response)
@@ -143,15 +143,15 @@ func (handler *Handler) Participate(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	/* --------------------------- remove notificaton -------------------------- */
-	if len(response.RequestID) !=0 {//participation activated form notification
+	if len(response.RequestID) != 0 { //participation activated form notification
 		if err = handler.repos.NotifRepo.Delete(response.RequestID); err != nil {
 			utils.RespondWithError(w, "Internal server error", 200)
 			return
 		}
-	}else{ //participation activated without noification
+	} else { //participation activated without noification
 		// delete notification if exists
-		notif := models.Notification{Type: "EVENT", TargetID: userId, Content:response.EventID}
-		if err = handler.repos.NotifRepo.DeleteByType(notif); err!=nil{
+		notif := models.Notification{Type: "EVENT", TargetID: userId, Content: response.EventID}
+		if err = handler.repos.NotifRepo.DeleteByType(notif); err != nil {
 			utils.RespondWithError(w, "Internal server error", 200)
 			return
 		}

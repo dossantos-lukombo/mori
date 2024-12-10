@@ -1,9 +1,9 @@
 package utils
 
 import (
+	"mori/pkg/models"
+	. "mori/pkg/models"
 	"net/http"
-	"social-network/pkg/models"
-	. "social-network/pkg/models"
 	"time"
 )
 

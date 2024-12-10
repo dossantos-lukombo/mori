@@ -1,9 +1,9 @@
 package handlers
 
 import (
+	"mori/pkg/models"
+	"mori/pkg/utils"
 	"net/http"
-	"social-network/pkg/models"
-	"social-network/pkg/utils"
 )
 
 func (handler *Handler) NewComment(w http.ResponseWriter, r *http.Request) {

@@ -2,11 +2,11 @@ package main
 
 import (
 	"fmt"
+	sqlite "mori/pkg/db/sqlite"
+	"mori/pkg/handlers"
+	"mori/pkg/utils"
+	ws "mori/pkg/wsServer"
 	"net/http"
-	sqlite "social-network/pkg/db/sqlite"
-	"social-network/pkg/handlers"
-	"social-network/pkg/utils"
-	ws "social-network/pkg/wsServer"
 )
 
 func main() {
@@ -69,8 +69,8 @@ func setRoutes(handler *handlers.Handler, wsServer *ws.Server) http.Handler {
 	mux.HandleFunc("/newComment", handler.Auth(handler.NewComment)) // create route
 
 	/* --------------------------------- groups --------------------------------- */
-	mux.HandleFunc("/allGroups", handler.Auth(handler.AllGroups))   // group list
-	mux.HandleFunc("/userGroups", handler.Auth(handler.UserGroups)) // group list of user groups
+	mux.HandleFunc("/allGroups", handler.Auth(handler.AllGroups))             // group list
+	mux.HandleFunc("/userGroups", handler.Auth(handler.UserGroups))           // group list of user groups
 	mux.HandleFunc("/otherUserGroups", handler.Auth(handler.OtherUserGroups)) // group list for specific user
 
 	mux.HandleFunc("/groupInfo", handler.Auth(handler.GroupInfo))                     // get group info
@@ -111,7 +111,7 @@ func setRoutes(handler *handlers.Handler, wsServer *ws.Server) http.Handler {
 	mux.HandleFunc("/newMessage", handler.Auth(func(w http.ResponseWriter, r *http.Request) {
 		handler.NewMessage(wsServer, w, r)
 	})) // new chat message
-	mux.HandleFunc("/chatList", handler.Auth(handler.ChatList)) //get list of users to display in chatbox
+	mux.HandleFunc("/chatList", handler.Auth(handler.ChatList))                       //get list of users to display in chatbox
 	mux.HandleFunc("/responseChatRequest", handler.Auth(handler.ResponseChatRequest)) // response to chat request
 
 	/* ---------------------------- websocket server ---------------------------- */

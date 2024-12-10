@@ -1,8 +1,8 @@
 package handlers
 
 import (
+	"mori/pkg/utils"
 	"net/http"
-	"social-network/pkg/utils"
 )
 
 func (handler *Handler) Notifications(w http.ResponseWriter, r *http.Request) {

@@ -6,9 +6,9 @@ import (
 	"net/http"
 	"strings"
 
-	"social-network/pkg/models"
-	"social-network/pkg/utils"
-	ws "social-network/pkg/wsServer"
+	"mori/pkg/models"
+	"mori/pkg/utils"
+	ws "mori/pkg/wsServer"
 )
 
 /* -------------------------------------------------------------------------- */

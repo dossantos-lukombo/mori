@@ -2,8 +2,8 @@ package ws
 
 import (
 	"log"
-	"social-network/pkg/models"
-	"social-network/pkg/utils"
+	"mori/pkg/models"
+	"mori/pkg/utils"
 
 	"github.com/gorilla/websocket"
 )
@@ -42,7 +42,7 @@ func (client *Client) SendNotification(notif models.Notification) {
 	case "EVENT":
 		notif.Event, _ = client.repos.EventRepo.GetData(notif.Content)
 		notif.User, _ = client.repos.UserRepo.GetDataMin(notif.Sender)
-		notif.Group,_ = client.repos.GroupRepo.GetData(notif.Event.GroupID)
+		notif.Group, _ = client.repos.GroupRepo.GetData(notif.Event.GroupID)
 	case "GROUP_REQUEST":
 		notif.User, _ = client.repos.UserRepo.GetDataMin(notif.Content)
 		notif.Group, _ = client.repos.GroupRepo.GetData(notif.TargetID)
@@ -65,7 +65,7 @@ func (client *Client) SendChatMessage(msg models.ChatMessage, flag string) {
 	message := WsMessage{
 		Action:      ChatAction,
 		ChatMessage: msg,
-		Message: flag,
+		Message:     flag,
 	}
 
 	client.send <- message.encode()

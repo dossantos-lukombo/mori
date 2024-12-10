@@ -2,8 +2,8 @@ package utils
 
 import (
 	"encoding/json"
+	"mori/pkg/models"
 	"net/http"
-	"social-network/pkg/models"
 )
 
 type ResponseMessage struct {

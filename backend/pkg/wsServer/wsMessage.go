@@ -3,7 +3,7 @@ package ws
 import (
 	"encoding/json"
 	"log"
-	"social-network/pkg/models"
+	"mori/pkg/models"
 )
 
 /* --------------------- actions for websocket messages --------------------- */

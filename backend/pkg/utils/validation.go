@@ -2,7 +2,7 @@ package utils
 
 import (
 	"errors"
-	"social-network/pkg/models"
+	"mori/pkg/models"
 )
 
 // validate all fields when user registers

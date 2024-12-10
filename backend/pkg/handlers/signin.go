@@ -2,9 +2,9 @@ package handlers
 
 import (
 	"encoding/json"
+	"mori/pkg/models"
+	"mori/pkg/utils"
 	"net/http"
-	"social-network/pkg/models"
-	"social-network/pkg/utils"
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
