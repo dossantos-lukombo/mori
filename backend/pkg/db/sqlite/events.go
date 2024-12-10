@@ -10,7 +10,7 @@ type EventRepository struct {
 }
 
 func (repo *EventRepository) GetAll(groupID string) ([]models.Event, error) {
-	var events = []models.Event{}
+	events := []models.Event{}
 	rows, err := repo.DB.Query("SELECT event_id, created_by, content, title, strftime('%d.%m.%Y', date) FROM event WHERE group_id = ?  ORDER BY date DESC;", groupID)
 	if err != nil {
 		return events, err

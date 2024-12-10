@@ -26,7 +26,7 @@ func (handler *Handler) NewEvent(wsServer *ws.Server, w http.ResponseWriter, r *
 	event.ID = utils.UniqueId()
 	event.AuthorID = r.Context().Value(utils.UserKey).(string)
 	/* -------------------- check if user is a meber of group ------------------- */
-	var isMember = false
+	isMember := false
 	isAdmin, err := handler.repos.GroupRepo.IsAdmin(event.GroupID, event.AuthorID)
 	if err != nil {
 		utils.RespondWithError(w, "Error on reading role", 200)
