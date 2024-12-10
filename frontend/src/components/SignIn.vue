@@ -1,13 +1,13 @@
 <template>
 
   <div class="sign-in__wrapper">
-    <div>
+    <div class="image-div-login">
       <img src="../assets/toa-heftiba-l_ExpFwwOEg-unsplash.jpg" alt="people hanging out">
 
     </div>
 
     <div class="sign-in">
-      <h1>Sign in</h1>
+      <h1 class="mori">Mori <span class="adder">- sign in</span></h1>
       <form class="form-group" @submit.prevent="signSubmit" id="sign-in__form">
         <div class="form-input">
           <label for="username">Email</label>
@@ -18,7 +18,7 @@
           <input type="password" id="password" v-model="signInForm.password" required>
         </div>
       </form>
-      <div>
+      <div class="button-or-register">
         <button class="btn" form="sign-in__form" type="submit">Sign in</button>
         <p>Need an account?
           <router-link to="/reg" id="sign-up">Register here</router-link>
@@ -31,7 +31,6 @@
 
 
 <script>
-import NavBarOff from './NavBarOff.vue';
 export default {
   name: "SignIn",
   data() {
@@ -97,8 +96,7 @@ export default {
       }
       catch { }
     },
-  },
-  components: { NavBarOff }
+  }
 }
 </script>
 
@@ -106,20 +104,29 @@ export default {
 .sign-in__wrapper {
   display: flex;
   /* margin: auto 0; */
-  background-color: var(--color-white);
+  background-color: var(--bg-neutral);
   border-radius: 20px;
-  box-shadow: var(--container-shadow);
+  color: var(--color-white);
+  box-shadow: 0 4px 15px rgb(0, 0, 0);
   overflow: hidden;
   align-items: center;
-
+  width: 810px;
 }
 
+.image-div-login {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 50%;
+  height: 100%;
+  background-color: var(--bg-neutral);
+}
 
 .sign-in__wrapper img {
   height: 550px;
-  min-height: 550px;
-  width: auto;
-
+  background-position: center;
+  background-repeat: no-repeat;
+  width: 100%;
 }
 
 
@@ -129,26 +136,49 @@ export default {
   justify-content: center;
   gap: 40px;
   margin: 0 auto;
-  padding: 0 70px;
-
+  padding: 0 50px;
+  width: 60%;
 }
 
 .form-group {
   display: flex;
   flex-direction: column;
   gap: 15px;
+  color: var(--color-white);
+  width: 90%;
+}
 
+.form-input {
+  color: var(--color-white);
 }
 
 
 
 .sign-in button {
   margin-bottom: 10px;
+  width: 80px;
 }
 
 
 
 #sign-up {
-  font-weight: 500;
+  color: var(--purple-color);
+  text-decoration: underline;
+  font-size: 16.5px;  
+  transition: all 0.3s ease;
 }
+
+#sign-up:hover {
+  color: var(--hover-background-color);
+  text-decoration: underline;
+  font-size: 16.5px;
+}
+
+.button-or-register {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+
 </style>

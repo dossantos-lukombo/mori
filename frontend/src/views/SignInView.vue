@@ -1,21 +1,17 @@
 <template>
     <div class="sign-in__container">
-        <NavBarOff />
         <SignIn />
-
     </div>
 </template>
 
 <script>
 
 // @ is an alias to /src
-import NavBarOff from '@/components/NavBarOff.vue';
 import SignIn from '@/components/SignIn.vue';
 
 export default {
     name: 'SignInView',
     components: {
-        NavBarOff,
         SignIn,
     }
 }
@@ -24,8 +20,10 @@ export default {
 
 <style>
 .sign-in__container {
-    display: grid;
-    grid-template-rows: max-content minmax(min-content, 1fr);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
     height: 100vh;
 
 }
