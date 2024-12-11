@@ -41,3 +41,5 @@ Backend team
 Frontend team
 - Kristofer Kangro
 - Viktor Ahlberk
+
+---tzeitgujzei
