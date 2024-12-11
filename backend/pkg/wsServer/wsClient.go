@@ -2,8 +2,8 @@ package ws
 
 import (
 	"log"
-	"social-network/pkg/models"
-	"social-network/pkg/utils"
+	"mori/pkg/models"
+	"mori/pkg/utils"
 
 	"github.com/gorilla/websocket"
 )

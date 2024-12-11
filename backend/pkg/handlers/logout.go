@@ -3,8 +3,8 @@ package handlers
 import (
 	"fmt"
 	"net/http"
-	"social-network/pkg/models"
-	"social-network/pkg/utils"
+	"mori/pkg/models"
+	"mori/pkg/utils"
 )
 
 // handler for logout/ validate user by id and delete session

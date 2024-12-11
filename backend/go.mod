@@ -10,4 +10,8 @@ require (
 	golang.org/x/crypto v0.30.0
 )
 
-require github.com/go-gorp/gorp/v3 v3.1.0 // indirect
+require (
+	github.com/go-gorp/gorp/v3 v3.1.0 // indirect
+	github.com/joho/godotenv v1.5.1 // indirect
+	github.com/lib/pq v1.10.9 // indirect
+)

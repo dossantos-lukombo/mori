@@ -3,7 +3,7 @@ package handlers
 import (
 	"context"
 	"net/http"
-	"social-network/pkg/utils"
+	"mori/pkg/utils"
 	"time"
 )
 

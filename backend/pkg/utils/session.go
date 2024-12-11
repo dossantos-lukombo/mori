@@ -2,8 +2,8 @@ package utils
 
 import (
 	"net/http"
-	"social-network/pkg/models"
-	. "social-network/pkg/models"
+	"mori/pkg/models"
+	. "mori/pkg/models"
 	"time"
 )
 
