@@ -15,12 +15,7 @@ export default createStore({
 
     profileInfo: {},
     myFollowers: null,
-
-    posts: {
-      allposts: [],
-      myposts: [],
-      groupPosts: [],
-    },
+   
 
     users: {
       allusers: [],
@@ -41,16 +36,7 @@ export default createStore({
   getters: {
     getId(state) {
       return state.id;
-    },
-    allPosts(state) {
-      return state.posts.allposts;
-    },
-    myPosts(state) {
-      return state.posts.myposts;
-    },
-    groupPosts(state) {
-      return state.posts.groupPosts;
-    },
+    },    
     userInfo(state) {
       return state.profileInfo;
     },
@@ -111,13 +97,7 @@ export default createStore({
 
   },
   //-------------------------------------- mutations is a way for change state.
-  mutations: {
-    updatePosts(state, posts) {
-      state.posts.allposts = posts;
-    },
-    updateMyPosts(state, myposts) {
-      state.posts.myposts = myposts;
-    },
+  mutations: {    
     updateProfileInfo(state, userinfo) {
       state.profileInfo = userinfo;
     },
@@ -134,10 +114,7 @@ export default createStore({
 
     updateMyUserID(state, id) {
       state.id = id;
-    },
-    updateGroupPosts(state, posts) {
-      state.posts.groupPosts = posts;
-    },
+    },    
     updateWebSocketConn(state, wsConn) {
       state.wsConn = wsConn
     },

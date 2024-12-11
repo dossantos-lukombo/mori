@@ -22,11 +22,7 @@ func (handler *Handler) Notifications(w http.ResponseWriter, r *http.Request) {
 			notifs[i].Group, _ = handler.repos.GroupRepo.GetData(notifs[i].Content)
 			notifs[i].User, _ = handler.repos.UserRepo.GetDataMin(notifs[i].Sender)
 		case "FOLLOW":
-			notifs[i].User, _ = handler.repos.UserRepo.GetDataMin(notifs[i].Content)
-		case "EVENT":
-			notifs[i].Event, _ = handler.repos.EventRepo.GetData(notifs[i].Content)
-			notifs[i].User, _ = handler.repos.UserRepo.GetDataMin(notifs[i].Sender)
-			notifs[i].Group, _ = handler.repos.GroupRepo.GetData(notifs[i].Event.GroupID)
+			notifs[i].User, _ = handler.repos.UserRepo.GetDataMin(notifs[i].Content)		
 		case "GROUP_REQUEST":
 			notifs[i].User, _ = handler.repos.UserRepo.GetDataMin(notifs[i].Content)
 			notifs[i].Group, _ = handler.repos.GroupRepo.GetData(notifs[i].TargetID)

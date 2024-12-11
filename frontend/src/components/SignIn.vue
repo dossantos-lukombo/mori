@@ -31,7 +31,7 @@
 
 
 <script>
-import NavBarOff from './NavBarOff.vue';
+
 export default {
   name: "SignIn",
   data() {
@@ -98,7 +98,7 @@ export default {
       catch { }
     },
   },
-  components: { NavBarOff }
+  
 }
 </script>
 

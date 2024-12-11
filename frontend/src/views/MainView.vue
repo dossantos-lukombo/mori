@@ -1,18 +1,14 @@
 <template>
     <NavBarOn />
 
-    <div id="layout">
-        <NewPost />
-        <Groups :groups="userGroups"/>
-        <AllPosts />
+    <div id="layout">        
+        <Groups :groups="userGroups"/>        
     </div>
 
 </template>
 
 <script>
 import NavBarOn from '@/components/NavBarOn.vue'
-import NewPost from '@/components/NewPost.vue'
-import AllPosts from '@/components/AllPosts.vue'
 import Groups from '@/components/Groups.vue'
 import NewGroup from '@/components/NewGroup.vue'
 import MultiselectDropdown from '@/components/MultiselectDropdown.vue'
@@ -20,7 +16,7 @@ import { mapState } from 'vuex';
 
 export default {
     name: 'MainView',
-    components: { NavBarOn, NewPost, AllPosts, Groups, NewGroup, MultiselectDropdown },
+    components: { NavBarOn, Groups, NewGroup, MultiselectDropdown },
     created() {
         this.$store.dispatch('getUserGroups');
     },

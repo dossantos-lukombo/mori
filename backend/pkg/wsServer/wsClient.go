@@ -38,11 +38,7 @@ func (client *Client) SendNotification(notif models.Notification) {
 		notif.Group, _ = client.repos.GroupRepo.GetData(notif.Content)
 		notif.User, _ = client.repos.UserRepo.GetDataMin(notif.Sender)
 	case "FOLLOW":
-		notif.User, _ = client.repos.UserRepo.GetDataMin(notif.Content)
-	case "EVENT":
-		notif.Event, _ = client.repos.EventRepo.GetData(notif.Content)
-		notif.User, _ = client.repos.UserRepo.GetDataMin(notif.Sender)
-		notif.Group,_ = client.repos.GroupRepo.GetData(notif.Event.GroupID)
+		notif.User, _ = client.repos.UserRepo.GetDataMin(notif.Content)	
 	case "GROUP_REQUEST":
 		notif.User, _ = client.repos.UserRepo.GetDataMin(notif.Content)
 		notif.Group, _ = client.repos.GroupRepo.GetData(notif.TargetID)

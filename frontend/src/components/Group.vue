@@ -3,7 +3,7 @@
 
         <div class="left-section">
             <GroupMembers v-bind:isMember="isMemberOfGroup" />
-            <GroupEvents v-if="this.isMemberOfGroup" />
+            
                  
         </div>
 
@@ -11,9 +11,7 @@
             <div class="about">
                 <h2 class="about-title">{{ this.groupData.name }}</h2>
                 <p class="about-text">{{ this.groupData.description }}</p>
-            </div>
-            <NewPost v-if="this.isMemberOfGroup" />
-            <GroupPosts v-if="this.isMemberOfGroup" />
+            </div>            
             <p class="additional-info large" v-if="!this.isMemberOfGroup">Only group members can see additional
                 information.
             </p>            
@@ -25,14 +23,10 @@
 </template>
 
 <script>
-import AllPosts from './AllPosts.vue'
+
 import Groups from './Groups.vue';
 import Notifications from './Notifications.vue';
-import NewPost from './NewPost.vue';
-import GroupPosts from './GroupPosts.vue';
 import GroupMembers from './GroupMembers.vue';
-import Modal from './Modal.vue';
-import GroupEvents from './GroupEvents.vue';
 import GroupJoinRequests from './GroupJoinRequests.vue';
 export default {
     name: "Group",
@@ -73,7 +67,7 @@ export default {
                 }));
         },
     },
-    components: { AllPosts, Groups, Notifications, NewPost, GroupPosts, GroupMembers, Modal, GroupEvents, GroupJoinRequests }
+    components: { Groups, Notifications, GroupMembers, GroupJoinRequests }
 }
 </script>
 

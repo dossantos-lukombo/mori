@@ -18,12 +18,10 @@ func StartServer(repos *models.Repositories) *Server {
 
 // register client
 func (s *Server) RegisterNewClient(client *Client) {
-	s.Clients[client] = true //update client list
+	s.Clients[client] = true // update client list
 }
 
 // register and unregister clients
 func (s *Server) UnregisterClient(client *Client) {
-	if _, ok := s.Clients[client]; ok {
-		delete(s.Clients, client)
-	}
+	delete(s.Clients, client)
 }

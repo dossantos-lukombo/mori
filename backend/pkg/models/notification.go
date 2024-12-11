@@ -8,8 +8,7 @@ type Notification struct {
 	Sender   string `json:"sender"`
 
 	//additional info for notification
-	User  User  `json:"user"`
-	Event Event `json:"event"`
+	User  User  `json:"user"`	
 	Group Group `json:"group"`
 }
 

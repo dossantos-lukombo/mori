@@ -53,8 +53,7 @@ func InitRepositories(db *sql.DB) *models.Repositories {
 	return &models.Repositories{
 		UserRepo:    &UserRepository{DB: db},
 		SessionRepo: &SessionRepository{DB: db},
-		GroupRepo:   &GroupRepository{DB: db},
-		PostRepo:    &PostRepository{DB: db},
+		GroupRepo:   &GroupRepository{DB: db},		
 		NotifRepo:   &NotifRepository{DB: db},
 		MsgRepo:     &MsgRepository{DB: db},
 	}

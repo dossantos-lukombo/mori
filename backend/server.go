@@ -59,12 +59,7 @@ func setRoutes(handler *handlers.Handler, wsServer *ws.Server) http.Handler {
 	})) // follow user
 	mux.HandleFunc("/cancelFollowRequest", handler.Auth(handler.CancelFollowRequest))
 	mux.HandleFunc("/unfollow", handler.Auth(handler.Unfollow))
-	mux.HandleFunc("/responseFollowRequest", handler.Auth(handler.ResponseFollowRequest))
-
-	/* ---------------------------------- posts --------------------------------- */
-	mux.HandleFunc("/allPosts", handler.Auth(handler.AllPosts))   // all posts- main page
-	mux.HandleFunc("/userPosts", handler.Auth(handler.UserPosts)) // all user posts - user page
-	mux.HandleFunc("/newPost", handler.Auth(handler.NewPost))     // create route
+	mux.HandleFunc("/responseFollowRequest", handler.Auth(handler.ResponseFollowRequest))	
 
 	/* --------------------------------- groups --------------------------------- */
 	mux.HandleFunc("/allGroups", handler.Auth(handler.AllGroups))             // group list
@@ -73,15 +68,14 @@ func setRoutes(handler *handlers.Handler, wsServer *ws.Server) http.Handler {
 
 	mux.HandleFunc("/groupInfo", handler.Auth(handler.GroupInfo))                     // get group info
 	mux.HandleFunc("/groupMembers", handler.Auth(handler.GroupMembers))               // get group members
-	mux.HandleFunc("/groupEvents", handler.Auth(handler.GroupEvents))                 // get group events
-	mux.HandleFunc("/groupPosts", handler.Auth(handler.GroupPosts))                   // get group posts
+	
 	mux.HandleFunc("/groupRequests", handler.Auth(handler.GroupRequests))             // get group member requests
 	mux.HandleFunc("/cancelGroupRequests", handler.Auth(handler.CancelGroupRequests)) // cancel request or joing group
 
 	mux.HandleFunc("/newGroup", handler.Auth(func(w http.ResponseWriter, r *http.Request) {
 		handler.NewGroup(wsServer, w, r)
 	})) // create new group
-	mux.HandleFunc("/newGroupPost", handler.Auth(handler.NewGroupPost))                           // create new group post
+	
 	mux.HandleFunc("/newGroupInvite", handler.Auth(func(w http.ResponseWriter, r *http.Request) { // invite new users to group
 		handler.NewGroupInvite(wsServer, w, r)
 	}))

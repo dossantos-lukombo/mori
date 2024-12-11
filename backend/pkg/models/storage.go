@@ -4,10 +4,7 @@ package models
 type Repositories struct {
 	UserRepo    UserRepository
 	SessionRepo SessionRepository
-	GroupRepo   GroupRepository
-	PostRepo    PostRepository
-	CommentRepo CommentRepository
-	NotifRepo   NotifRepository
-	EventRepo   EventRepository
+	GroupRepo   GroupRepository	
+	NotifRepo   NotifRepository	
 	MsgRepo     MsgRepository
 }

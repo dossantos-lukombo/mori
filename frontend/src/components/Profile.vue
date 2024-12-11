@@ -39,7 +39,7 @@
                     <h2 class="about-title">About me</h2>
                     <p class="about-text">{{ user.about }}</p>
                 </div>
-                <AllMyPosts :posts="this.posts"/>
+                
 
             </div>
 
@@ -51,7 +51,7 @@
 </template>
 
 <script>
-import AllMyPosts from './AllMyPosts.vue'
+
 import Following from './Following.vue'
 import Followers from './Followers.vue'
 import FollowBtn from './FollowBtn.vue'
@@ -60,7 +60,7 @@ import UnfollowBtn from './UnfollowBtn.vue'
 import Groups from './Groups.vue'
 export default {
     name: 'Profile',
-    components: { AllMyPosts, Followers, Following, FollowBtn, PrivacyBtn, UnfollowBtn, Groups },
+    components: { Followers, Following, FollowBtn, PrivacyBtn, UnfollowBtn, Groups },
     data() {
         return {
             // flag: false,
@@ -101,8 +101,7 @@ export default {
     },
     methods: {
         updateProfileData(){
-            this.getUserData()
-            this.getPosts()
+            this.getUserData()           
             this.getFollowers()
             this.getFollowing()
             this.checkProfile()
@@ -180,17 +179,7 @@ export default {
                     this.following = json.users
                 }))
 
-        },
-        async getPosts() {
-            await fetch("http://localhost:8081/userPosts?id=" + this.$route.params.id, {
-                credentials: "include",
-            })
-                .then((r) => r.json())
-                .then((r) => {
-                    this.posts = r.posts
-                });
-                // this.flag = false
-        },
+        },        
         
         addChat() {
             // check if user doesnt have a chat with that person already

@@ -1,8 +1,7 @@
 package handlers
 
 import (
-	"encoding/json"
-	"fmt"
+	"encoding/json"	
 	"net/http"
 	"strings"
 
@@ -124,102 +123,6 @@ func (handler *Handler) GroupMembers(w http.ResponseWriter, r *http.Request) {
 	utils.RespondWithUsers(w, members, 200)
 }
 
-// returns list of events for group
-// GET request with group_id included in query
-// in case if user is not a member of the group, returns error
-func (handler *Handler) GroupEvents(w http.ResponseWriter, r *http.Request) {
-	w = utils.ConfigHeader(w)
-	// access current user id
-	userId := r.Context().Value(utils.UserKey).(string)
-	// get group id from request
-	query := r.URL.Query()
-	groupId := query.Get("groupId")
-	if groupId == "" { // check if group id exists in request
-		utils.RespondWithError(w, "Error on reading group ID", 200)
-		return
-	}
-	// check if current user is a member or admin  of the group
-	isMember := false
-	isAdmin, err := handler.repos.GroupRepo.IsAdmin(groupId, userId)
-	if err != nil {
-		utils.RespondWithError(w, "Error on reading role", 200)
-		return
-	}
-	if !isAdmin {
-		isMember, err = handler.repos.GroupRepo.IsMember(groupId, userId)
-		if err != nil {
-			utils.RespondWithError(w, "Error on checking if is group member", 200)
-			return
-		}
-	}
-	if !isMember && !isAdmin {
-		utils.RespondWithError(w, "Not a member", 200)
-		return
-	}
-	// current user is a member or admin -> get events
-	events, err := handler.repos.EventRepo.GetAll(groupId)
-	if err != nil {
-		fmt.Println(err)
-		utils.RespondWithError(w, "Error on getting event data", 200)
-		return
-	}
-	/* ----------------------- attach author to each event ---------------------- */
-	for i := 0; i < len(events); i++ {
-		events[i].Author, _ = handler.repos.UserRepo.GetDataMin(events[i].AuthorID)
-	}
-	/* -------------------- attach participation to each event ------------------- */
-	for i := 0; i < len(events); i++ {
-		going, _ := handler.repos.EventRepo.IsParticipating(events[i].ID, userId)
-		if going {
-			events[i].Going = "YES"
-		} else {
-			events[i].Going = "NO"
-		}
-	}
-	utils.RespondWithEvents(w, events, 200)
-}
-
-// returns all posts that belongs to group
-func (handler *Handler) GroupPosts(w http.ResponseWriter, r *http.Request) {
-	w = utils.ConfigHeader(w)
-	// access current user id
-	userId := r.Context().Value(utils.UserKey).(string)
-	// get group id from request
-	query := r.URL.Query()
-	groupId := query.Get("groupId")
-	if groupId == "" { // check if group id exists in request
-		utils.RespondWithError(w, "Error on getting data", 200)
-		return
-	}
-	/* -------- check if current user is a member or admin  of the group -------- */
-	isAdmin, err := handler.repos.GroupRepo.IsAdmin(groupId, userId)
-	isMember, err := handler.repos.GroupRepo.IsMember(groupId, userId)
-	if err != nil {
-		utils.RespondWithError(w, "Error on getting data", 200)
-		return
-	}
-	if !isMember && !isAdmin {
-		utils.RespondWithError(w, "Not a member", 200)
-		return
-	}
-	/* ------------- current user is a member or admin -> get posts ------------- */
-	posts, err := handler.repos.PostRepo.GetGroupPosts(groupId)
-	if err != nil {
-		utils.RespondWithError(w, "Error on getting data", 200)
-		return
-	}
-	// Get post author info attached
-	if err = AttachAuthors(handler, &posts); err != nil {
-		utils.RespondWithError(w, "Error on getting data", 200)
-		return
-	}
-	// Get comment info for each post
-	if err = AttachComments(handler, &posts); err != nil {
-		utils.RespondWithError(w, "Error on getting data", 200)
-		return
-	}
-	utils.RespondWithPosts(w, posts, 200)
-}
 
 // returns pending requests to join to group, only for admin
 // for others respond with error
@@ -344,49 +247,6 @@ func (handler *Handler) NewGroup(wsServer *ws.Server, w http.ResponseWriter, r *
 	newGroup.Administrator = true
 	// NOTIFY WEBSOCKET ABOUT NEW NOTIFICATION
 	utils.RespondWithGroups(w, []models.Group{newGroup}, 200)
-}
-
-// NOT TESTED
-func (handler *Handler) NewGroupPost(w http.ResponseWriter, r *http.Request) {
-	w = utils.ConfigHeader(w)
-	if r.Method != "POST" {
-		utils.RespondWithError(w, "Error on form submittion", 200)
-		return
-	}
-	/* ---------------------------- read incoming data --------------------------- */
-	err := r.ParseMultipartForm(3145728) // 3MB
-	if err != nil {
-		utils.RespondWithError(w, "Error in form validation", 200)
-		return
-	}
-	userId := r.Context().Value(utils.UserKey).(string)
-	/* ------------------------ create new post instance ------------------------ */
-	newPost := models.Post{
-		ID:       utils.UniqueId(),
-		Content:  r.PostFormValue("body"),
-		GroupID:  r.PostFormValue("groupId"),
-		AuthorID: userId,
-	}
-	/* -------- check if current user is a member or admin  of the group -------- */
-	isAdmin, err := handler.repos.GroupRepo.IsAdmin(newPost.GroupID, userId)
-	isMember, err := handler.repos.GroupRepo.IsMember(newPost.GroupID, userId)
-	if err != nil {
-		utils.RespondWithError(w, "Error on getting data", 200)
-		return
-	}
-	if !isMember && !isAdmin {
-		utils.RespondWithError(w, "Not a member", 200)
-		return
-	}
-	/* ------------------------ save image in filesystem ------------------------ */
-	newPost.ImagePath = utils.SaveImage(r)
-	/* -------------------------- save post in database ------------------------- */
-	errDB := handler.repos.PostRepo.New(newPost)
-	if errDB != nil {
-		utils.RespondWithError(w, "Error on saving post", 200)
-		return
-	}
-	utils.RespondWithSuccess(w, "New post created", 200)
 }
 
 // handle when new user wants to join the group

@@ -1,7 +1,6 @@
 <template>
 
-    <div class="register__container">
-        <NavBarOff />
+    <div class="register__container">       
         <Register />
     </div>
 
@@ -9,10 +8,10 @@
 
 <script>
 import Register from "@/components/Register.vue";
-import NavBarOff from "@/components/NavBarOff.vue";
+
 export default {
     name: 'RegisterView',
-    components: { Register, NavBarOff, },
+    components: { Register }
 }
 </script>
 
