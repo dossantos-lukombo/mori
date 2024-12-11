@@ -1,0 +1,19 @@
+# Définir sur true pour ajouter des réviseurs aux pull requests
+addReviewers: true
+
+# Liste des utilisateurs GitHub à ajouter en tant que réviseurs
+reviewers:
+  - QuentinBoiteux
+  - Lyrisad
+  - dossantos-lukombo
+
+# Nombre de réviseurs à ajouter à la pull request
+# Mettre 0 pour ajouter tous les réviseurs (par défaut : 0)
+numberOfReviewers: 0
+
+# Définir sur true pour ajouter des assignés aux pull requests
+addAssignees: false
+
+# Liste des utilisateurs GitHub à ajouter en tant qu'assignés
+# assignees:
+#   - utilisateurA
