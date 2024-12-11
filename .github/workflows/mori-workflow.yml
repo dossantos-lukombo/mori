@@ -27,7 +27,7 @@ jobs:
 
     - name: Ensure PR requires review
       if: github.event.pull_request.draft == false
-       env:
+      env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         echo "Ensure PR has an approval."
