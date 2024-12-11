@@ -1,30 +1,38 @@
-# This is a basic workflow to help you get started with Actions
+name: mori-workflow
 
-name: CI
-
-# Controls when the workflow will run
 on:
-  # Triggers the workflow on push or pull request events but only for the "main" branch
   pull_request:
-    branches: 
-      - "*"
-  push:
-    branches: [ "main" ]
+    branches:
+      - main
 
-  # Allows you to run this workflow manually from the Actions tab
-  workflow_dispatch:
-
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # This workflow contains a single job called "build"
-  build:
-    # The type of runner that the job will run on
+  validate-pr:
     runs-on: ubuntu-latest
 
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
-        with:
-          go-version: 1.23.4
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Install GitHub CLI
+      run: sudo apt-get install gh -y
+
+    - name: Authenticate GitHub CLI
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        echo $GITHUB_TOKEN | gh auth login --with-token
+
+    - name: Run tests (example)
+      run: |
+        echo "Running tests..."
+        # Ajoutez ici vos scripts de test
+
+    - name: Ensure PR requires review
+      if: github.event.pull_request.draft == false
+      run: |
+        echo "Ensure PR has an approval."
+        approvals=$(gh pr view ${{ github.event.pull_request.number }} --json reviews --jq '.reviews | map(select(.state == "APPROVED")) | length')
+        if [ "$approvals" -lt 1 ]; then
+          echo "This PR does not have any approvals yet."
+          exit 1
+        fi

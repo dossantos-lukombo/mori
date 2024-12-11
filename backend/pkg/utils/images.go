@@ -1,7 +1,8 @@
 package utils
 
 import (
-	"io/ioutil"
+	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"strings"
@@ -31,7 +32,7 @@ func SaveAvatar(r *http.Request) string {
 	defer localFile.Close()
 
 	// read data in new file
-	fileData, err := ioutil.ReadAll(file)
+	fileData, err := io.ReadAll(file)
 	if err != nil {
 		return defaultImage
 	}
@@ -61,7 +62,7 @@ func SaveImage(r *http.Request) string {
 	defer localFile.Close()
 
 	// read data in new file
-	fileData, err := ioutil.ReadAll(file)
+	fileData, err := io.ReadAll(file)
 	if err != nil {
 		return ""
 	}
@@ -69,20 +70,30 @@ func SaveImage(r *http.Request) string {
 	return strings.Replace(localFile.Name(), "\\", "/", -1)
 }
 
-// creates empty local file based on filt type
+// creates empty local file based on file type
 func createTempFile(fileType string) (*os.File, error) {
-	var localFile *os.File
-	var err error
+	tempDir, err := os.MkdirTemp("", "imageUpload")
+	if err != nil {
+		return nil, err
+	}
 
+	var pattern string
 	switch fileType {
 	case "image/jpeg":
-		localFile, err = ioutil.TempFile("imageUpload", "*.jpg")
+		pattern = "*.jpg"
 	case "image/png":
-		localFile, err = ioutil.TempFile("imageUpload", "*.png")
+		pattern = "*.png"
 	case "image/gif":
-		localFile, err = ioutil.TempFile("imageUpload", "*.gif")
+		pattern = "*.gif"
 	default:
-		return localFile, err
+		return nil, fmt.Errorf("type de fichier non supporté : %s", fileType)
 	}
+
+	// Crée un fichier temporaire dans le répertoire spécifié
+	localFile, err := os.CreateTemp(tempDir, pattern)
+	if err != nil {
+		return nil, err
+	}
+
 	return localFile, nil
 }
