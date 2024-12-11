@@ -3,12 +3,6 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
-<<<<<<< HEAD
-	"mori/pkg/models"
-	"mori/pkg/utils"
-	ws "mori/pkg/wsServer"
-=======
->>>>>>> refactor_daryl
 	"strings"
 
 	"mori/pkg/models"

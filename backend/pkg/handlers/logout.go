@@ -3,10 +3,6 @@ package handlers
 import (
 	"fmt"
 	"net/http"
-<<<<<<< HEAD
-=======
-
->>>>>>> refactor_daryl
 	"mori/pkg/models"
 	"mori/pkg/utils"
 )
