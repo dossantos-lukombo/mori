@@ -9,10 +9,19 @@
           How can I help you?
         </div>
         <div class="chatbot-messages" v-if="hasMessages">
-          <div v-for="(message, index) in messages" :key="index" :class="['message', message.isUser ? 'user' : 'bot']">
-            <span>{{ message.text }}</span>
+            <div 
+              v-for="(message, index) in messages" 
+              :key="index" 
+              :class="['message', message.isUser ? 'user' : 'bot']"
+            >
+              <div v-if="!message.isUser" class="bot-logo">
+                <img src="../assets/mori.png" alt="Bot Logo" />
+              </div>
+              <span>{{ message.text }}</span>
+              <div class="timestamp">{{ message.timestamp }}</div>
+            </div>
           </div>
-        </div>
+          
         <div :class="['chatbot-input', { 'chatbot-input--active': hasMessages }]">
           <input
             type="text"
@@ -43,14 +52,29 @@
     methods: {
       handleUserInput() {
         if (this.userInput.trim()) {
-          this.messages.push({ text: this.userInput, isUser: true }); // Add user message
+          // Add user message with timestamp
+          this.messages.push({ 
+            text: this.userInput, 
+            isUser: true, 
+            timestamp: this.formatTimestamp(new Date()) 
+          });
           this.userInput = ""; // Clear input after sending
   
           // Simulate bot response
           setTimeout(() => {
-            this.messages.push({ text: "Thank you for your message!", isUser: false });
+            this.messages.push({ 
+              text: "Thank you for your message!", 
+              isUser: false, 
+              timestamp: this.formatTimestamp(new Date()) 
+            });
           }, 1000);
         }
+      },
+      formatTimestamp(date) {
+        const options = { hour: '2-digit', minute: '2-digit', hour12: false };
+        const time = date.toLocaleTimeString([], options);
+        const day = date.toLocaleDateString();
+        return `${day} ${time}`;
       },
     },
   };
@@ -85,6 +109,23 @@
     width: 80%;
     height: 85vh;
   }
+
+  .bot-logo {
+    display: inline-block;
+    vertical-align: top;
+    margin-right: 10px;
+    margin-top: -5px;
+    margin-left: -5px;
+  
+  }
+  
+  .bot-logo img {
+    width: 35px; /* Adjust size as needed */
+    height: 35px; /* Adjust size as needed */
+    border-radius: 50%; /* Optional: Make the image circular */
+    object-fit: cover; /* Ensure the image scales properly */
+  }
+  
   
   .mori-img {
     display: flex;
@@ -123,6 +164,7 @@
     padding: 10px;
     border-radius: 10px;
     font-size: 16px;
+    position: relative;
   }
   
   .user {
@@ -135,6 +177,14 @@
     align-self: flex-start;
     background-color: var(--bg-neutral);
     color: var(--color-white);
+  }
+  
+  .timestamp {
+    font-size: 12px;
+    color: var(--color-grey);
+    opacity: 0.5;
+    text-align: right;
+    margin-top: 5px;
   }
   
   /* Input field animation */
@@ -153,7 +203,7 @@
   }
   
   .chatbot-input--active {
-    width: calc(60% - 40px); /* New width for active state */
+    width: calc(50% - 40px); /* New width for active state */
     position: fixed;
     top: calc(97% - 80px); /* Slide to the bottom of the viewport */
     transform: translateX(-50%);
