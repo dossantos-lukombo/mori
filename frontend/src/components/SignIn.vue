@@ -101,6 +101,9 @@ export default {
 </script>
 
 <style >
+
+
+
 .sign-in__wrapper {
   display: flex;
   /* margin: auto 0; */

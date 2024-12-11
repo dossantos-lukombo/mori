@@ -169,7 +169,8 @@ export default {
     display: inline-block;
     box-shadow: var(--container-shadow);
     padding: 30px;
-    background-color: var(--color-white);
+    background-color: var(--bg-neutral);
+    box-shadow: 0 2px 10px rgb(0, 0, 0);
     /* width: 550px; */
     width: 100%;
     border-radius: 10px;
@@ -206,6 +207,7 @@ export default {
 .post-body,
 .comment-body {
     overflow-wrap: anywhere;
+    color: var(--color-white);
 }
 
 .post-content button {

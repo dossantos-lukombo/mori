@@ -174,11 +174,10 @@ export default {
 
 
 <style scoped>
-/* #newpost {
+/* $#newpost {
     display: flex;
     flex-direction: column;
 } */
-
 
 /* 
 #postBtn {
@@ -195,20 +194,20 @@ export default {
     align-items: center;
     justify-content: space-between;
     padding: 10px 15px;
-    background-color: var(--input-bg);
+    background-color: var(--purple-color);
+    color: var(--color-white);
     border: none;
-    box-shadow: var(--container-shadow);
-    /* box-shadow: var(--hover-box-shadow); */
-    /* box-shadow: 0 0 2px 2px black; */
+    box-shadow: 0 2px 10px rgb(0, 0, 0);
     font-family: inherit;
     font-size: 16px;
     border-radius: var(--container-border-radius);
     cursor: pointer;
-    /* transition: var(--hover-box-shadow-transition); */
-
-    transition: box-shadow 0.15s ease-in-out;
-
+    transition: all 0.3s ease;
     width: 100%;
+}
+
+.start-post:hover{
+    background-color: var(--hover-background-color);
 }
 
 .start-post i {
@@ -231,10 +230,5 @@ export default {
 
 .submitPost {
     margin-left: auto;
-}
-
-.start-post:hover {
-    /* box-shadow: none; */
-    box-shadow: var(--hover-box-shadow);
 }
 </style>

@@ -12,6 +12,7 @@
     --page-bg: #1a1a1a;
     --bg-neutral: #2c2c2c;
     --purple-color: #9146bc;
+    --clear-purple: #39005a;
     --color-white: #EFEFEF;
     --color-black: #0000;
     --color-lg-black: #202020;
@@ -37,6 +38,14 @@
 
 * {
     box-sizing: border-box;
+}
+
+#app{
+    display: flex;
+    flex-direction: column;
+    background-color: var(--page-bg);
+    width: 100%;
+    min-height: 100vh;
 }
 
 body {
@@ -65,6 +74,30 @@ ul {
     font-family: "Poppins";
     font-size: 22px;
     color: var(--purple-color);
+}
+
+.smallMoriLogo{
+    width: 40px;
+    height: 40px;
+    background-image: url('../mori.png');
+    background-size: cover;
+    background-position: center;
+    flex-shrink: 0;
+    border: 0;
+    border-radius: 50%;
+    margin-right: -16px;
+}
+
+.moriImg{
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    background-image: url('../mori.png');
+    background-size: cover;
+    background-position: center;
+    flex-shrink: 0;
+    border: 0;
+    border-radius: 50%;
 }
 
 h1 {
@@ -182,7 +215,7 @@ select {
     display: flex;
     flex-direction: column;
     gap: 5px;
-    color: var(--color-lg-black);
+    color: var(--color-white);
 }
 
 .form-group {
@@ -222,8 +255,9 @@ select {
 }
 
 .small {
-    height: 1.5em;
+    height: 1.1em;
     width: 1.5em;
+    color: var(--color-white) !important;
 }
 
 .medium {
@@ -232,9 +266,9 @@ select {
 }
 
 .additional-info {
-    color: rgb(95, 95, 95);
+    color: var(--color-white);
     font-weight: 400;
-    text-align: center;
+    text-align: left;
 
 }
 
@@ -280,12 +314,16 @@ select {
     flex-direction: column;
     gap: 20px;
     padding: var(--container-padding);
-    background-color: var(--color-white);
+    background-color: var(--bg-neutral);
     box-shadow: var(--container-shadow);
     border-radius: var(--container-border-radius);
-    color: var(--color-lg-black);
     align-items: flex-start;
-    /* width: max-content; */
+    box-shadow: 0 2px 10px rgb(0, 0, 0);
+
+}
+
+.item-list__wrapper h3{
+    color: var(--purple-color);
 }
 
 .item-list__wrapper:is(#following, #followers) {
@@ -345,6 +383,10 @@ select {
 
     align-items: center;
 
+}
+
+.item-text a {
+    color: var(--color-white);
 }
 
 .multiple-item-list>.item-list__wrapper {
