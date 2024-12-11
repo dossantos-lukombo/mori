@@ -36,3 +36,7 @@ jobs:
           echo "This PR does not have any approvals yet."
           exit 1
         fi
+    - name: Auto Assign Reviewers
+      uses: kentaro-m/auto-assign-action@v2.0.0
+      with:
+        configuration-path: '.github/auto-assign.yml'
