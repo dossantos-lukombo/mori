@@ -2,6 +2,10 @@ package db
 
 import (
 	"database/sql"
+<<<<<<< HEAD
+=======
+
+>>>>>>> refactor_santos
 	"mori/pkg/models"
 )
 

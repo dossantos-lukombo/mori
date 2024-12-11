@@ -2,6 +2,10 @@ package db
 
 import (
 	"database/sql"
+<<<<<<< HEAD
+=======
+
+>>>>>>> refactor_santos
 	"mori/pkg/models"
 )
 
@@ -98,9 +102,13 @@ func (repo *MsgRepository) GetUnreadGroup(userId string) ([]models.ChatStats, er
 			// is user group admin ?																	-- is group member? --
 		((SELECT administrator FROM groups WHERE group_id = messages.receiver_id) = ? OR (SELECT COUNT(*) FROM group_users WHERE group_id = messages.receiver_id AND user_id = ?) = 1)
 			AND (SELECT is_read FROM group_messages WHERE message_id = messages.message_id AND receiver_id = ?) = 0 GROUP BY receiver_id;
+<<<<<<< HEAD
 	*/
 
 	if err != nil {
+=======
+	*/if err != nil {
+>>>>>>> refactor_santos
 		return messages, err
 	}
 	for rows.Next() {
@@ -112,7 +120,11 @@ func (repo *MsgRepository) GetUnreadGroup(userId string) ([]models.ChatStats, er
 }
 
 func (repo *MsgRepository) GetChatHistoryIds(userId string) (map[string]bool, error) {
+<<<<<<< HEAD
 	var idmap = make(map[string]bool)
+=======
+	idmap := make(map[string]bool)
+>>>>>>> refactor_santos
 	// select ids if current is receiver
 	rowsReceiver, err := repo.DB.Query("SELECT sender_id FROM messages WHERE receiver_id = ? AND type = 'PERSON';", userId)
 	if err != nil {
@@ -135,6 +147,10 @@ func (repo *MsgRepository) GetChatHistoryIds(userId string) (map[string]bool, er
 	}
 	return idmap, nil
 }
+<<<<<<< HEAD
+=======
+
+>>>>>>> refactor_santos
 func (repo *MsgRepository) HasHistory(senderId, receiverId string) (bool, error) {
 	row := repo.DB.QueryRow("SELECT COUNT() FROM messages WHERE sender_id = ? AND receiver_id = ? OR sender_id = ? AND receiver_id = ?;", senderId, receiverId, receiverId, senderId)
 	var result int

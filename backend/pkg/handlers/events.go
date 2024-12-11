@@ -144,6 +144,7 @@ func (handler *Handler) Participate(w http.ResponseWriter, r *http.Request) {
 	}
 	/* --------------------------- remove notificaton -------------------------- */
 <<<<<<< HEAD
+<<<<<<< HEAD
 	if len(response.RequestID) != 0 { //participation activated form notification
 =======
 <<<<<<< HEAD
@@ -152,10 +153,14 @@ func (handler *Handler) Participate(w http.ResponseWriter, r *http.Request) {
 	if len(response.RequestID) != 0 { //participation activated form notification
 >>>>>>> d4d9b125 (refactor changing all import)
 >>>>>>> d6f49863 (rebase done)
+=======
+	if len(response.RequestID) != 0 { // participation activated form notification
+>>>>>>> refactor_santos
 		if err = handler.repos.NotifRepo.Delete(response.RequestID); err != nil {
 			utils.RespondWithError(w, "Internal server error", 200)
 			return
 		}
+<<<<<<< HEAD
 <<<<<<< HEAD
 	} else { //participation activated without noification
 =======
@@ -165,6 +170,9 @@ func (handler *Handler) Participate(w http.ResponseWriter, r *http.Request) {
 	} else { //participation activated without noification
 >>>>>>> d4d9b125 (refactor changing all import)
 >>>>>>> d6f49863 (rebase done)
+=======
+	} else { // participation activated without noification
+>>>>>>> refactor_santos
 		// delete notification if exists
 		notif := models.Notification{Type: "EVENT", TargetID: userId, Content: response.EventID}
 		if err = handler.repos.NotifRepo.DeleteByType(notif); err != nil {

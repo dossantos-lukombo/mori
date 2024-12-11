@@ -22,8 +22,6 @@ I created the design of the project using Figma and then used that to create the
 
 
 ## Stack
-
-
 Frontend
 - Vue
 - HTML & CSS
@@ -31,13 +29,11 @@ Frontend
 
 Backend
 - Go
-- SQLite3
+- postgresSQL
 
 ## Authors
-Backend team
-- Laura-Eliise Marrandi
-- Zane Krumina
+team Back and front
+- Daryl Parisi
+- Quentin Boiteux
+- Dos Santos Lukombo
 
-Frontend team
-- Kristofer Kangro
-- Viktor Ahlberk

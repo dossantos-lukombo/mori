@@ -1,0 +1,24 @@
+name: mori-workflow
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  pull-requests: write
+  contents: read
+
+
+jobs:
+  validate-pr:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Auto Assign Reviewers
+      uses: kentaro-m/auto-assign-action@v2.0.0
+      with:
+        configuration-path: '.github/auto_assign.yml'

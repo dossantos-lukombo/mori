@@ -5,6 +5,12 @@ import (
 	"mori/pkg/models"
 	"mori/pkg/utils"
 	"net/http"
+<<<<<<< HEAD
+=======
+
+	"mori/pkg/models"
+	"mori/pkg/utils"
+>>>>>>> refactor_santos
 )
 
 // handler for logout/ validate user by id and delete session
