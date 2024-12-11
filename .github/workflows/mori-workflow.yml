@@ -18,10 +18,6 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v3
 
-    - name: Run tests (example)
-      run: |
-        echo "Running tests..."
-        # Ajoutez ici vos scripts de test
     - name: Auto Assign Reviewers
       uses: kentaro-m/auto-assign-action@v2.0.0
       with:
