@@ -3,7 +3,7 @@
         <img src="../assets/pexels-cottonbro-5053739.jpg" alt="man holding phone">
 
         <div class="register">
-            <h1>Create your account</h1>
+            <h1 class="mori">Mori <span class="adder">- Register</span></h1>
             <form @submit.prevent="submitRegData" id="register__form">
 
                 <div class="form-group">
@@ -130,8 +130,9 @@ export default {
     max-width: 1050px;
     min-width: 950px;
     margin: auto;
-    background-color: var(--color-white);
+    background-color: var(--bg-neutral);
     box-shadow: var(--container-shadow);
+    box-shadow: 0 4px 15px rgb(0, 0, 0);
     border-radius: 20px;
     overflow: hidden;
 
@@ -143,7 +144,6 @@ export default {
     align-items: flex-start;
     gap: 45px;
     padding: 0 50px;
-
 }
 
 .register__wrapper img {
@@ -155,7 +155,16 @@ export default {
     gap: 40px;
 }
 
+.register .form-input {
+    color: var(--color-white);
+    border-radius: 10px;
+}
 
+#aboutme {
+    width: 100%;
+    height: 111px;
+    resize: none;
+}
 
 .register .form-group {
     gap: 25px;

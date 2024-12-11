@@ -20,7 +20,7 @@
     width: 100vw;
     top: 0;
     left: 0;
-    background-color: rgba(0, 0, 0, 0.4);
+    background-color: #9146bc7b;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -32,14 +32,11 @@
     display: flex;
     flex-direction: column;
     gap: 25px;
-
     padding: 30px 50px;
     width: 400px;
-
-
-
+    color: var(--color-white);
     position: relative;
-    background-color: var(--page-bg);
+    background-color: var(--bg-neutral);
     border-radius: var(--container-border-radius);
 
 

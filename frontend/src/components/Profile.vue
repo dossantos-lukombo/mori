@@ -226,7 +226,7 @@ export default {
 .left-section {
     display: flex;
     flex-direction: column;
-    gap: 50px;
+    gap: 35px;
     max-width: 250px;
     justify-self: flex-end;
 

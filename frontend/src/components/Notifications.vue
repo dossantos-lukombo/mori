@@ -232,7 +232,7 @@ export default {
 
 .link-header:hover::after {
     width: 100%;
-    background-color: rgb(132, 148, 236);
+    background-color: var(--hover-background-color);
 }
 
 .notification-ring {

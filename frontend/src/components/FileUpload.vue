@@ -108,7 +108,7 @@ label {
 
     background-color: var(--input-bg);
     box-shadow: var(--container-shadow);
-    border-radius: 5px;
+    border-radius: 10px;
 
     cursor: pointer;
     font-size: 14px;
@@ -146,13 +146,12 @@ input {
 }
 
 .btn {
-    border-radius: 5px;
-    background-color: rgb(190, 190, 190);
+    border-radius: 0px;
+    background-color: var(--purple-color);
     padding: 7.5px 10px;
-    color: var(--color-lg-black);
+    color: var(--color-white);
     overflow: hidden;
     width: 70.25px;
-
     margin-left: auto;
 }
 
@@ -162,7 +161,7 @@ label:hover {
 }
 
 .btn:hover {
-    background-color: rgb(209, 209, 209);
+    background-color: var(--hover-background-color);
     ;
 }
 </style>

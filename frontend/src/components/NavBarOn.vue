@@ -1,94 +1,99 @@
 <template>
-
     <div id="navbar">
-
-        <div id="nav-titleSearch">
-            <router-link to="/main" id="nav-title">Social Network</router-link>
-            <Search />
+      <div id="menu-btn" @click="toggleSidebar"></div>
+      <div id="nav-titleSearch">
+        <div class="smallMoriLogo">
         </div>
-        <ul class="nav-links">
-
-            <li id="notifications-link">
-                <Notifications />
-            </li>
-            <li>
-                <router-link v-if="typeof user.id !== 'undefined'"
-                             :to="{ name: 'Profile', params: { id: user.id } }">My profile</router-link>
-            </li>
-            <li @click="logout">Log out</li>
-        </ul>
-
+        <router-link to="/main" class="mori" id="nav-title">Mori</router-link>
+        <Search />
+      </div>
+      <ul class="nav-links">
+        <li id="notifications-link">
+          <Notifications />
+        </li>
+        <li>
+          <router-link v-if="typeof user.id !== 'undefined'"
+                       :to="{ name: 'Profile', params: { id: user.id } }">My profile</router-link>
+        </li>
+        <li @click="logout">Log out</li>
+      </ul>
+      <Sidebar :isActive="isSidebarActive" @close-sidebar="toggleSidebar" @logout="logout" />
     </div>
-
 </template>
-
-
+  
 <script>
-import Search from './Search.vue';
-import Notifications from './Notifications.vue'
-export default {
+  import Search from './Search.vue';
+  import Notifications from './Notifications.vue';
+  import Sidebar from './Sidebar.vue';
+  
+  export default {
     name: 'NavBarOn',
     data() {
-        return {
-            user: {}
-        }
+      return {
+        user: {},
+        isSidebarActive: false,
+      };
     },
+    components: { Notifications, Search, Sidebar },
     created() {
-        this.getUserInfo()
+      this.getUserInfo();
     },
     methods: {
-        async getUserInfo() {
-            await fetch("http://localhost:8081/currentUser", {
-                credentials: 'include',
-            })
-                .then((r => r.json()))
-                .then((json => {
-                    // console.log(json)
-                    this.user = json.users[0]
-                }))
-
-        },
-        async logout() {
-            await fetch('http://localhost:8081/logout', {
-                credentials: 'include',
-                headers: {
-                    'Accept': 'application/json',
-                }
-            })
-                .then((response => response.json()))
-                .then((json => { console.log(json) }))
-            // console.log("logout")
-            this.$store.state.wsConn.close(1000, "user logged out");
-            this.$router.push("/");
-        }
-    },
-    components: { Notifications, Search, }
-}
-
+      async getUserInfo() {
+        await fetch("http://localhost:8081/currentUser", { credentials: 'include' })
+          .then(r => r.json())
+          .then(json => {
+            this.user = json.users[0];
+          });
+      },
+      async logout() {
+        await fetch('http://localhost:8081/logout', {
+          credentials: 'include',
+          headers: { 'Accept': 'application/json' },
+        })
+          .then(response => response.json())
+          .then(json => console.log(json));
+        this.$store.state.wsConn.close(1000, "user logged out");
+        this.$router.push("/");
+      },
+      toggleSidebar() {
+        this.isSidebarActive = !this.isSidebarActive;
+      }
+    }
+  };
 </script>
+  
 
 <style scoped>
+
+#menu-btn {
+    width: 30px;
+    height: 30px;
+    margin-right: 20px;
+    background-image: url('../assets/menu.png');
+    background-size: cover;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+#menu-btn:hover {
+    transform: scale(1.05);
+}
+
 #navbar {
     position: fixed;
     top: 0;
     left: 0;
-    z-index: 1;
+    z-index: 3;
     width: 100%;
     min-width: min-content;
-
     display: flex;
     align-items: center;
     justify-content: space-between;
-
-    padding: 10px 40px;
-    background-color: var(--color-blue);
+    padding: 10px 30px;
+    background-color: var(--purple-color);
     color: var(--color-white);
-
     position: relative;
-
-
-
-
 }
 
 
@@ -97,17 +102,14 @@ export default {
 }
 
 
-
-
-
 #nav-title {
-    font-size: 24px;
-    font-weight: 400;
+    user-select: none;
     position: relative;
 }
 
 
 .nav-links li {
+    user-select: none;
     font-weight: 300;
     display: inline-block;
     margin-left: 20px;
@@ -141,7 +143,7 @@ export default {
 #navbar li:not(#notifications-link):hover::after,
 #nav-title:hover::after {
     width: 100%;
-    background-color: rgb(132, 148, 236);
+    background-color: var(--hover-background-color);
 }
 
 a:link {

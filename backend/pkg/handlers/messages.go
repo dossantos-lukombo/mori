@@ -4,10 +4,17 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+<<<<<<< HEAD
 	"mori/pkg/models"
 	"mori/pkg/utils"
 	ws "mori/pkg/wsServer"
+=======
+>>>>>>> refactor_daryl
 	"strings"
+
+	"mori/pkg/models"
+	"mori/pkg/utils"
+	ws "mori/pkg/wsServer"
 )
 
 // get all previous messages for chat
@@ -101,7 +108,7 @@ func (handler *Handler) NewMessage(wsServer *ws.Server, w http.ResponseWriter, r
 	/* -------------------- attach sender id ------------------------------------ */
 	msg.SenderId = r.Context().Value(utils.UserKey).(string)
 
-	var newChatFlag = "" //flag is raised with valu "NEW" if tha chat does not exist for user yet
+	newChatFlag := "" // flag is raised with valu "NEW" if tha chat does not exist for user yet
 
 	// check if receiver is following current user
 	isFollowingBack, err := handler.repos.UserRepo.IsFollowing(msg.SenderId, msg.ReceiverId)
@@ -193,7 +200,7 @@ func (handler *Handler) NewMessage(wsServer *ws.Server, w http.ResponseWriter, r
 				client.SendChatMessage(msg, newChatFlag)
 			}
 		}
-	} else if msg.Type == "GROUP" { //incase of group find and respond to all recievers
+	} else if msg.Type == "GROUP" { // incase of group find and respond to all recievers
 		// find all group members + admin except the sender
 		allMembers, err := handler.repos.GroupRepo.GetMembers(msg.ReceiverId)
 		if err != nil {

@@ -190,6 +190,8 @@ export default {
     right: 0;
     display: flex;
     align-items: flex-end;
+    box-shadow: 0 2px 10px rgb(0, 0, 0);
+    border-radius: 15px;
 }
 
 .messaging {
@@ -202,8 +204,8 @@ export default {
     justify-content: space-between;
     align-items: center;
     padding: 12px 20px;
-    background-color: var(--color-blue);
-    border-top-left-radius: 5px;
+    background-color: var(--purple-color);
+    border-top-left-radius: 15px;
     color: var(--color-white);
     cursor: pointer;
 }
@@ -232,10 +234,13 @@ export default {
 }
 
 .messaging-content {
-    background-color: var(--color-white);
+    background-color: var(--bg-neutral);
     padding: 20px;
 }
 
+.item-list{
+    color: var(--color-white);
+}
 .messaging .item-list:first-of-type {
     padding-bottom: 20px;
 }

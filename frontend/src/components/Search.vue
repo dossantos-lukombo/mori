@@ -166,6 +166,6 @@ export default {
 
 #searchDiv input[type="text"]:hover,
 #searchDiv input[type="text"]:focus {
-    box-shadow: 0 0 0 2px rgb(98, 98, 204);
+    box-shadow: 0 0 0 2px #7d3aa6;
 }
 </style>

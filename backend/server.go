@@ -59,23 +59,23 @@ func setRoutes(handler *handlers.Handler, wsServer *ws.Server) http.Handler {
 	})) // follow user
 	mux.HandleFunc("/cancelFollowRequest", handler.Auth(handler.CancelFollowRequest))
 	mux.HandleFunc("/unfollow", handler.Auth(handler.Unfollow))
-	mux.HandleFunc("/responseFollowRequest", handler.Auth(handler.ResponseFollowRequest))	
+	mux.HandleFunc("/responseFollowRequest", handler.Auth(handler.ResponseFollowRequest))
 
 	/* --------------------------------- groups --------------------------------- */
 	mux.HandleFunc("/allGroups", handler.Auth(handler.AllGroups))             // group list
 	mux.HandleFunc("/userGroups", handler.Auth(handler.UserGroups))           // group list of user groups
 	mux.HandleFunc("/otherUserGroups", handler.Auth(handler.OtherUserGroups)) // group list for specific user
 
-	mux.HandleFunc("/groupInfo", handler.Auth(handler.GroupInfo))                     // get group info
-	mux.HandleFunc("/groupMembers", handler.Auth(handler.GroupMembers))               // get group members
-	
+	mux.HandleFunc("/groupInfo", handler.Auth(handler.GroupInfo))       // get group info
+	mux.HandleFunc("/groupMembers", handler.Auth(handler.GroupMembers)) // get group members
+
 	mux.HandleFunc("/groupRequests", handler.Auth(handler.GroupRequests))             // get group member requests
 	mux.HandleFunc("/cancelGroupRequests", handler.Auth(handler.CancelGroupRequests)) // cancel request or joing group
 
 	mux.HandleFunc("/newGroup", handler.Auth(func(w http.ResponseWriter, r *http.Request) {
 		handler.NewGroup(wsServer, w, r)
 	})) // create new group
-	
+
 	mux.HandleFunc("/newGroupInvite", handler.Auth(func(w http.ResponseWriter, r *http.Request) { // invite new users to group
 		handler.NewGroupInvite(wsServer, w, r)
 	}))
@@ -86,7 +86,6 @@ func setRoutes(handler *handlers.Handler, wsServer *ws.Server) http.Handler {
 		handler.ResponseGroupRequest(wsServer, w, r)
 	})) // response to join request
 	mux.HandleFunc("/responseInviteRequest", handler.Auth(handler.ResponseInviteRequest)) // response to invite request
-	
 
 	/* ------------------------------ notifications ----------------------------- */
 	mux.HandleFunc("/notifications", handler.Auth(handler.Notifications)) // get all notifs from db on login

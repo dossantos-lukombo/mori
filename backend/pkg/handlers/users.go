@@ -2,12 +2,18 @@ package handlers
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
+<<<<<<< HEAD
 	"mori/pkg/models"
 	"mori/pkg/utils"
 	ws "mori/pkg/wsServer"
+=======
+>>>>>>> refactor_daryl
 	"strings"
+
+	"mori/pkg/models"
+	"mori/pkg/utils"
+	ws "mori/pkg/wsServer"
 )
 
 /* -------------------------------------------------------------------------- */
@@ -46,58 +52,67 @@ func (handler *Handler) CurrentUser(w http.ResponseWriter, r *http.Request) {
 //	can be used both on own profile and other users
 func (handler *Handler) UserData(w http.ResponseWriter, r *http.Request) {
 	w = utils.ConfigHeader(w)
-	// access user id
+
+	// Access user ID from the request context
 	currentUserId := r.Context().Value(utils.UserKey).(string)
-	// get user id from request
+
+	// Get the userId from the query
 	query := r.URL.Query()
 	userId := query.Get("userId")
-	// get if profile public or private
+
+	// Check profile visibility status
 	status, err := handler.repos.UserRepo.ProfileStatus(userId)
 	if err != nil {
-		utils.RespondWithError(w, "Error on getting data", 200)
+		utils.RespondWithError(w, "Error on getting profile status", 200)
 		return
 	}
-	// check if client looking for own profile
+
+	// Determine if the current user is accessing their own profile
 	currentUser := (currentUserId == userId)
+
 	var following bool
 	if !currentUser {
-		// check if current user following user he is looking for
+		// Check if the current user is following the profile user
 		following, err = handler.repos.UserRepo.IsFollowing(userId, currentUserId)
 		if err != nil {
-			fmt.Println("Throwing an err!", err)
-			utils.RespondWithError(w, "Error on getting data", 200)
+			utils.RespondWithError(w, "Error on checking following status", 200)
 			return
 		}
 	}
-	// request user info based on following/ and profile status
-	// if public or current user or if following  get large data set
-	// if private and not following => get small data set
+
+	// Fetch user details based on their profile visibility
 	var user models.User
-	if currentUser || following || status == "PUBLIC" { // get full data set
+	if currentUser || following || status == "PUBLIC" {
+		// Fetch full profile details including avatar and name
 		user, err = handler.repos.UserRepo.GetProfileMax(userId)
 	} else {
-		user, _ = handler.repos.UserRepo.GetProfileMin(userId)
-		/* -------------------- check if follow status is pending ------------------- */
-		notif := models.Notification{Type: "FOLLOW", Content: currentUserId, TargetID: userId}
-		user.FollowRequestPending, err = handler.repos.NotifRepo.CheckIfExists(notif)
+		// Fetch minimal profile details
+		user, err = handler.repos.UserRepo.GetProfileMin(userId)
+		if err == nil {
+			// Check if a follow request is pending
+			notif := models.Notification{Type: "FOLLOW", Content: currentUserId, TargetID: userId}
+			user.FollowRequestPending, err = handler.repos.NotifRepo.CheckIfExists(notif)
+		}
 	}
+
 	if err != nil {
-		fmt.Println("Throwing an err!12", err)
-		utils.RespondWithError(w, "Error on getting data", 200)
+		utils.RespondWithError(w, "Error on getting profile data", 200)
 		return
 	}
-	// tie together stats to user object
+
+	// Ensure avatar and name are included in the response
 	user.Following = following
 	user.CurrentUser = currentUser
 	user.Status = status
 
+	// Respond with the user data
 	utils.RespondWithUsers(w, []models.User{user}, 200)
 }
 
 // changes user status in db return status
 // in case of turning to PUBLIC -> also accept follow requests
 func (handler *Handler) UserStatus(w http.ResponseWriter, r *http.Request) {
-	statusList := []string{"PUBLIC", "PRIVATE"} //possible status
+	statusList := []string{"PUBLIC", "PRIVATE"} // possible status
 	var client models.User
 
 	w = utils.ConfigHeader(w)
@@ -191,14 +206,14 @@ func (handler *Handler) Follow(wsServer *ws.Server, w http.ResponseWriter, r *ht
 		return
 	}
 	if reqUserStatus == "PUBLIC" {
-		//SAVE AS FOLLOWER
+		// SAVE AS FOLLOWER
 		err := handler.repos.UserRepo.SaveFollower(reqUserId, currentUserId)
 		if err != nil {
 			utils.RespondWithError(w, "Error on saving follower", 200)
 			return
 		}
 	} else if reqUserStatus == "PRIVATE" {
-		//SAVE IN NOTIFICATIONS as pending folllow request
+		// SAVE IN NOTIFICATIONS as pending folllow request
 		notification := models.Notification{
 			ID:       utils.UniqueId(),
 			TargetID: reqUserId,
@@ -211,7 +226,7 @@ func (handler *Handler) Follow(wsServer *ws.Server, w http.ResponseWriter, r *ht
 			utils.RespondWithError(w, "Error on save", 200)
 			return
 		}
-		//if user online send notification about follow request
+		// if user online send notification about follow request
 		for client := range wsServer.Clients {
 			if client.ID == reqUserId {
 				client.SendNotification(notification)

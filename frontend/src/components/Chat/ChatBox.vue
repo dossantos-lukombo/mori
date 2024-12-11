@@ -173,7 +173,7 @@ export default {
 .header {
     display: flex;
     justify-content: space-between;
-    background-color: var(--color-blue);
+    background-color: var(--purple-color);
     color: var(--button-content);
     padding: 12px 20px;
 }
