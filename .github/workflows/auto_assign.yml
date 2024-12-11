@@ -1,0 +1,33 @@
+name: auto-assign
+
+on:
+  pull_request_target:
+    types: [opened, reopened]
+
+permissions:
+  pull-requests: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  assign-author-and-reviewers:
+    runs-on: ubuntu-latest
+    steps:
+      # Étape pour assigner l'auteur de la PR
+      - name: Assign PR Author
+        uses: toshimaru/auto-author-assign@v2.1.1
+
+      # Étape pour assigner des reviewers
+      - name: Assign Reviewers
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const reviewers = ['dossantos-lukombo', 'QuentinBoiteux', 'Daryl PARISI'];
+            await github.rest.pulls.requestReviewers({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.payload.pull_request.number,
+              reviewers: reviewers
+            });
