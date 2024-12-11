@@ -39,6 +39,3 @@ Backend team
 - Quentin Boiteux
 - Dos Santos Lukombo
 
-Frontend team
-- Kristofer Kangro
-- Viktor Ahlberk
