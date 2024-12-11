@@ -15,13 +15,6 @@ jobs:
 
     - name: Install GitHub CLI
       run: sudo apt-get install gh -y
-
-    - name: Authenticate GitHub CLI
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: |
-        echo $GITHUB_TOKEN | gh auth login --with-token
-
     - name: Run tests (example)
       run: |
         echo "Running tests..."
@@ -29,6 +22,8 @@ jobs:
 
     - name: Ensure PR requires review
       if: github.event.pull_request.draft == false
+       env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         echo "Ensure PR has an approval."
         approvals=$(gh pr view ${{ github.event.pull_request.number }} --json reviews --jq '.reviews | map(select(.state == "APPROVED")) | length')

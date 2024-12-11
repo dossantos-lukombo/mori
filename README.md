@@ -35,9 +35,7 @@ Backend
 
 ## Authors
 Backend team
-- Laura-Eliise Marrandi
-- Zane Krumina
+- Daryl Parisi
+- Quentin Boiteux
+- Dos Santos Lukombo
 
-Frontend team
-- Kristofer Kangro
-- Viktor Ahlberk
