@@ -34,7 +34,7 @@ Backend
 - SQLite3
 
 ## Authors
-Backend team
+team
 - Daryl Parisi
 - Quentin Boiteux
 - Dos Santos Lukombo
