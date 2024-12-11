@@ -1,3 +1,0 @@
-username = zoro
-email = santoslukombo@gmail.com
-mp = 12345678A1
