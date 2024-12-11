@@ -32,7 +32,7 @@ Backend
 - postgresSQL
 
 ## Authors
-team
+team Back and front
 - Daryl Parisi
 - Quentin Boiteux
 - Dos Santos Lukombo
