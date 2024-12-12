@@ -295,7 +295,7 @@ func (handler *Handler) ResponseChatRequest(w http.ResponseWriter, r *http.Reque
 		return
 	}
 	if strings.ToUpper(resp.Response) == "ACCEPT" {
-		notifData, err := handler.repos.NotifRepo.GetCahtNotifById(resp.RequestID)
+		notifData, err := handler.repos.NotifRepo.GetChatNotifById(resp.RequestID)
 		if err != nil {
 			utils.RespondWithError(w, "Error on getting notification", 200)
 			return

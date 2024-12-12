@@ -4,9 +4,7 @@ import "mori/pkg/models"
 
 // replace notification message content based on type
 func DefineNotificationMsg(notif *models.Notification) {
-	switch notif.Type {
-	case "EVENT":
-		notif.Content = " created a new event " 
+	switch notif.Type {	 
 	case "FOLLOW":
 		notif.Content = " sent you a following request "
 	case "GROUP_INVITE":

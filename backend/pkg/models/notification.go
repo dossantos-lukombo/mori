@@ -27,7 +27,7 @@ type NotifRepository interface {
 	// get all notifications for client
 	GetAll(userId string) ([]Notification, error)
 	// get Chat_request notifications based on receiver_id
-	GetCahtNotifById(notificationId string) (Notification, error)
+	GetChatNotifById(notificationId string) (Notification, error)
 	// get content form chat_request notification
 	GetContentFromChatRequest(senderId, receiverId string)(string, error)
 	CheckIfChatRequestExists(senderId, receiverId string)(bool, error) // true if exists, false otherwise

@@ -89,24 +89,7 @@ export default {
 
         context.commit("updateMyFollowers", data.users)
 
-    },
-    
-
-    async getGroupPosts() {
-        await fetch(
-            "http://localhost:8081/groupPosts?groupId=" +
-            router.currentRoute.value.params.id,
-            {
-                credentials: "include",
-            }
-        )
-            .then((r) => r.json())
-            .then((json) => {
-                // console.log(json)
-                let posts = json.posts;
-                this.commit("updateGroupPosts", posts);
-            });
-    },
+    }, 
 
     async isLoggedIn() {
         const response = await fetch('http://localhost:8081/sessionActive', {
