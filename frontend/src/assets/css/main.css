@@ -40,10 +40,9 @@
     box-sizing: border-box;
 }
 
-#app{
+#app{   
     display: flex;
     flex-direction: column;
-    background-color: var(--page-bg);
     width: 100%;
     min-height: 100vh;
 }

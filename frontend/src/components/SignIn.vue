@@ -1,10 +1,7 @@
 <template>
-
   <div class="sign-in__wrapper">
-    <div class="image-div-login">
-      <img src="../assets/toa-heftiba-l_ExpFwwOEg-unsplash.jpg" alt="people hanging out">
-
-    </div>
+    <div class="bg-forest" :style="{ backgroundImage: `url(${backgroundImage})` }"></div>
+    <div class="image-div-login" :style="{ backgroundImage: `url(${backgroundImage})` }"></div>
 
     <div class="sign-in">
       <h1 class="mori">Mori <span class="adder">- sign in</span></h1>
@@ -26,9 +23,7 @@
       </div>
     </div>
   </div>
-
 </template>
-
 
 <script>
 export default {
@@ -39,74 +34,77 @@ export default {
         login: "",
         password: "",
       },
+      backgroundImage: "", // Propriété pour stocker l'image sélectionnée
     };
   },
   methods: {
-    toast() {
-      /*---------------           Here is toast example             --------------------*/
-      // 
-      this.$toast.open({
-        message: "Data sent!",
-        type: "default",
-        //optional options
-        position: "bottom-right",
-        duration: 3000,
-        dismissible: true,
-        onClick: null,
-        onDismiss: null,
-        queue: false,
-        pauseOnHover: true, //Pause the timer when mouse on over a toast
-      });
+    setRandomImage() {
+      const images = [
+        require("../assets/images/forest_1.png"),
+        require("../assets/images/sakura.webp"),
+        require("../assets/images/automn.webp"),
+        require("../assets/images/fantastic.webp"),
+        require("../assets/images/fairytail.webp"),
+      ];
+      this.backgroundImage = images[Math.floor(Math.random() * images.length)];
     },
     async signSubmit() {
       try {
-        // await fetch('https://bfdf8b79-b1e1-40ce-8d02-896de58da3ca.mock.pstmn.io/signin', {
         await fetch("http://localhost:8081/signin", {
           credentials: "include",
           method: "POST",
           headers: {
-            "Accept": "application/json",
-            "Content-Type": "application/json"
+            Accept: "application/json",
+            "Content-Type": "application/json",
           },
-          body: JSON.stringify(this.signInForm)
+          body: JSON.stringify(this.signInForm),
         })
-          .then((response => response.json()))
-          .then((json => {
-            // console.log(json)
+          .then((response) => response.json())
+          .then((json) => {
             if (json.message === "Login successful") {
               this.$toast.open({
                 message: "Login success!",
-                type: "success", //One of success, info, warning, error, default
+                type: "success",
               });
 
-
-              this.$store.dispatch("createWebSocketConn").then(() => this.$router.push("/main"))
-
-
-              // await this.$store.dispatch("getMyUserID")
-            }
-            else {
+              this.$store.dispatch("createWebSocketConn").then(() =>
+                this.$router.push("/main")
+              );
+            } else {
               this.$router.push("/");
               this.$toast.open({
                 message: json.message,
-                type: "error", //One of success, info, warning, error, default
+                type: "error",
               });
             }
-          }));
+          });
+      } catch {
+        // Handle errors
       }
-      catch { }
     },
-  }
-}
+  },
+  created() {
+    this.setRandomImage(); // Choisir une image aléatoire à la création
+  },
+};
 </script>
 
-<style >
-
-
+<style>
+.bg-forest {
+  position: absolute;
+  height: 100vh;
+  width: 100vw;
+  left: 0;
+  z-index: -1;
+  filter: blur(8px) brightness(70%);
+  -webkit-filter: blur(8px) brightness(70%);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
 
 .sign-in__wrapper {
   display: flex;
-  /* margin: auto 0; */
   background-color: var(--bg-neutral);
   border-radius: 20px;
   color: var(--color-white);
@@ -114,6 +112,7 @@ export default {
   overflow: hidden;
   align-items: center;
   width: 810px;
+  max-width: 90%; /* Added for smaller screens */
 }
 
 .image-div-login {
@@ -122,16 +121,10 @@ export default {
   align-items: center;
   width: 50%;
   height: 100%;
-  background-color: var(--bg-neutral);
-}
-
-.sign-in__wrapper img {
-  height: 550px;
+  background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-  width: 100%;
 }
-
 
 .sign-in {
   display: flex;
@@ -139,7 +132,7 @@ export default {
   justify-content: center;
   gap: 40px;
   margin: 0 auto;
-  padding: 0 50px;
+  padding: 8%;
   width: 60%;
 }
 
@@ -148,26 +141,22 @@ export default {
   flex-direction: column;
   gap: 15px;
   color: var(--color-white);
-  width: 90%;
+  width: 100%;
 }
 
 .form-input {
   color: var(--color-white);
 }
 
-
-
 .sign-in button {
   margin-bottom: 10px;
   width: 80px;
 }
 
-
-
 #sign-up {
   color: var(--purple-color);
   text-decoration: underline;
-  font-size: 16.5px;  
+  font-size: 16.5px;
   transition: all 0.3s ease;
 }
 
@@ -183,5 +172,92 @@ export default {
   gap: 20px;
 }
 
+/* Media Queries */
+
+/* Tablet and Phone View (768px and below) */
+@media (max-width: 900px) {
+  html, body {
+    overflow-y: hidden; /* Prevent horizontal scrolling */
+  }
+
+  .bg-forest {
+    filter: blur(8px) brightness(60%); /* Softer background for clarity */
+    top: 0;
+  }
+
+  .sign-in__wrapper {
+    flex-direction: column;
+    align-items: center;
+    width: 95%;
+    max-width: 600px;
+    margin: 0 auto;
+    border-radius: 10px;
+  }
+
+  .image-div-login {
+    width: 100%;
+    height: 200px;
+    display: block;
+  }
+
+  .sign-in {
+    width: 90%;
+    padding: 5%;
+  }
+
+  h1.mori {
+    font-size: 1.8rem; /* Adjust heading size for smaller screens */
+  }
+  .sign-in button {
+    display: flex;
+    width: 100%; /* Wider button for better touch interaction */
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-size: 15px;
+  }
+}
+
+/* Phone View (480px and below) */
+@media (max-width: 480px) {
+  .sign-in__wrapper {
+    flex-direction: column; /* Keep the same column layout */
+    width: 95%;
+    margin: 0 auto;
+  }
+
+  .image-div-login {
+    width: 100%; /* Ensure image spans full width */
+    height: 150px; /* Slightly smaller height for phone screens */
+    display: block;
+  }
+
+  .sign-in {
+    width: 95%; /* Slightly wider form for phones */
+    padding: 4%;
+  }
+
+  h1.mori {
+    font-size: 1.5rem; /* Adjust heading size for better readability */
+  }
+
+  .bg-forest {
+    filter: blur(8px) brightness(60%); /* Softer background for clarity */
+    top: 0;
+  }
+
+  .sign-in button {
+    display: flex;
+    width: 100%; /* Wider button for better touch interaction */
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-size: 15px;
+  }
+
+  p {
+    font-size: 14px; /* Smaller font size for better readability */
+  }
+}
 
 </style>

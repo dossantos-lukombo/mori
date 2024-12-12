@@ -49,7 +49,7 @@
                 </ul>
 
                 <p class="additional-info" v-if="chatUserList === null && userGroups === null">
-                    No one to message with :(</p>
+                    No one to message with </p>
             </div>
 
         </div>
