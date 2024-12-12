@@ -93,7 +93,7 @@
     padding: 10px 30px;
     background-color: var(--purple-color);
     color: var(--color-white);
-    position: relative;
+    position: sticky;
 }
 
 
