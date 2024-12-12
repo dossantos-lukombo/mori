@@ -238,8 +238,8 @@ export default {
     display: flex;
     flex-direction: column;
     padding: var(--container-padding);
-    background-color: var(--color-white);
-    box-shadow: var(--container-shadow);
+    background-color: var(--bg-neutral);
+    box-shadow: 0 2px 10px rgb(0, 0, 0);
     border-radius: var(--container-border-radius);
     align-items: center;
     text-align: center;
@@ -248,8 +248,19 @@ export default {
 
 }
 
+.user-profile__private p, h3, .user-profile__public p, h3{
+    color: var(--color-white);
+}
+
+.user-profile__public h2, .user-profile__private h2 {
+    color: var(--purple-color);
+}
+
+.user-profile__privacy{
+    color: var(--color-white);
+}
+
 :is(.user-profile__public, .user-profile__private) .user-picture {
-    background-image: url(../assets/pexels-jack-winbow-1559486.jpg);
     height: 185px;
     width: 185px;
 }

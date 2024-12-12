@@ -1,7 +1,8 @@
 package utils
 
 import (
-	"io/ioutil"
+	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"strings"
@@ -31,7 +32,7 @@ func SaveAvatar(r *http.Request) string {
 	defer localFile.Close()
 
 	// read data in new file
-	fileData, err := ioutil.ReadAll(file)
+	fileData, err := io.ReadAll(file)
 	if err != nil {
 		return defaultImage
 	}
@@ -61,7 +62,7 @@ func SaveImage(r *http.Request) string {
 	defer localFile.Close()
 
 	// read data in new file
-	fileData, err := ioutil.ReadAll(file)
+	fileData, err := io.ReadAll(file)
 	if err != nil {
 		return ""
 	}
@@ -69,20 +70,24 @@ func SaveImage(r *http.Request) string {
 	return strings.Replace(localFile.Name(), "\\", "/", -1)
 }
 
-// creates empty local file based on filt type
+// creates empty local file based on file type
 func createTempFile(fileType string) (*os.File, error) {
 	var localFile *os.File
 	var err error
 
 	switch fileType {
 	case "image/jpeg":
-		localFile, err = ioutil.TempFile("imageUpload", "*.jpg")
+		localFile, err = os.CreateTemp("imageUpload", "*.jpg")
 	case "image/png":
-		localFile, err = ioutil.TempFile("imageUpload", "*.png")
+		localFile, err = os.CreateTemp("imageUpload", "*.png")
 	case "image/gif":
-		localFile, err = ioutil.TempFile("imageUpload", "*.gif")
+		localFile, err = os.CreateTemp("imageUpload", "*.gif")
 	default:
-		return localFile, err
+		return nil, fmt.Errorf("unsupported file type: %s", fileType)
+	}
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to create temp file: %w", err)
 	}
 	return localFile, nil
 }

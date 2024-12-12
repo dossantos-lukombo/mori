@@ -45,7 +45,12 @@
               <FileUpload v-model:file="form.avatar" labelName="Avatar"></FileUpload>
             </div>
           </div>
-          <button class="btn" form="register__form" type="submit">Create account</button>
+          <div class="button-or-signIn">
+            <button class="btn" form="register__form" type="submit">Create account</button>
+          <p>Already have an account?
+            <router-link to="/sign-in" id="sign-up">Sign-in</router-link>
+          </p>
+          </div>
         </form>
       </div>
     </div>
@@ -201,6 +206,12 @@
     text-align: center;
   }
   
+  .button-or-signIn {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+  }
+
   /* Media Queries */
   
   /* Tablet and Phone View (768px and below) */

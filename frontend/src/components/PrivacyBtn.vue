@@ -72,10 +72,9 @@ export default {
     width: 60px;
     height: 30px;
     /* border: 1px solid black; */
-    box-shadow: 0 0 0 1px rgb(221, 221, 221);
     border-radius: 50px;
     position: relative;
-    background-color: rgb(228, 228, 228);
+    background-color: var(--page-bg);
 }
 
 .toggle-button {
@@ -93,7 +92,7 @@ export default {
 
 .active .toggle-button {
     transform: translateX(100%);
-    background-color: rgb(0, 158, 0);
+    background-color: var(--purple-color);
 }
 
 #privateProfileInput {

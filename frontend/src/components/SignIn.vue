@@ -18,7 +18,7 @@
       <div class="button-or-register">
         <button class="btn" form="sign-in__form" type="submit">Sign in</button>
         <p>Need an account?
-          <router-link to="/reg" id="sign-up">Register here</router-link>
+          <router-link to="/register" id="sign-up">Register here</router-link>
         </p>
       </div>
     </div>

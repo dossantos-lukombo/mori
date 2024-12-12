@@ -182,7 +182,7 @@ export default {
 
 .content {
     flex: 1;
-    background-color: var(--color-white);
+    background-color: var(--bg-neutral);
     padding: var(--padding);
     color: var(--color-lg-black);
     font-size: 14px;
@@ -217,12 +217,15 @@ export default {
 
 
 .message-author {
-    padding-bottom: 3.5px;
+    padding-bottom: 5px;
+    font-size: 12px;
+    color: var(--color-white);
 }
 
 
 .sent-message {
-    background-color: rgb(201, 201, 201);
+    background-color: var(--purple-color);
+    color: var(--color-white);
     /* align-self: flex-end; */
 
 }
@@ -238,8 +241,9 @@ export default {
     flex-wrap: wrap;
     gap: 5px;
     align-items: center;
-
+    box-shadow: var(--container-shadow);
 }
+
 
 .send-message input {
     padding: 12px 20px;
