@@ -9,44 +9,46 @@
       @navigate-to="navigateTo"
     />
     <!-- Chatbox Content -->
-    <div class="chatbox-view-wrapper">
-      <header class="chatbox-view-header">
-        <h1>{{ name }}</h1>
-      </header>
+    <div id="layout">
+      <div class="chatbox-view-wrapper">
+        <header class="chatbox-view-header">
+          <h1>{{ name }}</h1>
+        </header>
 
-      <div class="chatbox-view-content" ref="contentDiv">
-        <div
-          class="message"
-          v-for="(message, index) in allMessages"
-          :style="msgPosition(message)"
-          :key="index"
-        >
-          <p class="message-author" v-if="displayName(message, index)">
-            {{ message.sender.nickname }}
-          </p>
-          <p :class="getClass(message)" class="message-content">
-            {{ message.content }}
-          </p>
+        <div class="chatbox-view-content" ref="contentDiv">
+          <div
+            class="message"
+            v-for="(message, index) in allMessages"
+            :style="msgPosition(message)"
+            :key="index"
+          >
+            <p class="message-author" v-if="displayName(message, index)">
+              {{ message.sender.nickname }}
+            </p>
+            <p :class="getClass(message)" class="message-content">
+              {{ message.content }}
+            </p>
+          </div>
         </div>
-      </div>
 
-      <form
-        @submit.prevent="sendMessage"
-        class="chatbox-view-input"
-        autocomplete="off"
-        @keyup.enter="sendMessage"
-      >
-        <input
-          type="text"
-          placeholder="Type your message here..."
-          ref="sendMessageInput"
-        />
-        <button type="submit"><i class="uil uil-message"></i></button>
-        <Emojis
-          :input="this.$refs.sendMessageInput"
-          :messagebox="this.$refs.contentDiv"
-        />
-      </form>
+        <form
+          @submit.prevent="sendMessage"
+          class="chatbox-view-input"
+          autocomplete="off"
+          @keyup.enter="sendMessage"
+        >
+          <input
+            type="text"
+            placeholder="Type your message here..."
+            ref="sendMessageInput"
+          />
+          <button type="submit"><i class="uil uil-message"></i></button>
+          <Emojis
+            :input="this.$refs.sendMessageInput"
+            :messagebox="this.$refs.contentDiv"
+          />
+        </form>
+      </div>
     </div>
   </div>
 </template>
@@ -69,32 +71,29 @@ export default {
   },
   computed: {
     allMessages() {
-      return [...this.previousMessages];
+      return [
+        ...this.previousMessages,
+        ...this.$store.getters.getMessages(this.receiverId, this.type),
+      ];
     },
     ...mapState({
       myID: (state) => state.id,
     }),
   },
   watch: {
+    allMessages() {
+      this.$nextTick(() => {
+        this.scrollToBottom();
+      });
+    },
     receiverId: {
       immediate: true,
-      handler() {
+      handler(newId) {
         this.getPreviousMessages();
       },
     },
   },
   methods: {
-    async fetchContacts() {
-      try {
-        const response = await fetch("http://localhost:8081/contacts", {
-          credentials: "include",
-        });
-        const data = await response.json();
-        this.contacts = data.contacts || [];
-      } catch (error) {
-        console.error("Error fetching contacts:", error);
-      }
-    },
     toggleSidebar() {
       this.isSidebarActive = !this.isSidebarActive;
     },
@@ -141,10 +140,9 @@ export default {
         const data = await response.json();
 
         if (data.type === "Success") {
-          this.previousMessages.push({
+          this.$store.dispatch("addNewChatMessage", {
             ...msgObj,
             senderId: this.myID,
-            sender: { nickname: "You" },
           });
           this.scrollToBottom();
         } else {
@@ -159,13 +157,30 @@ export default {
         console.error("Error sending message:", error);
       }
     },
+    clearChatNewMessages() {
+      if (this.type === "GROUP") {
+        let msgs = this.$store.state.chat.newGroupChatMessages.filter(
+          (msg) => msg.receiverId !== this.receiverId
+        );
+        this.$store.commit("updateNewGroupChatMessages", msgs);
+      } else {
+        let msgs = this.$store.state.chat.newChatMessages.filter(
+          (msg) =>
+            msg.receiverId !== this.receiverId &&
+            msg.senderId !== this.receiverId
+        );
+        this.$store.commit("updateNewChatMessages", msgs);
+      }
+    },
     displayName(message, index) {
       if (message.senderId === this.myID) return false;
       if (index < 1) return true;
       return message.senderId !== this.allMessages[index - 1]?.senderId;
     },
     getClass(message) {
-      return message.senderId === this.myID ? "sent-message" : "received-message";
+      return message.senderId === this.myID
+        ? { "sent-message": true }
+        : { "received-message": true };
     },
     msgPosition(message) {
       return {
@@ -174,19 +189,32 @@ export default {
     },
     scrollToBottom() {
       this.$nextTick(() => {
-        this.$refs.contentDiv.scrollTop = this.$refs.contentDiv.scrollHeight;
+        if (this.$refs.contentDiv) {
+          this.$refs.contentDiv.scrollTop = this.$refs.contentDiv.scrollHeight;
+        }
       });
     },
   },
   created() {
     this.getPreviousMessages();
-    this.fetchContacts();
+  },
+  unmounted() {
+    this.clearChatNewMessages();
   },
 };
 </script>
 
 
 <style scoped>
+#layout {
+  display: flex;
+  height: 95vh;
+  width: 100%;
+  position: fixed;
+  bottom: 0px;
+  align-items: center;
+  justify-content: center;
+}
 .chatbox-view-wrapper {
   display: flex;
   flex-direction: column;

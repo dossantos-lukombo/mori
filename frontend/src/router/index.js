@@ -25,6 +25,7 @@ const routes = [
       default: () => import("../views/MainView.vue"),
       Chat: () => import("@/components/Chat/Chat.vue"),
     },
+    meta: { requiresAuth: true },
   },
   {
     path: "/messages",
@@ -35,6 +36,7 @@ const routes = [
       receiverId: route.query.receiverId || null,
       type: route.query.type || "PERSON",
     }),
+    meta: { requiresAuth: true },
   },
   {
     path: "/profile/:id",
@@ -43,6 +45,7 @@ const routes = [
       default: () => import("../views/ProfileView.vue"),
       Chat: () => import("@/components/Chat/Chat.vue"),
     },
+    meta: { requiresAuth: true },
   },
   {
     path: "/group/:id",
@@ -51,6 +54,7 @@ const routes = [
       default: () => import("../views/GroupView.vue"),
       Chat: () => import("@/components/Chat/Chat.vue"),
     },
+    meta: { requiresAuth: true },
   },
 ];
 
@@ -59,13 +63,25 @@ const router = createRouter({
   routes,
 });
 
-router.beforeEach(async (to, from) => {
+router.beforeEach(async (to, from, next) => {
   const isAuthenticated = await store.dispatch("isLoggedIn");
 
   // Redirect to sign-in if not authenticated, except for sign-in and register
   if (!isAuthenticated && to.name !== "sign-in" && to.name !== "register") {
-    return { name: "sign-in" };
+    return next({ name: "sign-in" });
   }
+
+  // Ensure WebSocket connection is established
+  if (isAuthenticated && !store.state.wsConn) {
+    await store.dispatch("createWebSocketConn");
+  }
+
+  // Handle authenticated routes
+  if (to.meta.requiresAuth && !isAuthenticated) {
+    return next({ name: "sign-in" });
+  }
+
+  next();
 });
 
 export default router;

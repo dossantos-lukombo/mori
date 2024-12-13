@@ -1,170 +1,140 @@
-import router from "@/router"
+import router from "@/router";
 
 export default {
-   
+  async getMyUserID({ commit }) {
+    await fetch("http://localhost:8081/currentUser", {
+      credentials: "include",
+    })
+      .then((r) => r.json())
+      .then((json) => {
+        // console.log("JSON response", json)
+        commit("updateMyUserID", json.users[0].id);
+      });
+  },
 
-    async getMyUserID({ commit }) {
+  async getMyProfileInfo(context) {
+    await context.dispatch("getMyUserID");
+    const userID = context.state.id;
+    await fetch("http://localhost:8081/userData?userId=" + userID, {
+      credentials: "include",
+    })
+      .then((r) => r.json())
+      .then((json) => {
+        let userInfo = json.users[0];
+        // console.log(userInfo);
+        this.commit("updateProfileInfo", userInfo);
+        // console.log("userinfo -", json);
+      });
+  },
 
-        await fetch("http://localhost:8081/currentUser", {
-            credentials: "include",
-        })
-            .then((r) => r.json())
-            .then((json) => {
-                // console.log("JSON response", json)
-                commit("updateMyUserID", json.users[0].id)
-            });
-    },
+  async getAllUsers() {
+    await fetch("http://localhost:8081/allUsers", {
+      credentials: "include",
+    })
+      .then((r) => r.json())
+      .then((json) => {
+        let users = json.users;
+        this.commit("updateAllUsers", users);
+        // console.log("allUsers:", json.users);
+      });
+  },
+  async getAllGroups() {
+    await fetch("http://localhost:8081/allGroups", {
+      credentials: "include",
+    })
+      .then((r) => r.json())
+      .then((json) => {
+        let groups = json.groups;
+        this.commit("updateAllGroups", groups);
+        // console.log("Allgroups:", json.groups);
+      });
+  },
 
-    async getMyProfileInfo(context) {
-        await context.dispatch("getMyUserID");
-        const userID = context.state.id;
-        await fetch("http://localhost:8081/userData?userId=" + userID, {
-            credentials: "include",
-        })
-            .then((r) => r.json())
-            .then((json) => {
-                let userInfo = json.users[0];
-                // console.log(userInfo);
-                this.commit("updateProfileInfo", userInfo);
-                // console.log("userinfo -", json);
-            });
-    },
+  async getUserGroups(context) {
+    const response = await fetch(`http://localhost:8081/userGroups`, {
+      credentials: "include",
+    });
 
-    async getAllUsers() {
-        await fetch("http://localhost:8081/allUsers", {
-            credentials: "include",
-        })
-            .then((r) => r.json())
-            .then((json) => {
-                let users = json.users;
-                this.commit("updateAllUsers", users);
-                // console.log("allUsers:", json.users);
-            });
-    },
-    async getAllGroups() {
-        await fetch("http://localhost:8081/allGroups", {
-            credentials: "include",
-        })
-            .then((r) => r.json())
-            .then((json) => {
-                let groups = json.groups;
-                this.commit("updateAllGroups", groups);
-                // console.log("Allgroups:", json.groups);
-            });
-    },
+    const data = await response.json();
+    // console.log("/getUserGroups data", data)
+    // context.state.groups.userGroups.loaded = true;
 
-    async getUserGroups(context) {
-        const response = await fetch(`http://localhost:8081/userGroups`, {
-            credentials: 'include'
-        });
+    context.commit("updateUserGroups", data.groups);
+    context.commit("updateDataLoaded", "userGroups");
+  },
 
-        const data = await response.json();
-        // console.log("/getUserGroups data", data)
-        // context.state.groups.userGroups.loaded = true;
+  addUserGroup({ state, commit }, userGroup) {
+    let userGroups = state.groups.userGroups;
+    console.log("userGroups state", userGroups);
+    if (userGroups === null) {
+      userGroups = [];
+    }
+    userGroups.push(userGroup);
 
-        context.commit("updateUserGroups", data.groups)
-        context.commit("updateDataLoaded", "userGroups")
+    console.log("userGroup", userGroup);
+    commit("updateUserGroups", userGroups);
+  },
 
-    },
+  async getMyFollowers(context) {
+    await context.dispatch("getMyProfileInfo");
+    const myID = context.state.profileInfo.id;
 
-    addUserGroup({ state, commit }, userGroup) {
-        let userGroups = state.groups.userGroups;
-        console.log("userGroups state", userGroups)
-        if (userGroups === null) { userGroups = [] };
-        userGroups.push(userGroup);
+    const response = await fetch(
+      `http://localhost:8081/followers?userId=${myID}`,
+      {
+        credentials: "include",
+      }
+    );
 
-        console.log("userGroup", userGroup)
-        commit("updateUserGroups", userGroups)
-    },
+    const data = await response.json();
 
-    async getMyFollowers(context) {
-        await context.dispatch("getMyProfileInfo");
-        const myID = context.state.profileInfo.id;
+    context.commit("updateMyFollowers", data.users);
+  },
 
-        const response = await fetch(`http://localhost:8081/followers?userId=${myID}`, {
-            credentials: 'include'
-        });
+  async isLoggedIn() {
+    const response = await fetch("http://localhost:8081/sessionActive", {
+      credentials: "include",
+    });
 
-        const data = await response.json();
+    const data = await response.json();
 
-        context.commit("updateMyFollowers", data.users)
+    if (data.message === "Session active") {
+      // console.log("ah yes")
+      return true;
+    } else {
+      // console.log("ah no")
+      return false;
+    }
+  },
 
-    },
-    
+  createWebSocketConn({ commit, dispatch }) {
+    const ws = new WebSocket("ws://localhost:8081/ws");
 
-    async getGroupPosts() {
-        await fetch(
-            "http://localhost:8081/groupPosts?groupId=" +
-            router.currentRoute.value.params.id,
-            {
-                credentials: "include",
-            }
-        )
-            .then((r) => r.json())
-            .then((json) => {
-                // console.log(json)
-                let posts = json.posts;
-                this.commit("updateGroupPosts", posts);
-            });
-    },
+    ws.addEventListener("message", (e) => {
+      const data = JSON.parse(e.data);
 
-    async isLoggedIn() {
-        const response = await fetch('http://localhost:8081/sessionActive', {
-            credentials: 'include'
-        });
+      if (data.action === "chat") {
+        const message = data.chatMessage;
 
-        const data = await response.json();
+        // Add the new chat message to the Vuex store
+        dispatch("addNewChatMessage", message);
 
-        if (data.message === "Session active") {
-            // console.log("ah yes")
-            return true
-        } else {
-            // console.log("ah no")
-            return false
+        // Mark as read or unread depending on the current user's state
+        if (data.message === "NEW") {
+          dispatch("fetchChatUserList");
         }
 
-    },
+        // If the message is not read immediately, add it to unread
+        if (message.type === "PERSON" || message.type === "GROUP") {
+          dispatch("addUnreadChatMessage", message);
+        }
+      } else if (data.action === "notification") {
+        dispatch("addNewNotification", data.notification);
+      } else if (data.action === "groupAccept") {
+        dispatch("getUserGroups");
+      }
+    });
 
-    createWebSocketConn({ commit, dispatch, state }) {
-        const ws = new WebSocket("ws://localhost:8081/ws");
-      
-        ws.addEventListener("message", (e) => {
-            const data = JSON.parse(e.data);
-            if (data.action == "chat") {
-                // only broadcast messages when participants(sender and reciever) chat is open
-
-                const isParticipantsChatOpen = state.chat.openChats.some((chat) => {
-                    // Chat is open with the person who sent the message
-                    if (data.chatMessage.type === "PERSON" && data.chatMessage.senderId  === chat.receiverId) {
-                        return true
-                    }
-
-                    if (data.chatMessage.type === "GROUP" && data.chatMessage.receiverId === chat.receiverId) {
-                        return true
-                    }
-
-
-                })
-                if (isParticipantsChatOpen) {
-                    dispatch("addNewChatMessage", data.chatMessage)
-                    dispatch("markMessageRead", data.chatMessage)
-                } else {
-                    if (data.message === "NEW") {
-                        dispatch("fetchChatUserList");
-                    }
-    
-                    dispatch("addUnreadChatMessage", data.chatMessage)
-                }
-            } else if (data.action == "notification") {
-                dispatch("addNewNotification", data.notification);
-
-            } else if(data.action == "groupAccept"){
-                dispatch("getUserGroups");
-            }
-
-        })
-
-        commit("updateWebSocketConn", ws)  
-    }
-
-}
+    commit("updateWebSocketConn", ws);
+  },
+};

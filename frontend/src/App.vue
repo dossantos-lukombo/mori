@@ -5,6 +5,7 @@
   
   <script>
   import Chat from "./components/Chat/Chat.vue";
+  import { mapState } from "vuex";
   
   export default {
     name: "App",
@@ -14,16 +15,37 @@
         showSmallChat: true, // Controls visibility of the small chatbox
       };
     },
+    computed: {
+      ...mapState({
+        currentRoute: (state) => state.route, // Map current route from Vuex or Vue Router
+      }),
+      shouldHideSmallChat() {
+        // Hide small chatbox on specific routes
+        const hiddenRoutes = ["/sign-in", "/register", "/messages"];
+        return hiddenRoutes.includes(this.$route.path);
+      },
+    },
+    watch: {
+      $route() {
+        this.toggleChatVisibility();
+      },
+    },
     methods: {
-      toggleChatVisibility(hideChat) {
-        this.showSmallChat = !hideChat;
+      toggleChatVisibility() {
+        this.showSmallChat = !this.shouldHideSmallChat;
       },
       createWebSocketConn() {
-        if (this.$route.path === "/sign-in" || this.$route.path === "/register") {
+        const excludedPaths = ["/sign-in", "/register"];
+        if (excludedPaths.includes(this.$route.path)) {
           return;
         }
+  
         this.$store.dispatch("createWebSocketConn");
       },
+    },
+    created() {
+      this.toggleChatVisibility();
+      this.createWebSocketConn();
     },
   };
   </script>
