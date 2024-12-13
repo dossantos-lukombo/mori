@@ -126,7 +126,7 @@ func (repo *NotifRepository) GetAll(userId string) ([]models.Notification, error
 }
 
 // GetChatNotifById retrieves a chat notification by its ID.
-func (repo *NotifRepository) GetCahtNotifById(notificationId string) (models.Notification, error) {
+func (repo *NotifRepository) GetChatNotifById(notificationId string) (models.Notification, error) {
 	query := `
 		SELECT content, user_id, sender 
 		FROM notifications 

@@ -3,17 +3,20 @@ package ws
 import (
 	"encoding/json"
 	"log"
+
 	"mori/pkg/models"
 )
 
 /* --------------------- actions for websocket messages --------------------- */
-const NotificationAction = "notification"
-const ChatAction = "chat"
-const GroupAcceptAction = "groupAccept"
+const (
+	NotificationAction = "notification"
+	ChatAction         = "chat"
+	GroupAcceptAction  = "groupAccept"
+)
 
 type WsMessage struct {
 	UserID       string              `json:"uid"`
-	Action       string              `json:"action"` //msg request action
+	Action       string              `json:"action"` // msg request action
 	Notification models.Notification `json:"notification"`
 	ChatMessage  models.ChatMessage  `json:"chatMessage"`
 	Message      string              `json:"message"`

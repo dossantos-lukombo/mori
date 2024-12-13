@@ -2,6 +2,7 @@ package ws
 
 import (
 	"log"
+
 	"mori/pkg/models"
 	"mori/pkg/utils"
 
@@ -11,9 +12,9 @@ import (
 // represents single websocket client
 type Client struct {
 	ID    string
-	conn  *websocket.Conn      //ws connection
-	send  chan []byte          //sedn channel for outgoing messages
-	repos *models.Repositories //connection to db actions
+	conn  *websocket.Conn      // ws connection
+	send  chan []byte          // sedn channel for outgoing messages
+	repos *models.Repositories // connection to db actions
 }
 
 func NewClient(conn *websocket.Conn, repos *models.Repositories, ID string) *Client {
@@ -38,7 +39,7 @@ func (client *Client) SendNotification(notif models.Notification) {
 		notif.Group, _ = client.repos.GroupRepo.GetData(notif.Content)
 		notif.User, _ = client.repos.UserRepo.GetDataMin(notif.Sender)
 	case "FOLLOW":
-		notif.User, _ = client.repos.UserRepo.GetDataMin(notif.Content)	
+		notif.User, _ = client.repos.UserRepo.GetDataMin(notif.Content)
 	case "GROUP_REQUEST":
 		notif.User, _ = client.repos.UserRepo.GetDataMin(notif.Content)
 		notif.Group, _ = client.repos.GroupRepo.GetData(notif.TargetID)
@@ -61,7 +62,7 @@ func (client *Client) SendChatMessage(msg models.ChatMessage, flag string) {
 	message := WsMessage{
 		Action:      ChatAction,
 		ChatMessage: msg,
-		Message: flag,
+		Message:     flag,
 	}
 
 	client.send <- message.encode()

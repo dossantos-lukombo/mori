@@ -13,20 +13,20 @@ export default {
             });
     },
 
-    async getMyProfileInfo(context) {
-        await context.dispatch("getMyUserID");
-        const userID = context.state.id;
-        await fetch("http://localhost:8081/userData?userId=" + userID, {
-            credentials: "include",
-        })
-            .then((r) => r.json())
-            .then((json) => {
-                let userInfo = json.users[0];
-                // console.log(userInfo);
-                this.commit("updateProfileInfo", userInfo);
-                // console.log("userinfo -", json);
-            });
-    },
+  async getMyProfileInfo(context) {
+    await context.dispatch("getMyUserID");
+    const userID = context.state.id;
+    await fetch("http://localhost:8081/userData?userId=" + userID, {
+      credentials: "include",
+    })
+      .then((r) => r.json())
+      .then((json) => {
+        let userInfo = json.users[0];
+        // console.log(userInfo);
+        this.commit("updateProfileInfo", userInfo);
+        // console.log("userinfo -", json);
+      });
+  },
 
     async getAllUsers() {
         await fetch("http://localhost:8081/allUsers", {
@@ -51,33 +51,34 @@ export default {
             });
     },
 
-    async getUserGroups(context) {
-        const response = await fetch(`http://localhost:8081/userGroups`, {
-            credentials: 'include'
-        });
+  async getUserGroups(context) {
+    const response = await fetch(`http://localhost:8081/userGroups`, {
+      credentials: "include",
+    });
 
-        const data = await response.json();
-        // console.log("/getUserGroups data", data)
-        // context.state.groups.userGroups.loaded = true;
+    const data = await response.json();
+    // console.log("/getUserGroups data", data)
+    // context.state.groups.userGroups.loaded = true;
 
-        context.commit("updateUserGroups", data.groups)
-        context.commit("updateDataLoaded", "userGroups")
+    context.commit("updateUserGroups", data.groups);
+    context.commit("updateDataLoaded", "userGroups");
+  },
 
-    },
+  addUserGroup({ state, commit }, userGroup) {
+    let userGroups = state.groups.userGroups;
+    console.log("userGroups state", userGroups);
+    if (userGroups === null) {
+      userGroups = [];
+    }
+    userGroups.push(userGroup);
 
-    addUserGroup({ state, commit }, userGroup) {
-        let userGroups = state.groups.userGroups;
-        console.log("userGroups state", userGroups)
-        if (userGroups === null) { userGroups = [] };
-        userGroups.push(userGroup);
+    console.log("userGroup", userGroup);
+    commit("updateUserGroups", userGroups);
+  },
 
-        console.log("userGroup", userGroup)
-        commit("updateUserGroups", userGroups)
-    },
-
-    async getMyFollowers(context) {
-        await context.dispatch("getMyProfileInfo");
-        const myID = context.state.profileInfo.id;
+  async getMyFollowers(context) {
+    await context.dispatch("getMyProfileInfo");
+    const myID = context.state.profileInfo.id;
 
         const response = await fetch(`http://localhost:8081/followers?userId=${myID}`, {
             credentials: 'include'
@@ -92,22 +93,21 @@ export default {
 
     
 
-    async isLoggedIn() {
-        const response = await fetch('http://localhost:8081/sessionActive', {
-            credentials: 'include'
-        });
+  async isLoggedIn() {
+    const response = await fetch("http://localhost:8081/sessionActive", {
+      credentials: "include",
+    });
 
-        const data = await response.json();
+    const data = await response.json();
 
-        if (data.message === "Session active") {
-            // console.log("ah yes")
-            return true
-        } else {
-            // console.log("ah no")
-            return false
-        }
-
-    },
+    if (data.message === "Session active") {
+      // console.log("ah yes")
+      return true;
+    } else {
+      // console.log("ah no")
+      return false;
+    }
+  },
 
     async fetchConversationsMsg({ commit }) {
         const resp = await fetch("http://localhost:8081/conversationsMsg", {

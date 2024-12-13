@@ -3,6 +3,7 @@ package handlers
 import (
 	"log"
 	"net/http"
+
 	"mori/pkg/utils"
 	ws "mori/pkg/wsServer"
 
@@ -12,7 +13,7 @@ import (
 var upgrader = websocket.Upgrader{} // use default options
 
 func (handler *Handler) SocketHandler(wsServer *ws.Server, w http.ResponseWriter, r *http.Request) {
-	upgrader.CheckOrigin = func(r *http.Request) bool { return true } //for CORS err
+	upgrader.CheckOrigin = func(r *http.Request) bool { return true } // for CORS err
 
 	// access user id
 	userId := r.Context().Value(utils.UserKey).(string)
