@@ -109,10 +109,10 @@ export default {
 
   createWebSocketConn({ commit, dispatch }) {
     const ws = new WebSocket("ws://localhost:8081/ws");
-
+    console.log("Creating WebSocket connection...");
     ws.addEventListener("message", (e) => {
       const data = JSON.parse(e.data);
-
+      console.log("WebSocket message received:", e.data);
       if (data.action === "chat") {
         const message = data.chatMessage;
 
