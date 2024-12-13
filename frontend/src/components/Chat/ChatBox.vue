@@ -161,7 +161,7 @@ export default {
     width: 300px;
     display: flex;
     flex-direction: column;
-    box-shadow: var(--container-shadow);
+    box-shadow: 0 2px 10px rgb(0, 0, 0);
     border-radius: 5px 5px 0 0;
     overflow: hidden;
     --padding: 15px;

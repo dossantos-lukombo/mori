@@ -90,6 +90,7 @@ export default {
 </script>
 
 <style>
+
 .bg-forest {
   position: absolute;
   height: 100vh;

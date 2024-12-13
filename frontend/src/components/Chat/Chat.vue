@@ -190,12 +190,11 @@ export default {
     right: 0;
     display: flex;
     align-items: flex-end;
-    box-shadow: 0 2px 10px rgb(0, 0, 0);
     border-radius: 15px;
 }
 
 .messaging {
-
+    box-shadow: 0 2px 10px rgb(0, 0, 0);
     width: 300px;
 }
 
