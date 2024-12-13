@@ -1,71 +1,109 @@
 <template>
-    <div :class="['sidebar', { 'sidebar--active': isActive }]" @click.self="closeSidebar">
-      <div class="sidebar-content">
-        <ul>
-          <li><router-link to="/dashboard">Dashboard</router-link></li>
-          <li><router-link to="/settings">Settings</router-link></li>
-          <li @click="logout">Log out</li>
-        </ul>
-      </div>
+  <div :class="['sidebar', { 'sidebar--active': isActive }]">
+    <div class="sidebar-content">
+      <ul>
+        <li @click="navigateToMessages">
+          <div class="box">Messages</div>
+        </li>
+        <li @click="navigateToChatBot">
+          <div class="box">ChatBot</div>
+        </li>
+      </ul>
+
+      <ContactsForChatBotView
+        v-if="activeView === 'contacts'"
+        @select-contact="handleContactSelection"
+      />
     </div>
-  </template>
-  
-  <script>
-  export default {
-    name: "Sidebar",
-    props: {
-      isActive: {
-        type: Boolean,
-        required: true,
-      },
+  </div>
+</template>
+
+<script>
+import ContactsForChatBotView from "./ContactsForChatBoxView.vue";
+
+export default {
+  props: {
+    isActive: {
+      type: Boolean,
+      required: true,
     },
-    methods: {
-      closeSidebar() {
-        this.$emit('close-sidebar');
-      },
-      logout() {
-        this.$emit('logout');
+    contactsList: {
+      type: Array,
+      required: true, // Ensure we receive the contacts list as a prop
+    },
+  },
+  data() {
+    return {
+      activeView: null, // Manage the active view in the sidebar
+    };
+  },
+  components: { ContactsForChatBotView },
+  methods: {
+    async navigateToMessages() {
+      if (this.contactsList.length > 0) {
+        const firstContact = this.contactsList[0];
+        await this.$router.push({
+          name: "messages",
+          query: {
+            name: firstContact.nickname,
+            receiverId: firstContact.id,
+            type: "PERSON",
+          },
+        });
+      } else {
+        this.activeView = "contacts";
       }
     },
-  };
-  </script>
-  
-  <style scoped>
-  .sidebar {
-    position: fixed;
-    top: 64.45px; /* Adjust to match your navbar height */
-    left: -440px;
-    width: 440px;
-    height: calc(100% - 64.45px); /* Subtract navbar height from full height */
-    background-color: var(--bg-neutral);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3); /* Adjust transparency for softer shadow */
-    color: var(--color-white);
-    transition: left 0.3s ease;
-    border-radius: 0 0 20px 0; /* Rounded bottom corners */
-    z-index: 2;
-    overflow-y: auto;
-    clip-path: inset(-10px -10px 0 -10px); /* Remove shadow from the top */
+    async navigateToChatBot() {
+      await this.$router.push({ name: "mainpage" });
+    },
+    handleContactSelection(contact) {
+      this.$router.push({
+        name: "messages",
+        query: {
+          name: contact.nickname,
+          receiverId: contact.id,
+          type: "PERSON",
+        },
+      });
+    },
+  },
+};
+</script>
+
+
+<style scoped>
+/* Same styles */
+.sidebar {
+  position: fixed;
+  top: 64.45px;
+  left: -440px;
+  width: 440px;
+  height: calc(100% - 64.45px);
+  background-color: var(--bg-neutral);
+  transition: left 0.3s ease;
+  z-index: 2;
+  overflow-y: auto;
 }
 
-  .sidebar--active {
-    left: 0;
-  }
-  .sidebar-content {
-    padding: 20px;
-  }
-  .sidebar ul {
-    list-style: none;
-    padding: 0;
-  }
-  .sidebar li {
-    margin: 15px 0;
-  }
-  .sidebar a {
-    color: var(--color-white);
-    text-decoration: none;
-  }
-  .sidebar a:hover {
-    text-decoration: underline;
-  }
-  </style>
-  
+.sidebar--active {
+  left: 0;
+}
+
+.sidebar-content {
+  padding: 20px;
+}
+
+.box {
+  background-color: var(--purple-color);
+  padding: 15px;
+  border-radius: 8px;
+  text-align: center;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.box:hover {
+  background-color: var(--hover-color);
+}
+</style>

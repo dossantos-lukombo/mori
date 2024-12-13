@@ -1,68 +1,92 @@
 <template>
-    <div id="navbar">
-      <div id="menu-btn" @click="toggleSidebar"></div>
-      <div id="nav-titleSearch">
-        <div class="smallMoriLogo">
-        </div>
-        <router-link to="/main" class="mori" id="nav-title">Mori</router-link>
-        <Search />
-      </div>
-      <ul class="nav-links">
-        <li id="notifications-link">
-          <Notifications />
-        </li>
-        <li>
-          <router-link v-if="typeof user.id !== 'undefined'"
-                       :to="{ name: 'Profile', params: { id: user.id } }">My profile</router-link>
-        </li>
-        <li @click="logout">Log out</li>
-      </ul>
-      <Sidebar :isActive="isSidebarActive" @close-sidebar="toggleSidebar" @logout="logout" />
+  <div id="navbar">
+    <div id="menu-btn" @click="toggleSidebar"></div>
+    <div id="nav-titleSearch">
+      <div class="smallMoriLogo"></div>
+      <router-link to="/main" class="mori" id="nav-title">Mori</router-link>
+      <Search />
     </div>
+    <ul class="nav-links">
+      <li id="notifications-link">
+        <Notifications />
+      </li>
+      <li>
+        <router-link v-if="typeof user.id !== 'undefined'" :to="{ name: 'Profile', params: { id: user.id } }">
+          My profile
+        </router-link>
+      </li>
+      <li @click="logout">Log out</li>
+    </ul>
+    <!-- Sidebar -->
+    <Sidebar
+      :isActive="isSidebarActive"
+      :contactsList="contactsList"
+      @select-component="$emit('select-component', $event)"
+      @select-contact="$emit('select-contact', $event)"
+    />
+  </div>
 </template>
-  
+
 <script>
-  import Search from './Search.vue';
-  import Notifications from './Notifications.vue';
-  import Sidebar from './Sidebar.vue';
-  
-  export default {
-    name: 'NavBarOn',
-    data() {
-      return {
-        user: {},
-        isSidebarActive: false,
-      };
+import Search from "./Search.vue";
+import Notifications from "./Notifications.vue";
+import Sidebar from "./Sidebar.vue";
+
+export default {
+  name: "NavBarOn",
+  components: { Notifications, Search, Sidebar },
+  props: {
+    contactsList: {
+      type: Array,
+      default: () => [],
     },
-    components: { Notifications, Search, Sidebar },
-    created() {
-      this.getUserInfo();
+  },
+  data() {
+    return {
+      user: {},
+      isSidebarActive: false, // Controls sidebar visibility
+    };
+  },
+  created() {
+    this.getUserInfo();
+  },
+  methods: {
+    async getUserInfo() {
+      const response = await fetch("http://localhost:8081/currentUser", { credentials: "include" });
+      const json = await response.json();
+      this.user = json.users[0];
     },
-    methods: {
-      async getUserInfo() {
-        await fetch("http://localhost:8081/currentUser", { credentials: 'include' })
-          .then(r => r.json())
-          .then(json => {
-            this.user = json.users[0];
-          });
-      },
-      async logout() {
-        await fetch('http://localhost:8081/logout', {
-          credentials: 'include',
-          headers: { 'Accept': 'application/json' },
-        })
-          .then(response => response.json())
-          .then(json => console.log(json));
-        this.$store.state.wsConn.close(1000, "user logged out");
-        this.$router.push("/");
-      },
-      toggleSidebar() {
-        this.isSidebarActive = !this.isSidebarActive;
+    async logout() {
+      await fetch("http://localhost:8081/logout", {
+        credentials: "include",
+        headers: { Accept: "application/json" },
+      });
+      this.$store.state.wsConn.close(1000, "user logged out");
+      this.$router.push("/");
+    },
+    toggleSidebar() {
+      this.isSidebarActive = !this.isSidebarActive;
+    },
+    navigateToChatbot() {
+      this.$router.push({ name: "mainpage" }); // Navigate to the Chatbot view
+    },
+    navigateToMessages() {
+      if (this.contactsList.length > 0) {
+        const firstContact = this.contactsList[0];
+        this.$router.push({
+          name: "messages",
+          query: {
+            name: firstContact.nickname,
+            receiverId: firstContact.id,
+            type: "PERSON",
+          },
+        });
       }
-    }
-  };
+    },
+  },
+};
 </script>
-  
+
 
 <style scoped>
 

@@ -1,33 +1,30 @@
 <template>
-
-    <router-view>
-
-    </router-view>
-
-    <router-view name="Chat"></router-view>
-</template>
-
-<script>
-
-import Chat from './components/Chat/Chat.vue'
-export default {
-    name: 'App',
+    <router-view @hide-chat="toggleChatVisibility"></router-view>
+    <Chat v-if="showSmallChat" />
+  </template>
+  
+  <script>
+  import Chat from "./components/Chat/Chat.vue";
+  
+  export default {
+    name: "App",
     components: { Chat },
-
-    mounted() {
-        window.addEventListener("load", this.createWebSocketConn)
+    data() {
+      return {
+        showSmallChat: true, // Controls visibility of the small chatbox
+      };
     },
-
     methods: {
-        createWebSocketConn() {
-            if (this.$route.path === "/sign-in" || this.$route.path === "/register" ) {
-                return
-            }
-            this.$store.dispatch("createWebSocketConn")
+      toggleChatVisibility(hideChat) {
+        this.showSmallChat = !hideChat;
+      },
+      createWebSocketConn() {
+        if (this.$route.path === "/sign-in" || this.$route.path === "/register") {
+          return;
         }
-    }
-}
-</script>
-
-<style>
-</style>
+        this.$store.dispatch("createWebSocketConn");
+      },
+    },
+  };
+  </script>
+  

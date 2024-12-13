@@ -81,6 +81,7 @@
   </script>
   
   <style scoped>
+
   .chatbot-container {
     display: flex;
     justify-content: center;

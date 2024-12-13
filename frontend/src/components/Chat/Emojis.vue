@@ -40,11 +40,22 @@ export default {
 
 <style scoped>
 i {
-    font-size: 1.35em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-size: 1.4em;
+    width: 5%;
+    min-width: 40px;
+    height: 100%;
+    border-radius: 10px;
+    background-color: var(--purple-color);
+    color: white;
+    transition: all 0.3s ease;
 }
 
 i:hover {
-    color: var(--hover-color);
+    background-color: var(--hover-background-color);
 }
 
 
@@ -53,12 +64,12 @@ i:hover {
     display: flex;
     padding-top: 5px;
     padding-left: 7px;
-    width: 100%;
+    width: 40%;
     gap: 5px;
 }
 
 .emoji {
-    font-size: 1.25em;
+    font-size: 1.3em;
     cursor: pointer;
 }
 </style>

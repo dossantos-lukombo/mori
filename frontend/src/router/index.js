@@ -1,8 +1,6 @@
 import { createRouter, createWebHistory } from "vue-router";
 import Auth from "../components/Auth.vue";
 import store from "@/store";
-// import SignIn from '../views/SignInView.vue'
-// import RegisterView from '../views/RegisterView.vue'
 
 const routes = [
   {
@@ -27,6 +25,16 @@ const routes = [
       default: () => import("../views/MainView.vue"),
       Chat: () => import("@/components/Chat/Chat.vue"),
     },
+  },
+  {
+    path: "/messages",
+    name: "messages",
+    component: () => import("../components/ChatBoxView.vue"),
+    props: (route) => ({
+      name: route.query.name || "Conversation",
+      receiverId: route.query.receiverId || null,
+      type: route.query.type || "PERSON",
+    }),
   },
   {
     path: "/profile/:id",
@@ -54,8 +62,7 @@ const router = createRouter({
 router.beforeEach(async (to, from) => {
   const isAuthenticated = await store.dispatch("isLoggedIn");
 
-  // if user is not authenticated redirect back to sign in page BUT
-  // only if the page user wants to go is not sign-in or register
+  // Redirect to sign-in if not authenticated, except for sign-in and register
   if (!isAuthenticated && to.name !== "sign-in" && to.name !== "register") {
     return { name: "sign-in" };
   }
