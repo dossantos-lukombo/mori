@@ -112,6 +112,8 @@ export default {
     },
 
     addNewChatMessage({ commit, state }, payload) {
+      console.log("Adding new message to store:", payload);
+
       const newMessages =
         payload.type === "PERSON"
           ? [...state.newChatMessages, payload]

@@ -71,15 +71,22 @@ export default {
   },
   computed: {
     allMessages() {
-      return [
-        ...this.previousMessages,
-        ...this.$store.getters.getMessages(this.receiverId, this.type),
-      ];
+      // Ensure no duplicates between previousMessages and store messages
+      const storeMessages = this.$store.getters.getMessages(
+        this.receiverId,
+        this.type
+      );
+      const uniqueMessages = storeMessages.filter(
+        (msg) => !this.previousMessages.some((prevMsg) => prevMsg.id === msg.id)
+      );
+
+      return [...this.previousMessages, ...uniqueMessages];
     },
     ...mapState({
       myID: (state) => state.id,
     }),
   },
+
   watch: {
     allMessages() {
       this.$nextTick(() => {
@@ -115,7 +122,16 @@ export default {
           }),
         });
         const data = await response.json();
-        this.previousMessages = data.chatMessage || [];
+
+        // Filter out messages already in Vuex
+        const storeMessages = this.$store.getters.getMessages(
+          this.receiverId,
+          this.type
+        );
+        this.previousMessages = (data.chatMessage || []).filter(
+          (msg) => !storeMessages.some((storeMsg) => storeMsg.id === msg.id)
+        );
+
         this.scrollToBottom();
       } catch (error) {
         console.error("Error fetching messages:", error);
@@ -196,14 +212,15 @@ export default {
     },
   },
   created() {
+    console.log("Component created: chatbox");
     this.getPreviousMessages();
   },
   unmounted() {
+    console.log("Component unmounted: chatbox");
     this.clearChatNewMessages();
   },
 };
 </script>
-
 
 <style scoped>
 #layout {
