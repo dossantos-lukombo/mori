@@ -102,6 +102,7 @@ export default {
     min-width: 250px;
     max-width: 250px;
     border-radius: 10px;
+    z-index: 4;
 }
 
 #searchDiv input[type="text"] {
