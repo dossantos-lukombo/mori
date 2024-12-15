@@ -9,6 +9,7 @@ type ChatMessage struct {
 	Type       string    `json:"type"` // GROUP|PERSON
 	Content    string    `json:"content"`
 	CreatedAt  time.Time `json:"createdAt"`
+	IsRead     bool      `json:"isRead"`
 	Sender     User      `json:"sender"`
 }
 

@@ -109,6 +109,19 @@ export default {
     }
   },
 
+  markMessageAsSeen({ commit, state }, { messageID }) {
+    if (!Array.isArray(state.newChatMessages)) {
+      console.error("newChatMessages is not an array or undefined.");
+      return;
+    }
+
+    const updatedMessages = state.newChatMessages.map((msg) =>
+      msg.id === messageID ? { ...msg, isRead: true } : msg
+    );
+
+    commit("updateNewChatMessages", updatedMessages);
+  },
+
     async fetchConversationsMsg({ commit }) {
         const resp = await fetch("http://localhost:8081/conversationsMsg", {
           credentials: "include"
