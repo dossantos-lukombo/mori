@@ -490,7 +490,13 @@ border-radius: 15px;
   border-radius: 15px 15px 0 0;
   background-color: var(--bg-neutral);
   box-shadow: 0 2px 10px rgb(0, 0, 0);
+  transition: all 0.3s ease;
 }
+
+.chatbox-view-input:hover{
+  transform: scale(1.02);
+}
+
 
 .chatbox-view-input input {
   flex: 1;
