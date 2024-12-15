@@ -33,7 +33,7 @@ func (repo *MsgRepository) SaveGroupMsg(msg models.ChatMessage) error {
 // GetAll retrieves all messages between a sender and a receiver.
 func (repo *MsgRepository) GetAll(msgIn models.ChatMessage) ([]models.ChatMessage, error) {
 	query := `
-		SELECT message_id, sender_id, receiver_id, type, content 
+		SELECT message_id, sender_id, receiver_id, type, content, created_at 
 		FROM messages 
 		WHERE 
 			(receiver_id = $1 AND sender_id = $2) 
@@ -49,7 +49,7 @@ func (repo *MsgRepository) GetAll(msgIn models.ChatMessage) ([]models.ChatMessag
 	var messages []models.ChatMessage
 	for rows.Next() {
 		var msg models.ChatMessage
-		if err := rows.Scan(&msg.ID, &msg.SenderId, &msg.ReceiverId, &msg.Type, &msg.Content); err != nil {
+		if err := rows.Scan(&msg.ID, &msg.SenderId, &msg.ReceiverId, &msg.Type, &msg.Content, &msg.CreatedAt); err != nil {
 			return nil, err
 		}
 		messages = append(messages, msg)
@@ -60,7 +60,7 @@ func (repo *MsgRepository) GetAll(msgIn models.ChatMessage) ([]models.ChatMessag
 // GetAllGroup retrieves all messages in a group for a user.
 func (repo *MsgRepository) GetAllGroup(userId, groupId string) ([]models.ChatMessage, error) {
 	query := `
-		SELECT message_id, sender_id, receiver_id, type, content 
+		SELECT message_id, sender_id, receiver_id, type, content, created_at 
 		FROM messages 
 		WHERE 
 			(sender_id = $1 AND receiver_id = $2) 
@@ -82,7 +82,7 @@ func (repo *MsgRepository) GetAllGroup(userId, groupId string) ([]models.ChatMes
 	var messages []models.ChatMessage
 	for rows.Next() {
 		var msg models.ChatMessage
-		if err := rows.Scan(&msg.ID, &msg.SenderId, &msg.ReceiverId, &msg.Type, &msg.Content); err != nil {
+		if err := rows.Scan(&msg.ID, &msg.SenderId, &msg.ReceiverId, &msg.Type, &msg.Content, &msg.CreatedAt); err != nil {
 			return nil, err
 		}
 		messages = append(messages, msg)

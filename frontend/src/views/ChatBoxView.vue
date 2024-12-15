@@ -12,7 +12,18 @@
     <div id="layout">
       <div class="chatbox-view-wrapper">
         <header class="chatbox-view-header">
-          <h1>{{ name }}</h1>
+          <div class="header-left-part">
+            <div
+              class="receiver-avatar"
+              :style="{
+                backgroundImage: user.avatar
+                  ? `url(${user.avatar})`
+                  : 'url(default-avatar.png)',
+              }"
+            ></div>
+            <h1 class="receiver-name">{{ user.name || "Unnamed User" }}</h1>
+          </div>
+          <p class="follow-status">{{ user.following }}</p>
         </header>
 
         <div class="chatbox-view-content" ref="contentDiv">
@@ -22,11 +33,20 @@
             :style="msgPosition(message)"
             :key="index"
           >
+          <div class="receiver-avatar-name">
+          <div class="receiver-avatar-chat" v-if="displayName(message, index)" :style="{
+            backgroundImage: user.avatar
+              ? `url(${user.avatar})`
+              : 'url(default-avatar.png)',
+          }"></div>
             <p class="message-author" v-if="displayName(message, index)">
               {{ message.sender.nickname }}
             </p>
+          </div>
             <p :class="getClass(message)" class="message-content">
               {{ message.content }}
+
+              <p class="message-timeStamp">{{ formatTime(message.createdAt) }}</p>
             </p>
           </div>
         </div>
@@ -57,18 +77,23 @@
 import { mapState } from "vuex";
 import NavBarOn from "@/components/NavBarOn.vue";
 import Sidebar from "@/components/Sidebar.vue";
-import Emojis from "./Chat/Emojis.vue";
+import Emojis from "../components/Chat/Emojis.vue";
 
 export default {
   props: ["name", "receiverId", "type"],
   components: { NavBarOn, Sidebar, Emojis },
   data() {
     return {
+      user: {
+        name: "", // Default name
+        avatar: "default-avatar.png", // Default avatar
+      },
       previousMessages: [],
       isSidebarActive: false,
       contacts: [],
     };
   },
+
   computed: {
     allMessages() {
       // Ensure no duplicates between previousMessages and store messages
@@ -96,11 +121,73 @@ export default {
     receiverId: {
       immediate: true,
       handler(newId) {
+        this.fetchUserDetails(newId);
         this.getPreviousMessages();
       },
     },
   },
   methods: {
+    formatTime(timestamp) {
+      if (!timestamp) return "Invalid timestamp";
+
+      const date = new Date(timestamp);
+
+      // Extract date components
+      const day = date.getDate().toString().padStart(2, "0"); // Two-digit day
+      const month = (date.getMonth() + 1).toString().padStart(2, "0"); // Two-digit month
+      const year = date.getFullYear();
+
+      // Extract time components
+      const hours = date.getHours().toString().padStart(2, "0"); // Two-digit hours
+      const minutes = date.getMinutes().toString().padStart(2, "0"); // Two-digit minutes
+
+      // Combine into desired format: DD/MM/YYYY HH:mm
+      return `${day}/${month}/${year} ${hours}:${minutes}`;
+    },
+    removeZFromTimestamp(timestamp) {
+      if (!timestamp || typeof timestamp !== "string") {
+        return "Invalid timestamp";
+      }
+      return timestamp.replace("Z", "");
+    },
+
+    async fetchUserDetails(userId) {
+      try {
+        const response = await fetch("http://localhost:8081/allUsers", {
+          credentials: "include",
+        });
+        const data = await response.json();
+        const user = data.users.find((user) => user.id === userId);
+        if (user) {
+          if (user.follower == true) {
+            user.following = "Follows you";
+          } else {
+            user.following = "Not Following you";
+          }
+          this.user = {
+            name: user.nickname,
+            following: user.following,
+            avatar:
+              `http://localhost:8081/${user.avatar}` || "default-avatar.png", // Include full URL for avatar
+          };
+        } else {
+          this.user = { name: "Unknown User", avatar: "default-avatar.png" }; // Fallback for invalid user
+        }
+      } catch (error) {
+        console.error("Error fetching user details:", error);
+        this.user = { name: "Unknown User", avatar: "default-avatar.png" }; // Fallback for errors
+      }
+    },
+    updateLayoutWidth() {
+      const sidebar = document.querySelector(".sidebar");
+      const layout = document.getElementById("layout");
+
+      if (sidebar?.classList.contains("sidebar--active")) {
+        layout.style.width = "70%";
+      } else {
+        layout.style.width = "100%";
+      }
+    },
     toggleSidebar() {
       this.isSidebarActive = !this.isSidebarActive;
     },
@@ -122,28 +209,39 @@ export default {
           }),
         });
         const data = await response.json();
+        console.log(data);
 
         // Filter out messages already in Vuex
         const storeMessages = this.$store.getters.getMessages(
           this.receiverId,
           this.type
         );
-        this.previousMessages = (data.chatMessage || []).filter(
-          (msg) => !storeMessages.some((storeMsg) => storeMsg.id === msg.id)
-        );
+
+        // Format the `createdAt` field
+        this.previousMessages = (data.chatMessage || [])
+          .filter(
+            (msg) => !storeMessages.some((storeMsg) => storeMsg.id === msg.id)
+          )
+          .map((msg) => {
+            return {
+              ...msg,
+              createdAt: this.removeZFromTimestamp(msg.createdAt), // Add formatted timestamp
+            };
+          });
 
         this.scrollToBottom();
       } catch (error) {
         console.error("Error fetching messages:", error);
       }
     },
+
     async sendMessage() {
       const sendMessageInput = this.$refs.sendMessageInput;
       if (sendMessageInput.value === "") return;
-
       const msgObj = {
         receiverId: this.receiverId,
         content: sendMessageInput.value,
+        createdAt: new Date(),
         type: this.type,
       };
 
@@ -211,6 +309,30 @@ export default {
       });
     },
   },
+  async mounted() {
+    this.fetchUserDetails(this.receiverId);
+
+    const sidebar = document.querySelector(".sidebar");
+
+    // Ensure layout width is set initially
+    this.updateLayoutWidth();
+
+    // Observe changes to the sidebar class
+    this.sidebarObserver = new MutationObserver(() => {
+      this.updateLayoutWidth();
+    });
+
+    this.sidebarObserver.observe(sidebar, {
+      attributes: true, // Watch for changes to attributes (like `class`)
+      attributeFilter: ["class"], // Only observe the `class` attribute
+    });
+  },
+  beforeUnmount() {
+    // Disconnect the observer to prevent memory leaks
+    if (this.sidebarObserver) {
+      this.sidebarObserver.disconnect();
+    }
+  },
   created() {
     console.log("Component created: chatbox");
     this.getPreviousMessages();
@@ -231,6 +353,8 @@ export default {
   bottom: 0px;
   align-items: center;
   justify-content: center;
+  right: 0px;
+  transition: all 0.3s ease;
 }
 .chatbox-view-wrapper {
   display: flex;
@@ -238,14 +362,79 @@ export default {
   height: 100%;
   background-color: var(--page-bg);
   width: 60%;
+  outline: 1px solid var(--bg-neutral);
+}
+.chatbox-view-header {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  background-color: var(--bg-neutral);
+  padding: 15px;
+  border-radius: 0 0 15px 15px;
+  box-shadow: 0 2px 10px rgb(0, 0, 0);
+  z-index: 1;
+  font-size: 1.5em;
 }
 
-.chatbox-view-header {
+.header-left-part {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: left;
   color: var(--color-white);
-  padding: 20px;
-  text-align: center;
+  gap: 15px;
   font-size: 1.5em;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.receiver-name {
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  margin-top: 15px;
+  text-align: center;
+  font-size: 23px;
+}
+.receiver-avatar {
+  margin-top: 15px;
+  margin-left: 10px;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
+  background-color: wheat;
+  border: 2px solid var(--purple-color);
+}
+
+.receiver-avatar-name{
+  display: flex;
+  align-items: end;
+  gap: 6px;
+}
+.receiver-avatar-chat{
+  box-shadow: 0 2px 10px rgb(0, 0, 0);
+  background-color: wheat;
+  border: 2px solid var(--purple-color);
+  border-radius: 50%;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
+  width: 40px;
+  height: 40px;
+  margin-bottom: 15px;
+}
+
+.follow-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  margin-top: 18px;
+  margin-right: 30px;
+  color: var(--purple-color);
+  font-size: 16px;
 }
 
 .chatbox-view-content {
@@ -254,13 +443,14 @@ export default {
   padding: 20px;
   display: flex;
   flex-direction: column;
+border-radius: 15px;
   gap: 10px;
 }
 
 .message-author {
   font-size: 0.9em;
   color: var(--purple-color);
-  margin-bottom: 5px;
+  margin-bottom: 15px;
 }
 
 .message-content {
@@ -269,12 +459,25 @@ export default {
   word-break: break-word;
 }
 
+.message-timeStamp{
+  font-size: 0.7em;
+  color: var(--color-grey);
+  opacity: 0.5;
+  text-align: right;
+  margin-top: 5px;
+}
+
+.message{
+  max-width: 80%;
+}
 .sent-message {
+  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.3);
   background-color: var(--purple-color);
   color: var(--color-white);
 }
 
 .received-message {
+  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.3);
   background-color: var(--bg-neutral);
   color: var(--color-white);
 }
@@ -286,6 +489,7 @@ export default {
   padding: 15px;
   border-radius: 15px 15px 0 0;
   background-color: var(--bg-neutral);
+  box-shadow: 0 2px 10px rgb(0, 0, 0);
 }
 
 .chatbox-view-input input {

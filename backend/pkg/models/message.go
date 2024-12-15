@@ -1,12 +1,15 @@
 package models
 
+import "time"
+
 type ChatMessage struct {
-	ID         string `json:"id"`
-	SenderId   string `json:"senderId"`
-	ReceiverId string `json:"receiverId"`
-	Type       string `json:"type"` //GROUP|PERSON
-	Content    string `json:"content"`
-	Sender User `json:"sender"`
+	ID         string    `json:"id"`
+	SenderId   string    `json:"senderId"`
+	ReceiverId string    `json:"receiverId"`
+	Type       string    `json:"type"` // GROUP|PERSON
+	Content    string    `json:"content"`
+	CreatedAt  time.Time `json:"createdAt"`
+	Sender     User      `json:"sender"`
 }
 
 type ChatStats struct {
@@ -17,7 +20,7 @@ type ChatStats struct {
 
 type MsgRepository interface {
 	Save(ChatMessage) error
-	//get all for specific chat
+	// get all for specific chat
 	// needs  RECEIVER and SENDER as input
 	GetAll(ChatMessage) ([]ChatMessage, error)
 	GetAllGroup(userId, groupId string) ([]ChatMessage, error)
@@ -29,8 +32,8 @@ type MsgRepository interface {
 
 	SaveGroupMsg(ChatMessage) error
 
-	//returns list of user id's that hve chat history with provided user
-	GetChatHistoryIds(userId string)(map[string]bool, error)
+	// returns list of user id's that hve chat history with provided user
+	GetChatHistoryIds(userId string) (map[string]bool, error)
 	// responds tru if both users have chat history
 	HasHistory(senderId, receiverId string) (bool, error)
 }

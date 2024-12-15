@@ -30,7 +30,7 @@ const routes = [
   {
     path: "/messages",
     name: "messages",
-    component: () => import("../components/ChatBoxView.vue"),
+    component: () => import("../views/ChatBoxView.vue"),
     props: (route) => ({
       name: route.query.name || "Conversation",
       receiverId: route.query.receiverId || null,
