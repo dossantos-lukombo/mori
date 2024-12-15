@@ -54,7 +54,7 @@ func (handler *Handler) Messages(w http.ResponseWriter, r *http.Request) {
 			}
 			if requetExists {
 				msgContent, _ := handler.repos.NotifRepo.GetContentFromChatRequest(msgIn.SenderId, msgIn.ReceiverId)
-				newMessage := models.ChatMessage{ID: "0", SenderId: msgIn.SenderId, ReceiverId: msgIn.ReceiverId, Content: msgContent, CreatedAt: msgIn.CreatedAt, Type: "PERSON"}
+				newMessage := models.ChatMessage{ID: "0", SenderId: msgIn.SenderId, ReceiverId: msgIn.ReceiverId, Content: msgContent, CreatedAt: msgIn.CreatedAt, IsRead: msgIn.IsRead, Type: "PERSON"}
 				messages = append(messages, newMessage)
 			}
 		}

@@ -107,9 +107,22 @@ export default {
     }
   },
 
+  markMessageAsSeen({ commit, state }, { messageID }) {
+    if (!Array.isArray(state.newChatMessages)) {
+      console.error("newChatMessages is not an array or undefined.");
+      return;
+    }
+
+    const updatedMessages = state.newChatMessages.map((msg) =>
+      msg.id === messageID ? { ...msg, isRead: true } : msg
+    );
+
+    commit("updateNewChatMessages", updatedMessages);
+  },
+
   createWebSocketConn({ commit, dispatch }) {
     const ws = new WebSocket("ws://localhost:8081/ws");
-    console.log("Creating WebSocket connection...");
+
     ws.addEventListener("message", (e) => {
       const data = JSON.parse(e.data);
       console.log("WebSocket message received:", e.data);

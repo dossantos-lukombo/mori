@@ -110,10 +110,14 @@ export default {
         state.unreadMsgsStatsFromDB = data.chatStats;
       }
     },
+    markMessageAsSeen({ commit, state }, { messageID }) {
+      const updatedMessages = state.newChatMessages.map((msg) =>
+        msg.id === messageID ? { ...msg, isRead: true } : msg
+      );
+      commit("updateNewChatMessages", updatedMessages);
+    },
 
     addNewChatMessage({ commit, state }, payload) {
-      console.log("Adding new message to store:", payload);
-
       const newMessages =
         payload.type === "PERSON"
           ? [...state.newChatMessages, payload]

@@ -49,6 +49,7 @@
               <p class="message-timeStamp">{{ formatTime(message.createdAt) }}</p>
             </p>
           </div>
+          <p class="seen" v-if="isLastMessageSeen">Seen by {{ user.name }}</p>
         </div>
 
         <form
@@ -96,7 +97,6 @@ export default {
 
   computed: {
     allMessages() {
-      // Ensure no duplicates between previousMessages and store messages
       const storeMessages = this.$store.getters.getMessages(
         this.receiverId,
         this.type
@@ -106,6 +106,13 @@ export default {
       );
 
       return [...this.previousMessages, ...uniqueMessages];
+    },
+    isLastMessageSeen() {
+      // Get the last message
+      const lastMessage = this.allMessages[this.allMessages.length - 1];
+
+      // Check if the last message was sent by me and is read by the receiver
+      return lastMessage && lastMessage.senderId === this.myID && lastMessage.isRead;
     },
     ...mapState({
       myID: (state) => state.id,
@@ -209,7 +216,7 @@ export default {
           }),
         });
         const data = await response.json();
-        console.log(data);
+        console.log(data, "message data");
 
         // Filter out messages already in Vuex
         const storeMessages = this.$store.getters.getMessages(
@@ -226,6 +233,7 @@ export default {
             return {
               ...msg,
               createdAt: this.removeZFromTimestamp(msg.createdAt), // Add formatted timestamp
+              isRead: msg.isRead || false, 
             };
           });
 
@@ -301,13 +309,55 @@ export default {
         alignSelf: message.senderId === this.myID ? "flex-end" : "flex-start",
       };
     },
-    scrollToBottom() {
-      this.$nextTick(() => {
-        if (this.$refs.contentDiv) {
-          this.$refs.contentDiv.scrollTop = this.$refs.contentDiv.scrollHeight;
+    markMessageAsSeen(messageID) {
+    console.log(`Marking message ${messageID} as seen...`);
+
+    // Send a POST request to mark the message as read
+    fetch("http://localhost:8081/messageRead", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include", // Include session cookies
+      body: JSON.stringify({
+        messageID: messageID,
+        type: this.type, // "PERSON" or "GROUP"
+      }),
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.type === "Success") {
+          console.log(`Message ${messageID} marked as read successfully.`);
+          // Update the local state immediately
+          this.$store.dispatch("markMessageAsSeen", { messageID });
+        } else {
+          console.error("Failed to mark message as read:", data.message);
         }
+      })
+      .catch((error) => {
+        console.error("Error marking message as seen:", error);
       });
-    },
+  },
+
+  scrollToBottom() {
+    this.$nextTick(() => {
+      if (this.$refs.contentDiv) {
+        this.$refs.contentDiv.scrollTop = this.$refs.contentDiv.scrollHeight;
+
+        // Mark the last message as seen
+        const lastMessage = this.allMessages[this.allMessages.length - 1];
+        if (
+          lastMessage &&
+          lastMessage.senderId !== this.myID && // Only mark as seen if not sent by me
+          !lastMessage.isRead // Only mark if it isn't already read
+        ) {
+          this.markMessageAsSeen(lastMessage.id);
+        }
+      }
+    });
+  },
+
+
   },
   async mounted() {
     this.fetchUserDetails(this.receiverId);
@@ -519,5 +569,12 @@ border-radius: 15px;
 
 .chatbox-view-input button:hover {
   background-color: var(--hover-color);
+}
+
+.seen{
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  color: grey;
 }
 </style>
