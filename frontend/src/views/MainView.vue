@@ -30,6 +30,16 @@
       };
     },
     methods: {
+        updateLayoutWidth() {
+      const sidebar = document.querySelector(".sidebar");
+      const layout = document.getElementById("layout");
+
+      if (sidebar?.classList.contains("sidebar--active")) {
+        layout.style.width = "80%";
+      } else {
+        layout.style.width = "100%";
+      }
+    },
       toggleSidebar() {
         this.isSidebarActive = !this.isSidebarActive;
       },
@@ -41,6 +51,28 @@
         }
       },
     },
+    mounted() {
+    const sidebar = document.querySelector(".sidebar");
+
+    // Ensure layout width is set initially
+    this.updateLayoutWidth();
+
+    // Observe changes to the sidebar class
+    this.sidebarObserver = new MutationObserver(() => {
+      this.updateLayoutWidth();
+    });
+
+    this.sidebarObserver.observe(sidebar, {
+      attributes: true, // Watch for changes to attributes (like `class`)
+      attributeFilter: ["class"], // Only observe the `class` attribute
+    });
+  },
+  beforeUnmount() {
+    // Disconnect the observer to prevent memory leaks
+    if (this.sidebarObserver) {
+      this.sidebarObserver.disconnect();
+    }
+  },  
   };
   </script>
   
@@ -57,6 +89,8 @@ body {
   width: 100%;
   position: fixed;
   bottom: 0px;
+  right: 0px;
+    transition: width 0.3s ease;
 }
 
 .main-content {
