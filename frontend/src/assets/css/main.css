@@ -236,13 +236,23 @@ select {
 
 .user-picture {
     background-color: wheat;
-    background-image: url(../icons/default-profile.svg);
+    background-image: url(http://localhost:8081/${user.avatar});
     background-size: cover;
     background-position: center;
     flex-shrink: 0;
     border: 0;
     border-radius: 50%;
 
+}
+
+.contact-picture {
+    background-color: wheat;
+    background-image: url(http://localhost:8081/${contact.avatar});
+    background-size: cover;
+    background-position: center;
+    flex-shrink: 0;
+    border: 0;
+    border-radius: 50%;
 }
 
 .accept {

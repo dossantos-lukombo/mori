@@ -68,7 +68,7 @@ export default {
             isMyProfile: false,
             followers: [],
             following: [],
-            posts:[],
+            
 
             profileGroups: null,
         }

@@ -153,7 +153,8 @@ func (repo *UserRepository) GetProfileMin(userID string) (models.User, error) {
 func (repo *UserRepository) GetFollowers(userID string) ([]models.User, error) {
 	query := `
 		SELECT user_id, 
-		       COALESCE(nickname, first_name || ' ' || last_name) 
+		       COALESCE(nickname, first_name || ' ' || last_name),
+			   image
 		FROM users 
 		WHERE (SELECT COUNT(*) FROM followers WHERE followers.user_id = $1 AND follower_id = users.user_id) = 1;
 	`
@@ -166,7 +167,7 @@ func (repo *UserRepository) GetFollowers(userID string) ([]models.User, error) {
 	var users []models.User
 	for rows.Next() {
 		var user models.User
-		if err := rows.Scan(&user.ID, &user.Nickname); err != nil {
+		if err := rows.Scan(&user.ID, &user.Nickname, &user.ImagePath); err != nil {
 			return nil, err
 		}
 		users = append(users, user)
@@ -178,7 +179,8 @@ func (repo *UserRepository) GetFollowers(userID string) ([]models.User, error) {
 func (repo *UserRepository) GetFollowing(userID string) ([]models.User, error) {
 	query := `
 		SELECT user_id, 
-		       COALESCE(nickname, first_name || ' ' || last_name) 
+		       COALESCE(nickname, first_name || ' ' || last_name),
+			   image
 		FROM users 
 		WHERE (SELECT COUNT(*) FROM followers WHERE followers.follower_id = $1 AND user_id = users.user_id) = 1;
 	`
@@ -191,7 +193,7 @@ func (repo *UserRepository) GetFollowing(userID string) ([]models.User, error) {
 	var users []models.User
 	for rows.Next() {
 		var user models.User
-		if err := rows.Scan(&user.ID, &user.Nickname); err != nil {
+		if err := rows.Scan(&user.ID, &user.Nickname, &user.ImagePath); err != nil {
 			return nil, err
 		}
 		users = append(users, user)

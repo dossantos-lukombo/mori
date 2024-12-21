@@ -84,17 +84,6 @@ export default {
     },
   },
   methods: {
-    async fetchContacts() {
-      try {
-        const response = await fetch("http://localhost:8081/contacts", {
-          credentials: "include",
-        });
-        const data = await response.json();
-        this.contacts = data.contacts || [];
-      } catch (error) {
-        console.error("Error fetching contacts:", error);
-      }
-    },
     toggleSidebar() {
       this.isSidebarActive = !this.isSidebarActive;
     },
@@ -180,7 +169,6 @@ export default {
   },
   created() {
     this.getPreviousMessages();
-    this.fetchContacts();
   },
 };
 </script>

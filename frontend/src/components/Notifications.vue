@@ -15,7 +15,7 @@
                         <NotificationMsg :notification="notification"></NotificationMsg>
                     </div>
 
-                    <div class="row2" v-if="notification.type === 'EVENT'">
+                    <!--<div class="row2" v-if="notification.type === 'EVENT'">
                          <i class="uil uil-times decline" @click.stop="handleEventRequest(notification, 'NO')"></i>
                         <i class="uil uil-check accept" @click.stop="handleEventRequest(notification, 'YES')"></i>
                     </div>
@@ -23,7 +23,7 @@
                     <div class="row2" v-else>
                         <i class="uil uil-times decline" @click.stop="handleRequest(notification, 'decline')"></i>
                         <i class="uil uil-check accept" @click.stop="handleRequest(notification, 'accept')"></i>
-                    </div>
+                    </div>-->
                 </li>
 
                 <li v-else class="additional-info">No notifications</li>
@@ -65,26 +65,7 @@ export default {
         this.$store.commit("updateAllNotifications", []);
     },
     methods: {
-        async handleEventRequest(notification, reqResponse){
-            const response = await fetch(`http://localhost:8081/participate`, {
-                credentials: "include",
-                method: "POST",
-                body: JSON.stringify({
-                    requestId: notification.id,
-                    eventId: notification.event.id,
-                    response: reqResponse,
-                })
-            });
-            const data = await response.json();
-            if (data.type == "Success"){
-                // remove the notification
-                this.$store.dispatch("removeNotification", notification.id);
-            }
-
-            if (!this.hasNotifications) {
-                this.toggleShowNotifications();
-            }
-        },
+        
         toggleShowNotifications() {
             this.showNotifications = !this.showNotifications;
         },
@@ -158,16 +139,10 @@ export default {
         isDataValid(resp) {
             return resp.type === "Success" ? true : false;
         },
-        additionalText(notification) {
-            let a = "";
-            switch (notification.type) {
-                case "EVENT":
-                    // console.log("Notif", notification);
-                    a = `${notification.event.title}`;
-                    break;
-                case "GROUP_INVITE":
-                    a = notification.group.name;
-                    break;
+        additionalText(notification) {            let a = "";
+            
+            if (notification.type === "GROUP_INVITE") {
+                return `${notification.group.name}`;
             }
             // event need group name, event name
             // group invite -> who invited and to what group

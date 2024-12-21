@@ -95,7 +95,7 @@ export default {
 
             // console.log(this.getIds(this.checkedFollowers))
             const response = await fetch('http://localhost:8081/newGroup', {
-                method: 'post',
+                method: 'POST',
                 credentials: 'include',
                 body: JSON.stringify(formDataObject)
             })

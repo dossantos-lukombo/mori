@@ -16,7 +16,8 @@
 
                     <li v-for="user in chatUserList">
                         <div class="user">
-                            <div class="user-picture small"></div>
+                            <div class="user-picture small"
+                         :style="{ backgroundImage: `url(http://localhost:8081/${user.avatar})` }"></div>
                             <div class="item-text"
                                  @click.stop="openChat($event, { receiverId: user.id, type: 'PERSON' })">
                                 {{ user.nickname }}</div>

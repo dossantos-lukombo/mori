@@ -1,12 +1,18 @@
 <template>
   <div :class="['sidebar', { 'sidebar--active': isActive }]">
     <div class="sidebar-content">
-      <ul>
-        <li @click="navigateToMessages">
-          <div class="box">Messages</div>
+      <ul class="icon-container">
+        <li @click="navigateToMessages" class="icon-wrapper">
+          <div class="icon-circle">
+            <img src="@/assets/icons/messages.svg" alt="Messagerie" />
+          </div>
+          <span>Messages</span>
         </li>
-        <li @click="navigateToChatBot">
-          <div class="box">ChatBot</div>
+        <li @click="navigateToChatBot" class="icon-wrapper">
+          <div class="icon-circle">
+            <img src="@/assets/icons/chat.svg" alt="Chat" />
+          </div>
+          <span>ChatBot</span>
         </li>
       </ul>
 
@@ -71,9 +77,7 @@ export default {
 };
 </script>
 
-
 <style scoped>
-/* Same styles */
 .sidebar {
   position: fixed;
   top: 64.45px;
@@ -94,16 +98,51 @@ export default {
   padding: 20px;
 }
 
-.box {
-  background-color: var(--purple-color);
-  padding: 15px;
-  border-radius: 8px;
-  text-align: center;
+.icon-container {
+  display: flex;
+  justify-content: center; /* Center horizontally */
+  gap: 20px; /* Space between items */
+  margin-bottom: 20px;
+}
+
+.icon-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   cursor: pointer;
+  text-align: center;
+  color: var(--text-color);
+  transition: transform 0.3s ease;
+}
+
+.icon-wrapper:hover {
+  transform: scale(1.1);
+}
+
+.icon-circle {
+  width: 70px;
+  height: 70px;
+  background-color: var(--purple-color);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 8px;
   transition: background-color 0.3s ease;
 }
 
-.box:hover {
+.icon-circle:hover {
   background-color: var(--hover-color);
+}
+
+.icon-circle img {
+  width: 32px;
+  height: 32px;
+}
+
+.icon-wrapper span {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
 }
 </style>
