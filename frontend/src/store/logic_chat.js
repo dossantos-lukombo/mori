@@ -40,7 +40,7 @@ function sendBtn_clicked(){
             sendData(conversation.user_id,textearea.value)
             
             textearea.value = ""
-    }
+        }
         
     })
     textearea.addEventListener("keydown", (e)=>{
