@@ -123,12 +123,6 @@ export default {
       try {
         accumulatedText = "";
         let { done, value } = await reader.read();
-        // let index = this.messages.length - 1;
-        
-        // // console.log("index", index);
-        // const markdown_length = document.querySelectorAll(".markdownLLM").length;
-        // let markdown = document.querySelectorAll(".markdownLLM")[markdown_length-1];
-        // console.log("markdown", markdown);
         
         while (!done) {
           const chunk = decoder.decode(value, { stream: true });
@@ -151,14 +145,10 @@ export default {
           ({ done, value } = await reader.read());
         }
         
-        // this.conversation.llm_response = accumulatedText;
         this.messages[this.messages.length - 1].remove();
         this.appendMessage("LLM", accumulatedText);
         lastLLMMessage.text = "";
         
-        
-
-        // this.markdownText = "";
       } catch (error) {
         console.error("Erreur de lecture du flux", error);
       } finally {
@@ -166,9 +156,7 @@ export default {
         reader.releaseLock();
       }
       
-      // this.markdownText = "";
       this.conversation.history.push(this.conversation.llm_response);
-      // await this.sendConversation();
     },
     async sendConversation() {
       const response = await fetch(`http://localhost:8081/llmConvo`, {
@@ -187,6 +175,7 @@ export default {
 
       console.log("Conversation envoyée avec succès !");
     },
+    // Méthode pour gérer les événements de touche
     handleKeydown(event) {
       
       if (event.shiftKey && event.key === "Enter" ) {
@@ -200,13 +189,19 @@ export default {
         this.sendMessage();
         
       }
-      // event.preventDefault();
-      // let textarea = this.$el.querySelector("textarea");
-      // if (event.key === "Backspace" && textarea.selectionEnd ===  ) {
-      //   this.userInput += "LOL"
-      //   textarea.style.height = `${textarea.scrollHeight-10}px`;
-      // }
-      
+      let textarea = this.$el.querySelector("textarea");
+      const textLength = textarea.value.length;
+      if (event.key === "Backspace" && textLength > 0) {
+        const cursorPosition = textarea.selectionEnd; // Position actuelle du curseur
+
+        // Vérifie si le caractère à supprimer est un retour chariot
+        if (textarea.value[cursorPosition - 1] === "\n") {
+        // Réduit la hauteur du textarea
+          textarea.style.height = `${textarea.scrollHeight - 22}px`;
+        }
+      }else if (event.key === "Backspace" && textLength === 1) {
+        textarea.style.height = `50px`;
+      }
     },
   },
 };
