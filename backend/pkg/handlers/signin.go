@@ -2,15 +2,16 @@ package handlers
 
 import (
 	"encoding/json"
-	"net/http"
 	"mori/pkg/models"
 	"mori/pkg/utils"
+	"net/http"
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
 )
 
 func (handler *Handler) Signin(w http.ResponseWriter, r *http.Request) {
+
 	w = utils.ConfigHeader(w)
 	if r.Method != "POST" {
 		utils.RespondWithError(w, "Error on form submittion", 200)
@@ -53,6 +54,7 @@ func (handler *Handler) Signin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	utils.RespondWithSuccess(w, "Login successful", 200)
+
 }
 
 // endpoint for checking if user session is already in progress

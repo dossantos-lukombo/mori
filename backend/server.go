@@ -46,6 +46,9 @@ func setRoutes(handler *handlers.Handler, wsServer *ws.Server) http.Handler {
 	mux.HandleFunc("/logout", handler.Auth(handler.Logout))
 	mux.HandleFunc("/sessionActive", handler.SessionActive)
 
+	/* ------------------------------- LLM_conv ------------------------------- */
+	mux.HandleFunc("/llmConvo", handler.Auth(handler.LLMHandler))
+
 	/* ---------------------------------- users --------------------------------- */
 	mux.HandleFunc("/allUsers", handler.Auth(handler.AllUsers))       // all users + info except current
 	mux.HandleFunc("/followers", handler.Auth(handler.GetFollowers))  // follower list

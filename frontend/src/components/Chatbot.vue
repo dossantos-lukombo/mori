@@ -15,15 +15,7 @@
           <div v-if="message.sender !== 'Utilisateur'" class="bot-logo">
             <img src="../assets/mori.png" alt="Bot Logo" />
           </div>
-          <div v-if="message.sender === 'Utilisateur'" class="markdown-container-Utilisateur">
-            <Markdown :source="message.text" />
-          </div>
-          <div v-if="message.sender === 'LLM'" class="markdown-container-LLM">
-            <Markdown
-            class = "markdownLLM"
-            :source="message.text"
-            />
-          </div>
+          <pre>{{ message.text }}</pre>
           <div class="timestamp">{{ message.timestamp }}</div>
         </div>
       </div>
@@ -45,19 +37,13 @@
 </template>
 
 <script>
-import Markdown from 'vue3-markdown-it';
-
 export default {
-  components: { Markdown },
   data() {
     return {
       userInput: "",
       messages: [],
       rows: 10,
-      sourceLLM: "",
-      sourceUtilisateur: "",
-      markdownText: '',
-
+      count: 0,
     };
   },
   computed: {
@@ -83,25 +69,26 @@ export default {
     appendMessage(sender, text) {
       const timestamp = new Date().toLocaleTimeString();
       this.messages.push({ sender, text, timestamp });
-        this.$nextTick(() => {
-          const chatBox = this.$el.querySelector(".chatbot-messages");
-          chatBox.scrollTop = chatBox.scrollHeight;
-        });
+      this.$nextTick(() => {
+        const chatBox = this.$el.querySelector(".chatbot-messages");
+        chatBox.scrollTop = chatBox.scrollHeight;
+      });
     },
     async sendMessage() {
       if (this.userInput.trim() === "") return;
+
       this.appendMessage("Utilisateur", this.userInput);
       this.conversation.user_request = this.userInput;
       this.userInput = "";
 
       try {
         await this.sendData();
+        // this.userInput = ""; // Clear the input
       } catch (error) {
         console.error("Erreur lors de l'envoi du message :", error);
       }
     },
     async sendData() {
-      let accumulatedText = "";
       const response = await fetch(`http://localhost:8081/llmConvo`, {
         method: "POST",
         credentials: 'include',
@@ -117,58 +104,60 @@ export default {
       }
       const reader = response.body.getReader();
       const decoder = new TextDecoder("utf-8");
-      this.appendMessage("LLM", "");
-      let lastLLMMessage = this.messages[this.messages.length - 1]; // Référence au dernier message LLM
-
+      
       try {
-        accumulatedText = "";
-        let { done, value } = await reader.read();
-        // let index = this.messages.length - 1;
-        
-        // // console.log("index", index);
-        // const markdown_length = document.querySelectorAll(".markdownLLM").length;
-        // let markdown = document.querySelectorAll(".markdownLLM")[markdown_length-1];
-        // console.log("markdown", markdown);
-        
-        while (!done) {
-          const chunk = decoder.decode(value, { stream: true });
-          const lines = chunk.split("\n");
-          lines.forEach((line) => {
-            if (line.startsWith("data: ")) {
-              const jsonData = line.replace("data: ", "").trim();
-              try {
-                const parsedData = JSON.parse(jsonData);
-                
-                accumulatedText += parsedData.response.message.content;
-                lastLLMMessage.text = accumulatedText;
+      // const llm_bubble = document.createElement("div");
+      // const chatBox = this.$el.querySelector(".chatbot-messages");
+      // llm_bubble.classList.add("message","LLM");
 
-             
-              } catch (error) {
-                console.error("Erreur de parsing JSON :", error);
-              }
+      // const bot_image = document.createElement("div");
+      // bot_image.classList.add("bot-logo");
+      // const bot_img = document.createElement("img");
+      // bot_img.src = "../assets/mori.png";
+      // bot_image.appendChild(bot_img);
+      // llm_bubble.appendChild(bot_image);
+      
+      // const innerPre = document.createElement("pre");
+
+      // const timestamp = new Date().toLocaleTimeString();
+      // const divTimestamp = document.createElement("div");
+      // divTimestamp.classList.add("timestamp");
+      // divTimestamp.innerText = timestamp;
+      // llm_bubble.appendChild(divTimestamp);
+      
+      // llm_bubble.appendChild(innerPre);
+      
+      let { done, value } = await reader.read();
+      
+      while (!done) {
+        const chunk = decoder.decode(value, { stream: true });
+        const lines = chunk.split("\n");
+        lines.forEach((line) => {
+          if (line.startsWith("data: ")) {
+            const jsonData = line.replace("data: ", "").trim();
+            try {
+              const parsedData = JSON.parse(jsonData);
+              
+              innerPre.innerText += parsedData.response.message.content;
+              
+            } catch (error) {
+              console.error("Erreur de parsing JSON :", error);
             }
-          });
-          ({ done, value } = await reader.read());
-        }
-        
-        // this.conversation.llm_response = accumulatedText;
-        this.messages[this.messages.length - 1].remove();
-        this.appendMessage("LLM", accumulatedText);
-        lastLLMMessage.text = "";
-        
-        
-
-        // this.markdownText = "";
-      } catch (error) {
-        console.error("Erreur de lecture du flux", error);
-      } finally {
-        
-        reader.releaseLock();
+          }
+        });
+        ({ done, value } = await reader.read());
       }
       
-      // this.markdownText = "";
+      
+      // chatBox.appendChild(llm_bubble);
+      this.conversation.llm_response = innerPre.innerText;
       this.conversation.history.push(this.conversation.llm_response);
-      // await this.sendConversation();
+      await this.sendConversation();
+    } catch (error) {
+        console.error("Erreur de lecture du flux", error);
+      } finally {
+        reader.releaseLock();
+      }
     },
     async sendConversation() {
       const response = await fetch(`http://localhost:8081/llmConvo`, {
@@ -194,11 +183,11 @@ export default {
         this.userInput += "\n";
         let textarea = this.$el.querySelector("textarea");
         textarea.style.height = `${textarea.scrollHeight+10}px`;
+        // this.count = this.userInput.split('\n').length;
 
       } else if (event.key === "Enter") {
         event.preventDefault();
         this.sendMessage();
-        
       }
       // event.preventDefault();
       // let textarea = this.$el.querySelector("textarea");
@@ -297,8 +286,6 @@ export default {
     border-radius: 10px;
     font-size: 16px;
     position: relative;
-    text-align: left;
-
   }
   
   .Utilisateur {
@@ -309,7 +296,7 @@ export default {
   
   .LLM {
     align-self: flex-start;
-    background-color: var(--page-bg);
+    background-color: red;
     color: var(--color-white);
   }
   
@@ -372,7 +359,7 @@ export default {
   .chatbot-input button:hover {
     background-color: var(--hover-background-color);
   }
-  .markdown-container {
+  pre {
     white-space: pre-wrap;
     word-wrap: break-word;
   }
