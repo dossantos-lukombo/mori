@@ -28,18 +28,21 @@
         </div>
       </div>
 
-      <div :class="['chatbot-input', { 'chatbot-input--active': hasMessages }]">
-        <textarea
-          :rows="rows"
-          class="chatbot-input"
-          type="text"
-          v-model="userInput"
-          @keydown="handleKeydown"
-          @click="handleKeydown"
-          placeholder="Type your message here..."
-        ></textarea>
-        <button @click="sendMessage">Send</button>
-      </div>
+      <div 
+      :class="['chatbot-input-container', { 'chatbot-input-container--active': hasMessages }]"
+    >
+      <textarea
+        ref="textarea"
+        :rows="rows"
+        class="chatbot-textarea"
+        v-model="userInput"
+        @keydown="handleKeydown"
+        @click="handleKeydown"
+        placeholder="Type your message here..."
+      ></textarea>
+      <button @click="sendMessage">Send</button>
+    </div>
+    
     </div>
   </div>
 </template>
@@ -208,7 +211,19 @@ export default {
 </script>
 
 <style scoped>
-.chatbot-container {
+  .Utilisateur {
+    align-self: flex-end;
+    background-color: var(--purple-color);
+    color: var(--color-white);
+  }
+  
+  .LLM {
+    align-self: flex-start;
+    background-color: var(--page-bg);
+    color: var(--color-white);
+  }
+  
+  .chatbot-container {
     display: flex;
     justify-content: center;
     align-items: center;
@@ -286,25 +301,23 @@ export default {
     gap: 10px;
   }
   
-  .message{
+  .message {
     max-width: 70%;
     padding: 10px;
     border-radius: 10px;
     font-size: 16px;
     position: relative;
-    text-align: left;
-
   }
   
-  .Utilisateur {
+  .user {
     align-self: flex-end;
     background-color: var(--purple-color);
     color: var(--color-white);
   }
   
-  .LLM {
+  .bot {
     align-self: flex-start;
-    background-color: var(--page-bg);
+    background-color: var(--bg-neutral);
     color: var(--color-white);
   }
   
@@ -317,62 +330,67 @@ export default {
   }
   
   /* Input field animation */
-  .chatbot-input textarea {
-    display: flex;
-    gap: 10px;
-    align-items: center;
-    position: absolute;
-    top: 65%; /* Initially positioned below the "How can I help?" */
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: calc(40% - 40px);
-    border-radius: 10px;
-    padding: 10px 20px;
-    transition: top 0.7s ease, transform 0.7s ease, width 0.7s ease; /* Added width for smooth transition */
-  }
-  
-  .chatbot-input--active {
-    width: calc(50% - 40px); /* New width for active state */
-    position: fixed;
-    top: calc(97% - 80px); /* Slide to the bottom of the viewport */
-    transform: translateX(-50%);
-  }
-  
-  .chatbot-input {
-    flex: 1;
-    padding: 10px;
-    border: 1px solid var(--color-grey);
-    border-radius: 10px;
-    height: 50px;
-    font-size: 16px;
-  }
+  /* 
+  1. The container that slides down with an animation 
+     (replaces .chatbot-input in your old code)
+*/
+.chatbot-input-container {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  position: absolute;
+  top: 65%; /* Initially below the greeting message */
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: calc(40% - 40px);
+  border-radius: 10px;
+  padding: 10px 20px;
+  transition: top 0.7s ease, transform 0.7s ease, width 0.7s ease;
+}
 
-  textarea {
-    resize: none;
-    word-wrap: break-word;
-    overflow: hidden;
-  }
+.chatbot-input-container--active {
+  width: calc(50% - 40px); /* Widen the container */
+  position: fixed;
+  top: calc(97% - 80px);   /* Slide to bottom of viewport */
+  transform: translateX(-50%);
+}
+
+/* 
+  2. The textarea itself: 
+     (new .chatbot-textarea class)
+*/
+.chatbot-textarea {
+  flex: 1;
+  border: 1px solid var(--color-grey);
+  border-radius: 10px;
+  font-size: 16px;
+  min-height: 50px;   /* Ensure it matches your old input height */
+  padding: 13px;
+  resize: none;       /* Optional: remove manual resize handle */
+}
+
+/* 
+  3. The Send button 
+  (same rules as your old .chatbot-input button style)
+*/
+.chatbot-input-container button {
+  padding: 15px 20px;
+  background-color: var(--purple-color);
+  color: var(--color-white);
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background-color 0.3s;
+}
+
+.chatbot-input-container button:hover {
+  background-color: var(--hover-background-color);
+}
+
   
-  .chatbot-input button {
-    padding: 15px 20px;
-    background-color: var(--purple-color);
-    color: var(--color-white);
-    border: none;
-    border-radius: 10px;
-    cursor: pointer;
-    font-size: 16px;
-    transition: background-color 0.3s;
-  }
-  
-  .chatbot-input button:hover {
-    background-color: var(--hover-background-color);
-  }
-  .markdown-container {
-    white-space: pre-wrap;
-    word-wrap: break-word;
-  }
-  
-  .chatbot-input textarea:focus {
+  .chatbot-input-container input:focus {
     outline: none;
     border-color: var(--color-primary);
-  }</style>
+  }
+</style>
