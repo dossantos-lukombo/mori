@@ -44,6 +44,7 @@ func setRoutes(handler *handlers.Handler, wsServer *ws.Server) http.Handler {
 	mux.HandleFunc("/register", handler.Register)
 	mux.HandleFunc("/signin", handler.Signin)
 	mux.HandleFunc("/logout", handler.Auth(handler.Logout))
+	mux.HandleFunc("/captcha", handler.ServeCaptcha)
 	mux.HandleFunc("/sessionActive", handler.SessionActive)
 
 	/* ------------------------------- LLM_conv ------------------------------- */

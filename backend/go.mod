@@ -13,6 +13,7 @@ require (
 )
 
 require (
+	github.com/dchest/captcha v1.1.0 // indirect
 	github.com/go-gorp/gorp/v3 v3.1.0 // indirect
 	github.com/mattn/go-sqlite3 v1.14.24 // indirect
 )
