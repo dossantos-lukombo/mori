@@ -259,13 +259,13 @@ export default {
     margin-right: 10px;
     margin-top: -5px;
     margin-left: -5px;
-  
   }
   
   .bot-logo img {
     width: 35px; /* Adjust size as needed */
     height: 35px; /* Adjust size as needed */
     border-radius: 50%; /* Optional: Make the image circular */
+    background-color: var(--purple-color);
     object-fit: cover; /* Ensure the image scales properly */
   }
   

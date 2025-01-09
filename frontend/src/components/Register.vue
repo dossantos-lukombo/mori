@@ -1,55 +1,143 @@
 <template>
   <div class="register__wrapper">
-    <div class="bg-forest-reg" :style="{ backgroundImage: `url(${backgroundImage})` }"></div>
-    <div class="image-div-reg" :style="{ backgroundImage: `url(${backgroundImage})` }"></div>
+    <div
+      class="bg-forest-reg"
+      :style="{ backgroundImage: `url(${backgroundImage})` }"
+    ></div>
+    <div
+      class="image-div-reg"
+      :style="{ backgroundImage: `url(${backgroundImage})` }"
+    ></div>
 
     <div class="register">
       <h1 class="mori">Mori <span class="adder">- Register</span></h1>
-      <form class="form-group" @submit.prevent="submitRegData" id="register__form">
+      <form
+        class="form-group"
+        @submit.prevent="submitRegData"
+        id="register__form"
+      >
         <div class="form-row">
           <div class="form-input">
             <label for="firstname">First name</label>
-            <input v-model="form.firstname" type="text" name="firstname" id="firstname" required>
+            <input
+              v-model="form.firstname"
+              type="text"
+              name="firstname"
+              id="firstname"
+              required
+            />
           </div>
           <div class="form-input">
             <label for="lastname">Last name</label>
-            <input v-model="form.lastname" type="text" name="lastname" id="lastname" required>
+            <input
+              v-model="form.lastname"
+              type="text"
+              name="lastname"
+              id="lastname"
+              required
+            />
           </div>
         </div>
+
         <div class="form-row">
           <div class="form-input">
             <label for="email">Email</label>
-            <input v-model="form.email" type="email" name="email" id="email" required>
+            <input
+              v-model="form.email"
+              type="email"
+              name="email"
+              id="email"
+              required
+            />
           </div>
           <div class="form-input">
             <label for="password">Password</label>
-            <input v-model="form.password" type="password" name="password" id="password" required>
+            <input
+              v-model="form.password"
+              type="password"
+              name="password"
+              id="password"
+              required
+            />
           </div>
         </div>
+
         <div class="form-row">
           <div class="form-input">
             <label for="date">Date of Birth</label>
-            <input v-model="form.dateofbirth" type="date" name="date" id="date" required>
+            <input
+              v-model="form.dateofbirth"
+              type="date"
+              name="date"
+              id="date"
+              required
+            />
           </div>
           <div class="form-input">
             <label for="nickname">Nickname</label>
-            <input v-model="form.nickname" type="text" name="nickname" id="nickname">
+            <input
+              v-model="form.nickname"
+              type="text"
+              name="nickname"
+              id="nickname"
+            />
           </div>
         </div>
+
         <div class="form-row">
           <div class="form-input">
             <label for="aboutme">About me</label>
-            <textarea v-model="form.aboutme" id="aboutme" name="aboutme" rows="4"></textarea>
+            <textarea
+              v-model="form.aboutme"
+              id="aboutme"
+              name="aboutme"
+              rows="4"
+            ></textarea>
           </div>
           <div class="form-input">
-            <FileUpload v-model:file="form.avatar" labelName="Avatar"></FileUpload>
+            <FileUpload v-model:file="form.avatar" labelName="Avatar" />
           </div>
         </div>
+
+        <!-- Captcha Row -->
+        <div class="form-row">
+          <div class="form-input">
+            <!-- Display the captcha image -->
+            <img
+              :src="captchaImageUrl"
+              alt="Captcha"
+              style="margin-bottom: 5px; display: block"
+            />
+            <div id="captchaRow">
+              <input
+                v-model="form.captchaValue"
+                type="text"
+                name="captcha"
+                id="captcha"
+                placeholder="Enter the code above"
+                required
+              />
+              <button
+                type="button"
+                class="btn"
+                @click="reloadCaptcha"
+                style="font-size: 1.2rem; height: 44px; width: 44px; text-align: center"
+              >
+              ⟳
+              </button>
+            </div>
+          </div>
+        </div>
+        <!-- End Captcha Row -->
+
         <div class="button-or-signIn">
-          <button class="btn" form="register__form" type="submit">Create account</button>
-        <p>Already have an account?
-          <router-link to="/sign-in" id="sign-up">Sign-in</router-link>
-        </p>
+          <button class="btn" form="register__form" type="submit">
+            Create account
+          </button>
+          <p>
+            Already have an account?
+            <router-link to="/sign-in" id="sign-up">Sign-in</router-link>
+          </p>
         </div>
       </form>
     </div>
@@ -66,6 +154,7 @@ import FileUpload from "./FileUpload.vue";
 
 export default {
   name: "Register",
+  components: { FileUpload },
   data() {
     return {
       form: {
@@ -77,8 +166,12 @@ export default {
         nickname: "",
         avatar: null,
         aboutme: "",
+        // We'll store captcha input in this field
+        captchaValue: "",
       },
-      backgroundImage: "", // Property to store the randomly chosen image
+      backgroundImage: "", // Randomly chosen background image
+      // We'll build this dynamic URL so we can reload the captcha
+      captchaImageUrl: "http://localhost:8081/captcha",
     };
   },
   methods: {
@@ -86,8 +179,46 @@ export default {
       const images = [forest1, sakura, automn, fantastic, fairytail];
       this.backgroundImage = images[Math.floor(Math.random() * images.length)];
     },
+
+    // Reload Captcha: append a timestamp so the browser doesn't cache
+    reloadCaptcha() {
+      this.captchaImageUrl = `http://localhost:8081/captcha?${Date.now()}`;
+    },
+
     async submitRegData() {
-      let formData = new FormData();
+      // Basic password checks (as you already do)
+      const pwd = this.form.password;
+      if (pwd.length < 10) {
+        this.$toast.open({
+          message: "Password must be at least 10 characters.",
+          type: "error",
+        });
+        return;
+      }
+      if (!/[A-Z]/.test(pwd)) {
+        this.$toast.open({
+          message: "Password must contain at least one uppercase letter.",
+          type: "error",
+        });
+        return;
+      }
+      if (!/\d/.test(pwd)) {
+        this.$toast.open({
+          message: "Password must contain at least one digit.",
+          type: "error",
+        });
+        return;
+      }
+      if (!/[^a-zA-Z0-9]/.test(pwd)) {
+        this.$toast.open({
+          message: "Password must contain at least one special character.",
+          type: "error",
+        });
+        return;
+      }
+
+      // Build FormData
+      const formData = new FormData();
       formData.set("avatar", this.form.avatar);
       formData.set("email", this.form.email);
       formData.set("password", this.form.password);
@@ -96,12 +227,17 @@ export default {
       formData.set("dateofbirth", this.form.dateofbirth);
       formData.set("nickname", this.form.nickname);
       formData.set("aboutme", this.form.aboutme);
+      // Set the captcha user input
+      formData.set("captchaValue", this.form.captchaValue);
 
-      await fetch("http://localhost:8081/register", {
-        credentials: "include",
-        method: "POST",
-        body: formData,
-      }).then((res) => {
+      try {
+        // Because the server sets a "captcha_id" cookie, we need "credentials: include"
+        const res = await fetch("http://localhost:8081/register", {
+          credentials: "include",
+          method: "POST",
+          body: formData,
+        });
+
         if (res.status === 409) {
           this.$toast.open({
             message: "Email already taken",
@@ -109,9 +245,11 @@ export default {
           });
         } else if (res.status === 400) {
           this.$toast.open({
-            message: "Bad request",
+            message: "Invalid Captcha",
             type: "error",
           });
+          // Optionally, you can reload the captcha if the user typed it wrong
+          this.reloadCaptcha();
         } else {
           this.$toast.open({
             message: "Successfully registered!",
@@ -119,12 +257,19 @@ export default {
           });
           this.$router.push("/");
         }
-      });
+      } catch (err) {
+        this.$toast.open({
+          message: "Server error. Please try again.",
+          type: "error",
+        });
+        console.error("Error while registering:", err);
+      }
     },
   },
-  components: { FileUpload },
   created() {
-    this.setRandomImage(); // Choose a random image on component creation
+    this.setRandomImage();
+    // Immediately load the first captcha on page creation
+    this.reloadCaptcha();
   },
 };
 </script>
@@ -201,7 +346,6 @@ textarea {
 }
 
 .register button {
-  margin-top: 20px;
   width: fit-content;
   text-align: center;
 }
@@ -212,11 +356,20 @@ textarea {
   gap: 30px;
 }
 
+#captchaRow{
+  display: flex;
+  gap: 10px;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+}
+
 /* Media Queries */
 
 /* Tablet and Phone View (768px and below) */
 @media (max-width: 900px) {
-  html, body {
+  html,
+  body {
     overflow-y: hidden; /* Prevent horizontal scrolling */
   }
 
@@ -274,8 +427,8 @@ textarea {
   }
 
   .register {
-      width: 100%;
-      padding: 4%;
+    width: 100%;
+    padding: 4%;
   }
 
   h1.mori {
@@ -300,5 +453,4 @@ textarea {
     font-size: 14px;
   }
 }
-
 </style>

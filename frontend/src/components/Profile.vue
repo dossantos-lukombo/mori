@@ -1,5 +1,5 @@
 <template>
-    <div v-if="user && this.$store.state.id !== ''">
+    <div v-if="user && this.$store.state.id !== ''" class="user-profil">
         <div id="layout-profile">
 
             <div class="left-section ">
@@ -247,6 +247,11 @@ export default {
 </script>
 
 <style scoped>
+
+.user-profile {
+    overflow: scroll;
+}
+
 #layout-profile {
     display: grid;
     grid-template-columns: 1fr minmax(min-content, 550px) 1fr;
