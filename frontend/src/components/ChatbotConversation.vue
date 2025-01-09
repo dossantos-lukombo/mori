@@ -219,6 +219,7 @@ export default {
   
   .LLM {
     align-self: flex-start;
+    text-align: left;
     background-color: var(--page-bg);
     color: var(--color-white);
   }
@@ -350,7 +351,7 @@ export default {
 
 .chatbot-input-container--active {
   width: calc(50% - 40px); /* Widen the container */
-  position: fixed;
+  position: absolute;
   top: calc(97% - 80px);   /* Slide to bottom of viewport */
   transform: translateX(-50%);
 }
