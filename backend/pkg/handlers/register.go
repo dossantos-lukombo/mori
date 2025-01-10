@@ -69,10 +69,10 @@ func (handler *Handler) Register(w http.ResponseWriter, r *http.Request) {
 	// 7) If the user uploaded an avatar, save it
 	newUser.ImagePath = utils.SaveAvatar(r)
 
-	// 8) Save the user in the DB
+	// 8) Save the user in the DB (and automatically send email)
 	errSave := handler.repos.UserRepo.Add(newUser)
 	if errSave != nil {
-		utils.RespondWithError(w, "Couldn't save new user", 500)
+		utils.RespondWithError(w, "Couldn't save new user or send email", 500)
 		return
 	}
 

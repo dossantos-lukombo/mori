@@ -10,7 +10,9 @@ CREATE TABLE IF NOT EXISTS users (
     image VARCHAR(255),
     about TEXT,
     status VARCHAR(50) NOT NULL DEFAULT 'PUBLIC',
-    password VARCHAR(100) NOT NULL
+    password VARCHAR(100) NOT NULL,
+    verification_token VARCHAR(100),
+    verified BOOLEAN NOT NULL DEFAULT FALSE
 );
 
 

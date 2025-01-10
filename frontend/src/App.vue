@@ -21,7 +21,7 @@
       }),
       shouldHideSmallChat() {
         // Hide small chatbox on specific routes
-        const hiddenRoutes = ["/sign-in", "/register", "/messages"];
+        const hiddenRoutes = ["/sign-in", "/register", "/messages", "/verified"];
         return hiddenRoutes.includes(this.$route.path);
       },
     },
@@ -35,7 +35,7 @@
         this.showSmallChat = !this.shouldHideSmallChat;
       },
       createWebSocketConn() {
-        const excludedPaths = ["/sign-in", "/register"];
+        const excludedPaths = ["/sign-in", "/register", "/verified"];
         if (excludedPaths.includes(this.$route.path)) {
           return;
         }

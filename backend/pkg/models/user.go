@@ -2,21 +2,22 @@ package models
 
 // defines  User data type
 type User struct {
-	ID          string `json:"id"`
-	Email       string `json:"login"`
-	FirstName   string `json:"firstName"`
-	LastName    string `json:"lastName"`
-	Password    string `json:"password,omitempty"`
-	Nickname    string `json:"nickname"`
-	About       string `json:"about"`
-	DateOfBirth string `json:"dateOfBirth"`
-	ImagePath   string `json:"avatar"`
-	Status      string `json:"status"`      // private / public
-	CurrentUser bool   `json:"currentUser"` // returns true for current, false otherwise
-
-	Follower             bool `json:"follower"`       // if this user is following another user
-	Following            bool `json:"following"`      // if curr user is following this one
-	FollowRequestPending bool `json:"requestPending"` // true if requested to follow
+	ID                   string `json:"id"`
+	Email                string `json:"login"`
+	FirstName            string `json:"firstName"`
+	LastName             string `json:"lastName"`
+	Password             string `json:"password,omitempty"`
+	Nickname             string `json:"nickname"`
+	About                string `json:"about"`
+	DateOfBirth          string `json:"dateOfBirth"`
+	ImagePath            string `json:"avatar"`
+	VerificationToken    string `json:"verificationToken"`
+	Verified             bool   `json:"verified"`
+	Status               string `json:"status"`         // private / public
+	CurrentUser          bool   `json:"currentUser"`    //  returns true for current, false otherwise
+	Follower                        bool   `json:"follower"`            //  if this user is following another user
+	Following                       bool   `json:"following"`           //  if curr user is following this one
+	FollowRequestPending bool   `json:"requestPending"` // true if requested to follow
 }
 
 // Repository represent all possible actions availible to deal with User
@@ -25,6 +26,7 @@ type UserRepository interface {
 	Add(User) error                           // save new user in db
 	EmailNotTaken(email string) (bool, error) // returns true if not taken
 	FindUserByEmail(email string) (User, error)
+	VerifyEmail(token string) error
 
 	GetAllAndFollowing(userID string) ([]User, error) // all users and follow info
 	GetFollowers(userId string) ([]User, error)       // get client followers
