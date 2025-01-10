@@ -4,19 +4,19 @@ import (
 	"errors"
 	"unicode"
 
-	"mori/pkg/models"
+	"github.com/dchest/captcha"
 
-	"github.com/dchest/captcha" // Make sure you import the captcha package
+	"mori/pkg/models"
 )
 
-// validate all fields when user registers, including captcha
+// ValidateNewUser checks captcha, user fields, and password rules.
 func ValidateNewUser(user models.User, captchaID, captchaValue string) error {
-	// 1) Validate Captcha first
+	// 1) Validate Captcha
 	if err := validateCaptcha(captchaID, captchaValue); err != nil {
 		return err
 	}
 
-	// 2) Then validate all user fields
+	// 2) Check empty fields
 	if err := validateFirstName(user.FirstName); err != nil {
 		return err
 	}
@@ -32,10 +32,14 @@ func ValidateNewUser(user models.User, captchaID, captchaValue string) error {
 	if err := validateEmail(user.Email); err != nil {
 		return err
 	}
+
 	return nil
 }
 
-// validateCaptcha calls dchest/captcha
+// ---------------------------------------------------------------------------------
+// Helper validation methods
+// ---------------------------------------------------------------------------------
+
 func validateCaptcha(captchaID, captchaValue string) error {
 	if captchaID == "" || captchaValue == "" {
 		return errors.New("invalid captcha")
@@ -48,48 +52,43 @@ func validateCaptcha(captchaID, captchaValue string) error {
 
 func validateFirstName(name string) error {
 	if fieldEmpty(name) {
-		return errors.New("validation error")
+		return errors.New("first name is required")
 	}
 	return nil
 }
 
 func validateLastName(name string) error {
 	if fieldEmpty(name) {
-		return errors.New("validation error")
+		return errors.New("last name is required")
 	}
 	return nil
 }
 
 func validateBirth(birthDate string) error {
 	if fieldEmpty(birthDate) {
-		return errors.New("validation error")
+		return errors.New("birthday is required")
 	}
 	return nil
 }
 
 func validateEmail(email string) error {
 	if fieldEmpty(email) {
-		return errors.New("validation error")
+		return errors.New("email is required")
 	}
+	// Optionally check format if you want
 	return nil
 }
 
-// ---------------------------------------
-// Manual password validation (no lookahead)
-// ---------------------------------------
 func validatePassword(password string) error {
 	if fieldEmpty(password) {
-		return errors.New("validation error")
+		return errors.New("password is required")
 	}
-
 	// 1) At least 10 characters
 	if len(password) < 10 {
 		return errors.New("password must be at least 10 characters")
 	}
-
 	// 2) Must contain at least one uppercase, one digit, one special char
 	var hasUpper, hasDigit, hasSpecial bool
-
 	for _, ch := range password {
 		switch {
 		case unicode.IsUpper(ch):
@@ -100,7 +99,6 @@ func validatePassword(password string) error {
 			hasSpecial = true
 		}
 	}
-
 	if !hasUpper {
 		return errors.New("password must contain at least one uppercase letter")
 	}
@@ -114,16 +112,11 @@ func validatePassword(password string) error {
 	return nil
 }
 
-// Helper to check if the character is "special" (not a letter/digit)
+// If you prefer the broad definition of "special" as anything not letter or digit:
 func isSpecialChar(ch rune) bool {
-	// For a broad check, treat anything not a letter or digit as special
-	return !(isLetter(ch) || isDigit(ch))
+	return !(unicode.IsLetter(ch) || unicode.IsDigit(ch))
 }
 
 func fieldEmpty(value string) bool {
 	return len(value) == 0
 }
-
-// If you need these:
-func isLetter(ch rune) bool { return unicode.IsLetter(ch) }
-func isDigit(ch rune) bool  { return unicode.IsDigit(ch) }

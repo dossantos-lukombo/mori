@@ -252,7 +252,7 @@ export default {
           this.reloadCaptcha();
         } else {
           this.$toast.open({
-            message: "Successfully registered!",
+            message: "Successfully registered, verify your email to login.",
             type: "success",
           });
           this.$router.push("/");

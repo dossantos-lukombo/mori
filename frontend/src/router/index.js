@@ -56,6 +56,11 @@ const routes = [
     },
     meta: { requiresAuth: true },
   },
+  {
+    path: "/verified",
+    name: "Verified",
+    component: () => import("@/views/Verified.vue"),
+  },
 ];
 
 const router = createRouter({
@@ -66,8 +71,13 @@ const router = createRouter({
 router.beforeEach(async (to, from, next) => {
   const isAuthenticated = await store.dispatch("isLoggedIn");
 
-  // Redirect to sign-in if not authenticated, except for sign-in and register
-  if (!isAuthenticated && to.name !== "sign-in" && to.name !== "register") {
+  // Add "Verified" to the allowed list of routes for unauthenticated users
+  if (
+    !isAuthenticated &&
+    to.name !== "sign-in" &&
+    to.name !== "register" &&
+    to.name !== "Verified"
+  ) {
     return next({ name: "sign-in" });
   }
 
@@ -76,7 +86,7 @@ router.beforeEach(async (to, from, next) => {
     await store.dispatch("createWebSocketConn");
   }
 
-  // Handle authenticated routes
+  // If the route requires authentication and user is not authenticated => sign-in
   if (to.meta.requiresAuth && !isAuthenticated) {
     return next({ name: "sign-in" });
   }

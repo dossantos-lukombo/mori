@@ -63,7 +63,7 @@ export default {
           .then((json) => {
             if (json.message === "Login successful") {
               this.$toast.open({
-                message: "Login success!",
+                message: "Login successful!",
                 type: "success",
               });
 
