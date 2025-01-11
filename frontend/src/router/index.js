@@ -61,6 +61,16 @@ const routes = [
     name: "Verified",
     component: () => import("@/views/Verified.vue"),
   },
+  {
+    path: "/forgotpassword",
+    name: "ForgotPassword",
+    component: () => import("@/views/ForgotPassword.vue"),
+  },
+  {
+    path: "/reset-password",
+    name: "ResetPassword",
+    component: () => import("@/views/ResetPassword.vue"),
+  },
 ];
 
 const router = createRouter({
@@ -76,7 +86,9 @@ router.beforeEach(async (to, from, next) => {
     !isAuthenticated &&
     to.name !== "sign-in" &&
     to.name !== "register" &&
-    to.name !== "Verified"
+    to.name !== "Verified" &&
+    to.name !== "ForgotPassword" &&
+    to.name !== "ResetPassword"
   ) {
     return next({ name: "sign-in" });
   }
