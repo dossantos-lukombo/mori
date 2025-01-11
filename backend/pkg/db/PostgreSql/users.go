@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/smtp"
 	"strings"
+	"time"
 
 	"mori/pkg/models"
 )
@@ -28,15 +29,15 @@ func (repo *UserRepository) Add(user models.User) error {
 
 	// 2) Insert user with the verification_token and verified=false
 	query := `
-        INSERT INTO users (
-          user_id, email, first_name, last_name, nickname, about, 
-          password, birthday, image, verification_token, verified
-        )
-        VALUES(
-          $1, $2, $3, $4, NULLIF($5, ''), $6,
-          $7, $8, $9, $10, $11
-        );
-    `
+		INSERT INTO users (
+			user_id, email, first_name, last_name, nickname, about, 
+			password, birthday, image, verification_token, verified
+		)
+		VALUES(
+			$1, $2, $3, $4, NULLIF($5, ''), $6,
+			$7, $8, $9, $10, $11
+		);
+	`
 	_, errDB := repo.DB.Exec(
 		query,
 		user.ID,
@@ -57,8 +58,7 @@ func (repo *UserRepository) Add(user models.User) error {
 
 	// 3) Send verification email
 	if errEmail := repo.sendVerificationEmail(user); errEmail != nil {
-		// Optionally, decide if you want to remove the user if email fails
-		// or ignore the failure to send and keep user in DB
+		// Optionally remove the user if email fails, or leave as is
 		return fmt.Errorf("error sending verification email: %w", errEmail)
 	}
 
@@ -151,7 +151,6 @@ func (repo *UserRepository) sendVerificationEmail(user models.User) error {
 <body>
     <div class="container">
         <div class="header">
-            <img src="https://via.placeholder.com/100x100.png?text=Mori" alt="Mori Logo">
             <h1>Mori Team</h1>
         </div>
         <div class="content">
@@ -237,6 +236,52 @@ func generateRandomToken() (string, error) {
 		return "", err
 	}
 	return hex.EncodeToString(b), nil
+}
+
+func (repo *UserRepository) SetResetToken(userID, token string, expires time.Time) error {
+	query := `
+		UPDATE users
+		SET reset_token = $1,
+		    reset_token_expires = $2
+		WHERE user_id = $3
+	`
+	_, err := repo.DB.Exec(query, token, expires, userID)
+	return err
+}
+
+func (repo *UserRepository) UpdatePasswordAndClearToken(userID, newHashedPwd string) error {
+	query := `
+		UPDATE users
+		SET password = $1,
+		    reset_token = NULL,
+		    reset_token_expires = NULL
+		WHERE user_id = $2
+	`
+	_, err := repo.DB.Exec(query, newHashedPwd, userID)
+	return err
+}
+
+func (repo *UserRepository) FindUserByResetToken(token string) (models.User, error) {
+	query := `
+		SELECT user_id, email, reset_token_expires
+		FROM users
+		WHERE reset_token = $1
+		LIMIT 1
+	`
+	var user models.User
+	var expires time.Time
+
+	err := repo.DB.QueryRow(query, token).Scan(
+		&user.ID,
+		&user.Email,
+		&expires,
+	)
+	if err != nil {
+		return user, err
+	}
+	user.ResetToken = token
+	user.ResetTokenExpires = &expires
+	return user, nil
 }
 
 // EmailNotTaken checks if an email is not already registered.
