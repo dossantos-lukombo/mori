@@ -15,6 +15,15 @@ type ChatStats struct {
 	UnreadMsgCount int    `json:"unreadMsgCount"`
 }
 
+type ConversationMsg struct {
+	ID              string `json:"id"`              // user_id ou group_id
+	Type            string `json:"type"`            // "PERSON" ou "GROUP"
+	Name            string `json:"name"`            // nickname / group name
+	Avatar          string `json:"avatar"`          // chemin vers l'image
+	LastMessage     string `json:"lastMessage"`     // contenu du dernier message
+	LastMessageTime string `json:"lastMessageTime"` // date/heure du dernier message
+}
+
 type MsgRepository interface {
 	Save(ChatMessage) error
 	//get all for specific chat
@@ -26,6 +35,8 @@ type MsgRepository interface {
 	// mark as read
 	MarkAsRead(ChatMessage) error
 	MarkAsReadGroup(ChatMessage) error
+
+	GetConversationsMsg(userID string) ([]ConversationMsg, error)
 
 	SaveGroupMsg(ChatMessage) error
 

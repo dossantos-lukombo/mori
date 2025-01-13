@@ -111,6 +111,18 @@ export default {
 
     },
 
+    async fetchConversationsMsg({ commit }) {
+        const resp = await fetch("http://localhost:8081/conversationsMsg", {
+          credentials: "include"
+        });
+        const data = await resp.json();
+      
+        // data devrait ressembler à :
+        // { conversationsMsg: [ { ... }, { ... } ] }
+        commit("setConversationsMsg", data.conversationsMsg);
+    },
+      
+
     createWebSocketConn({ commit, dispatch, state }) {
         const ws = new WebSocket("ws://localhost:8081/ws");
       

@@ -225,3 +225,58 @@ func (repo *MsgRepository) HasHistory(senderId, receiverId string) (bool, error)
 	err := repo.DB.QueryRow(query, senderId, receiverId).Scan(&result)
 	return result > 0, err
 }
+
+func (repo *MsgRepository) GetConversationsMsg(userID string) ([]models.ConversationMsg, error) {
+	var convs []models.ConversationMsg
+
+	// Exemple : seulement les DM, type = 'PERSON'
+	query := `
+		SELECT DISTINCT ON (u.user_id)
+		       u.user_id,
+		       u.nickname,
+		       u.image, 
+		       m.content,
+		       m.created_at
+		FROM (
+			SELECT 
+			  CASE WHEN sender_id = $1 THEN receiver_id ELSE sender_id END AS friend_id,
+			  content,
+			  created_at
+			FROM messages
+			WHERE type = 'PERSON'
+			  AND (sender_id = $1 OR receiver_id = $1)
+			ORDER BY created_at DESC
+		) AS m
+		JOIN users u ON u.user_id = m.friend_id
+		ORDER BY u.user_id, m.created_at DESC
+	`
+
+	rows, err := repo.DB.Query(query, userID)
+	if err != nil {
+		return convs, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var c models.ConversationMsg
+		var userIDFriend, nickname, avatar, content, createdAt string
+		if err := rows.Scan(&userIDFriend, &nickname, &avatar, &content, &createdAt); err != nil {
+			return convs, err
+		}
+
+		c.ID = userIDFriend
+		c.Type = "PERSON"
+		c.Name = nickname
+		c.Avatar = avatar
+		c.LastMessage = content
+		c.LastMessageTime = createdAt
+
+		convs = append(convs, c)
+	}
+
+	// -- Si tu souhaites gérer la partie GROUP, tu ferais une 2e requête similaire
+	//    (ou un UNION) pour les messages type = 'GROUP' en joignant la table groups.
+	//    Puis append au tableau convs.
+
+	return convs, nil
+}

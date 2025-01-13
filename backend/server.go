@@ -99,7 +99,8 @@ func setRoutes(handler *handlers.Handler, wsServer *ws.Server) http.Handler {
 	})) // new chat message
 	mux.HandleFunc("/chatList", handler.Auth(handler.ChatList))                       // get list of users to display in chatbox
 	mux.HandleFunc("/responseChatRequest", handler.Auth(handler.ResponseChatRequest)) // response to chat request
-
+	/* ---------------------------- ConversationMsg Sidebar ---------------------------- */
+	mux.HandleFunc("/conversationsMsg", handler.Auth(handler.ConversationsMsg)) // get list of users to display in chatbox
 	/* ---------------------------- websocket server ---------------------------- */
 	mux.HandleFunc("/ws", handler.Auth(func(w http.ResponseWriter, r *http.Request) {
 		handler.SocketHandler(wsServer, w, r)

@@ -15,6 +15,8 @@ export default createStore({
 
     profileInfo: {},
     myFollowers: null,
+
+    conversationsMsg: [],
    
 
     users: {
@@ -126,6 +128,10 @@ export default createStore({
 
     updateDataLoaded(state, data) {
       state.dataLoaded[data] = true;
+    },
+
+    setConversationsMsg(state, convsMsg) {
+      state.conversationsMsg = convsMsg; // Ici convsMsg est censé être un tableau
     }
 
 
