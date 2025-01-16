@@ -48,6 +48,8 @@ func setRoutes(handler *handlers.Handler, wsServer *ws.Server) http.Handler {
 
 	/* ------------------------------- LLM_conv ------------------------------- */
 	mux.HandleFunc("/llmConvo", handler.Auth(handler.LLMHandler))
+	mux.HandleFunc("/llmConvoSave", handler.Auth(handler.LLMConvoSave))
+	// mux.HandleFunc("/llmConvoCreate", handler.Auth(handler.LLMCreateConvo))
 
 	/* ---------------------------------- users --------------------------------- */
 	mux.HandleFunc("/allUsers", handler.Auth(handler.AllUsers))       // all users + info except current

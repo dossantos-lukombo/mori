@@ -50,6 +50,7 @@
 <script>
 import Markdown from 'vue3-markdown-it';
 
+
 export default {
   components: { Markdown },
   data() {
@@ -60,7 +61,14 @@ export default {
       sourceLLM: "",
       sourceUtilisateur: "",
       markdownText: '',
-
+      conversation:{
+        user_id:"",
+        user_request: "",
+        llm_response: "",
+        new_conversation: false,
+        created_at: "",
+        updated_at: "",
+      },
     };
   },
   computed: {
@@ -72,16 +80,28 @@ export default {
     this.initializeConversation();
   },
   methods: {
+     async getMyUserID() {
+      const response=await fetch("http://localhost:8081/currentUser", {
+      credentials: "include",
+      headers: new Headers({
+        "Content-Type": "application/json",
+      }),
+      method: "POST",
+    })
+    if (!response.ok) {
+      console.error("Erreur lors de la récupération de l'ID de l'utilisateur :", response.statusText);
+      return;
+    }else{
+      const resp = await response.json();
+      console.log(resp);
+      console.log(resp.users[0].id);
+      return resp.users[0].id;
+    }
+    },
     initializeConversation() {
-      this.conversation = {
-        user_id:"",
-        conversation_id: "",
-        user_request: "",
-        llm_response: "",
-        session: "",
-        new_conversation: false,
-        history: [],
-      };
+      this.conversation.user_request = "";
+      this.conversation.llm_response = "";
+      this.conversation.created_at = "";
     },
     appendMessage(sender, text) {
       const timestamp = new Date().toLocaleTimeString();
@@ -122,6 +142,8 @@ export default {
       const decoder = new TextDecoder("utf-8");
       this.appendMessage("LLM", "");
       let lastLLMMessage = this.messages[this.messages.length - 1]; // Référence au dernier message LLM
+      // let LLMMessageElement = document.querySelectorAll(".message LLM");
+      // console.log("LLMMessage Element: ",LLMMessageElement);
 
       try {
         accumulatedText = "";
@@ -148,21 +170,32 @@ export default {
           ({ done, value } = await reader.read());
         }
         
-        this.messages[this.messages.length - 1].remove();
+        
+        console.log("Accumulated Text", accumulatedText);
+        this.conversation.llm_response = accumulatedText;
+        
         this.appendMessage("LLM", accumulatedText);
+        this.messages.splice(this.messages.length - 2, 1);
+        // console.log("LLMMessage Element: ",LLMMessageElement);
         lastLLMMessage.text = "";
         
       } catch (error) {
         console.error("Erreur de lecture du flux", error);
       } finally {
-        
         reader.releaseLock();
       }
       
-      this.conversation.history.push(this.conversation.llm_response);
+      // LLMMessageElement[LLMMessageElement.length - 1].remove();
+      console.log("LLM RESPONSE",this.conversation.llm_response);
+      this.conversation.user_id = await this.getMyUserID();
+      this.conversation.created_at = new Date().toLocaleTimeString();
+      if(this.messages.length === 2){
+        this.conversation.new_conversation = true;
+      }
+      this.sendConversation();
     },
     async sendConversation() {
-      const response = await fetch(`http://localhost:8081/llmConvo`, {
+      const response = await fetch(`http://localhost:8081/llmConvoSave`, {
         method: "POST",
         credentials: 'include',
         headers: {
@@ -175,7 +208,7 @@ export default {
         console.error("Erreur lors de l'envoi de la conversation :", response.statusText);
         return;
       }
-
+      
       console.log("Conversation envoyée avec succès !");
     },
     // Méthode pour gérer les événements de touche

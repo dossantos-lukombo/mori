@@ -7,12 +7,14 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"mori/pkg/models"
 	"net/http"
 	"os"
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/joho/godotenv"
+	uuid "github.com/satori/go.uuid"
 )
 
 var accessSecret string
@@ -26,15 +28,17 @@ type CustomClaims struct {
 	jwt.RegisteredClaims
 }
 
-type Conversation struct {
-	UserID          string   `json:"user_id"`
-	ConversationID  string   `json:"conversation_id"`
-	Session         string   `json:"session"`
-	UserRequest     string   `json:"user_request"`
-	LLMResponse     string   `json:"llm_response"`
-	NewConversation bool     `json:"new_conversation"`
-	History         []string `json:"history"`
-}
+// type Conversation struct {
+// 	UserID          string   `json:"user_id"`
+// 	ConversationID  string   `json:"conversation_id"`
+// 	Session         string   `json:"session"`
+// 	UserRequest     string   `json:"user_request"`
+// 	LLMResponse     string   `json:"llm_response"`
+// 	NewConversation bool     `json:"new_conversation"`
+// 	CreatedAt       string   `json:"created_at"`
+// 	UpdateAt        string   `json:"update_at"`
+// 	History         []string `json:"history"`
+// }
 
 type ServerPython struct {
 	Status         string `json:"status"`
@@ -45,8 +49,8 @@ type ServerPython struct {
 }
 
 type ConversationResponse struct {
-	Type string       `json:"type"`
-	Data Conversation `json:"data"`
+	Type string              `json:"type"`
+	Data models.Conversation `json:"data"`
 }
 
 func (handler *Handler) LLMHandler(w http.ResponseWriter, r *http.Request) {
@@ -56,7 +60,7 @@ func (handler *Handler) LLMHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
 		// Do something
 		//get the body of our POST request
-		var conversation Conversation
+		var conversation models.Conversation
 		w.Header().Set("Content-Type", "application/json")
 
 		body, err := io.ReadAll(r.Body)
@@ -68,7 +72,7 @@ func (handler *Handler) LLMHandler(w http.ResponseWriter, r *http.Request) {
 
 		err = json.Unmarshal(body, &conversation)
 		if err != nil {
-			http.Error(w, "Error unmarshalling JSON",
+			http.Error(w, "Error unmarshalling JSON LLMHandler"+err.Error(),
 				http.StatusInternalServerError)
 			return
 		}
@@ -129,8 +133,6 @@ func (handler *Handler) LLMHandler(w http.ResponseWriter, r *http.Request) {
 
 		}
 
-		// data := []byte(`{"user_id":"` + conversation.UserID + `","conversation_id":"` + conversation.ConversationID + `","message":"` + conversation.UserRequest + `"}`)
-
 		SendRequestWithToken("http://127.0.0.1:8000/llm-protected", accessToken, data, w)
 		return
 	}
@@ -138,6 +140,8 @@ func (handler *Handler) LLMHandler(w http.ResponseWriter, r *http.Request) {
 
 func SendRequestWithToken(url string, token string, jsonData []byte, w http.ResponseWriter) {
 
+	llm_message := ""
+	// Créer une requête POST avec le JSON
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
 	if err != nil {
 		fmt.Println("Error creating request:", err)
@@ -149,7 +153,7 @@ func SendRequestWithToken(url string, token string, jsonData []byte, w http.Resp
 	req.Header.Set("Content-Type", "application/json")
 	w.Header().Set("Content-Type", "text/event-stream")
 	w.Header().Set("Cache-Control", "no-cache")
-	// w.Header().Set("Connection", "keep-alive")
+	w.Header().Set("Connection", "keep-alive")
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
@@ -177,6 +181,7 @@ func SendRequestWithToken(url string, token string, jsonData []byte, w http.Resp
 
 		// Envoyer chaque chunk au frontend
 		fmt.Fprintf(w, "%s", line)
+		llm_message += string(line)
 		// fmt.Println("Response body:", string(line))
 		flusher.Flush() // Envoyer immédiatement les données au client
 	}
@@ -368,4 +373,70 @@ func VerifyAndRefreshTokenHandler(w http.ResponseWriter, r *http.Request) {
 		"status":      "refreshed",
 		"accessToken": newAccessToken,
 	})
+}
+
+// LLMConvoSave saves the conversation to the database
+func (handler *Handler) LLMConvoSave(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("Method: ", r.Method)
+
+	if r.Method == http.MethodPost {
+		// Do something
+		//get the body of our POST request
+		var conversation models.Conversation
+		w.Header().Set("Content-Type", "application/json")
+
+		body, err := io.ReadAll(r.Body)
+		if err != nil {
+			http.Error(w, "Error reading request body",
+				http.StatusInternalServerError)
+		}
+		fmt.Println("Body: ", string(body))
+
+		err = json.Unmarshal(body, &conversation)
+		if err != nil {
+			http.Error(w, "Error unmarshalling JSON LLMConvoSave "+err.Error(),
+				http.StatusInternalServerError)
+			return
+		}
+
+		if conversation.NewConversation == true {
+			uuid := uuid.NewV4()
+			conversation.ConversationID = uuid.String()
+			fmt.Println("conversation", conversation)
+			conversation.UpdateAt = conversation.CreatedAt
+			err = handler.repos.LLMConvoRepo.SaveConvo(conversation)
+			if err != nil {
+				http.Error(w, "Error saving conversation: "+err.Error(), http.StatusInternalServerError)
+				return
+			}
+		} else {
+			conversation.UpdateAt = time.Now().Format("2025-01-16T11:23:47.515Z")
+			err = handler.repos.LLMConvoRepo.SaveConvo(conversation)
+			if err != nil {
+				http.Error(w, "Error saving conversation: "+err.Error(), http.StatusInternalServerError)
+				return
+			}
+		}
+
+		return
+	}
+}
+
+// functon that get all the previous conversation
+func (handler *Handler) LLMConvoGetAll(w http.ResponseWriter, convo models.Conversation) {
+
+	var conversations []models.Conversation
+
+	conversations, err := handler.repos.LLMConvoRepo.GetAllConvo(convo)
+	if err != nil {
+		http.Error(w, "Error getting all conversations: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	err = json.NewEncoder(w).Encode(conversations)
+	if err != nil {
+		http.Error(w, "Error encoding JSON: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
 }

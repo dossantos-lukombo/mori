@@ -14,8 +14,8 @@ type User struct {
 	Status      string `json:"status"`      // private / public
 	CurrentUser bool   `json:"currentUser"` //returns true for current, false otherwise
 
-	Follower  bool `json:"follower"`  //if this user is following another user
-	Following bool `json:"following"` //if curr user is following this one
+	Follower             bool `json:"follower"`       //if this user is following another user
+	Following            bool `json:"following"`      //if curr user is following this one
 	FollowRequestPending bool `json:"requestPending"` // true if requested to follow
 }
 
@@ -29,7 +29,7 @@ type UserRepository interface {
 	GetAllAndFollowing(userID string) ([]User, error) //all users and follow info
 	GetFollowers(userId string) ([]User, error)       //get client followers
 	GetFollowing(userId string) ([]User, error)       //get who is following client
-	SaveFollower(userId, followerId string) error      //save new follower
+	SaveFollower(userId, followerId string) error     //save new follower
 	DeleteFollower(userId, followerId string) error
 
 	IsFollowing(userID, currentUserID string) (bool, error) //returns true if current is following

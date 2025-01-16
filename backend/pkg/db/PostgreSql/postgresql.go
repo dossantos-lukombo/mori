@@ -51,11 +51,12 @@ func InitDB() *sql.DB {
 // InitRepositories initializes all repositories with the database connection.
 func InitRepositories(db *sql.DB) *models.Repositories {
 	return &models.Repositories{
-		UserRepo:    &UserRepository{DB: db},
-		SessionRepo: &SessionRepository{DB: db},
-		GroupRepo:   &GroupRepository{DB: db},		
-		NotifRepo:   &NotifRepository{DB: db},
-		MsgRepo:     &MsgRepository{DB: db},
+		UserRepo:     &UserRepository{DB: db},
+		SessionRepo:  &SessionRepository{DB: db},
+		GroupRepo:    &GroupRepository{DB: db},
+		NotifRepo:    &NotifRepository{DB: db},
+		MsgRepo:      &MsgRepository{DB: db},
+		LLMConvoRepo: &LLMConvoRepository{DB: db},
 	}
 }
 

@@ -67,6 +67,16 @@ export default {
         },
       });
     },
+    handleConversationSelection(conversation) {
+      this.$router.push({
+        name: "messages",
+        query: {
+          name: conversation.nickname,
+          receiverId: conversation.id,
+          type: "PERSON",
+        },
+      });
+    },
   },
 };
 </script>
