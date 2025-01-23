@@ -229,8 +229,10 @@ func (repo *MsgRepository) HasHistory(senderId, receiverId string) (bool, error)
 func (repo *MsgRepository) GetConversationsMsg(userID string) ([]models.ConversationMsg, error) {
 	var convs []models.ConversationMsg
 
-	// Exemple : seulement les DM, type = 'PERSON'
-	query := `
+	//--------------------------------------------------
+	// A) Récupération des conversations PERSON
+	//--------------------------------------------------
+	queryPerson := `
 		SELECT DISTINCT ON (u.user_id)
 		       u.user_id,
 		       u.nickname,
@@ -251,16 +253,16 @@ func (repo *MsgRepository) GetConversationsMsg(userID string) ([]models.Conversa
 		ORDER BY u.user_id, m.created_at DESC
 	`
 
-	rows, err := repo.DB.Query(query, userID)
+	rowsPerson, err := repo.DB.Query(queryPerson, userID)
 	if err != nil {
 		return convs, err
 	}
-	defer rows.Close()
+	defer rowsPerson.Close()
 
-	for rows.Next() {
+	for rowsPerson.Next() {
 		var c models.ConversationMsg
 		var userIDFriend, nickname, avatar, content, createdAt string
-		if err := rows.Scan(&userIDFriend, &nickname, &avatar, &content, &createdAt); err != nil {
+		if err := rowsPerson.Scan(&userIDFriend, &nickname, &avatar, &content, &createdAt); err != nil {
 			return convs, err
 		}
 
@@ -274,9 +276,68 @@ func (repo *MsgRepository) GetConversationsMsg(userID string) ([]models.Conversa
 		convs = append(convs, c)
 	}
 
-	// -- Si tu souhaites gérer la partie GROUP, tu ferais une 2e requête similaire
-	//    (ou un UNION) pour les messages type = 'GROUP' en joignant la table groups.
-	//    Puis append au tableau convs.
+	//--------------------------------------------------
+	// B) Récupération des conversations GROUP
+	//--------------------------------------------------
+	queryGroup := `
+		SELECT DISTINCT ON (g.group_id)
+		       g.group_id,
+		       g.name,
+		       g.description,
+		       m.content,
+		       m.created_at
+		FROM (
+			SELECT 
+			  receiver_id AS group_id,
+			  content,
+			  created_at
+			FROM messages
+			WHERE type = 'GROUP'
+			  AND (
+			    sender_id = $1
+			    OR (
+			      (SELECT COUNT(*) FROM group_users 
+			       WHERE group_id = messages.receiver_id 
+			         AND user_id = $1
+			      )=1
+			    )
+			    OR (
+			      (SELECT administrator FROM groups 
+			       WHERE group_id = messages.receiver_id
+			      )=$1
+			    )
+			  )
+			ORDER BY created_at DESC
+		) AS m
+		JOIN groups g ON g.group_id = m.group_id
+		ORDER BY g.group_id, m.created_at DESC
+	`
 
+	rowsGroup, err := repo.DB.Query(queryGroup, userID)
+	if err != nil {
+		return convs, err
+	}
+	defer rowsGroup.Close()
+
+	for rowsGroup.Next() {
+		var c models.ConversationMsg
+		var groupID, groupName, groupDescription, content, createdAt string
+		if err := rowsGroup.Scan(&groupID, &groupName, &groupDescription, &content, &createdAt); err != nil {
+			return convs, err
+		}
+
+		c.ID = groupID
+		c.Type = "GROUP"
+		c.Name = groupName
+		c.LastMessage = content
+		c.LastMessageTime = createdAt
+
+		convs = append(convs, c)
+	}
+
+	//--------------------------------------------------
+	// C) Retourner les conversations combinées
+	//--------------------------------------------------
 	return convs, nil
 }
+

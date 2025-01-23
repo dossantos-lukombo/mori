@@ -101,6 +101,10 @@ func setRoutes(handler *handlers.Handler, wsServer *ws.Server) http.Handler {
 	mux.HandleFunc("/responseChatRequest", handler.Auth(handler.ResponseChatRequest)) // response to chat request
 	/* ---------------------------- ConversationMsg Sidebar ---------------------------- */
 	mux.HandleFunc("/conversationsMsg", handler.Auth(handler.ConversationsMsg)) // get list of users to display in chatbox
+	/* ---------------------------- Update Profile ---------------------------- */
+	mux.HandleFunc("/updateNickname", handler.Auth(handler.ChangeNickname)) // Update user nickname
+	mux.HandleFunc("/updateAvatar", handler.Auth(handler.ChangeAvatar))     // Update user avatar
+
 	/* ---------------------------- websocket server ---------------------------- */
 	mux.HandleFunc("/ws", handler.Auth(func(w http.ResponseWriter, r *http.Request) {
 		handler.SocketHandler(wsServer, w, r)

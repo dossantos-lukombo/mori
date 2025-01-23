@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"strings"
 
@@ -315,36 +316,44 @@ func (handler *Handler) ResponseFollowRequest(w http.ResponseWriter, r *http.Req
 /* -------------------------------------------------------------------------- */
 func (handler *Handler) ChatList(w http.ResponseWriter, r *http.Request) {
 	w = utils.ConfigHeader(w)
-	// get userId from request
-	query := r.URL.Query()
-	userId := query.Get("userId")
-	// request all  following users
+
+	// Récupération du userId depuis la query
+	userId := r.URL.Query().Get("userId")
+
+	// 1) Récupérer les "amis" ou "following"
 	followers, errUsers := handler.repos.UserRepo.GetFollowing(userId)
 	if errUsers != nil {
 		utils.RespondWithError(w, "Error on getting data", 200)
 		return
 	}
-	// get users_ids that have a chat history
+
+	// 2) Récupérer l'historique DM (seulement type='PERSON') => un set d'IDs
 	ids, errIds := handler.repos.MsgRepo.GetChatHistoryIds(userId)
 	if errIds != nil {
 		utils.RespondWithError(w, "Error on getting chat history", 200)
 		return
 	}
-	// loop over chat history ids
-	// compare with followers
-	// if not found in folllowers, fetch user data and add to the list
+
+	// 3) Parcourir ces IDs
 	for currentId := range ids {
+		// Si on a déjà ce user dans "followers", on ne fait rien
 		isPresent := ContainsUser(followers, currentId)
-		if !isPresent {
-			user, err := handler.repos.UserRepo.GetDataMin(currentId)
-			if err != nil {
-				utils.RespondWithError(w, "Error on getting chat history data", 200)
-				return
-			}
-			followers = append(followers, user)
+		if isPresent {
+			continue
 		}
+
+		// Tenter de récupérer l'utilisateur (table "users")
+		user, err := handler.repos.UserRepo.GetDataMin(currentId)
+		if err != nil {
+			// Si erreur => peut-être un group_id ou user inexistant => on skip
+			// log.Println("Skipping ID", currentId, ":", err)
+			continue
+		}
+		// Ajouter ce user à la liste
+		followers = append(followers, user)
 	}
 
+	// 4) Répondre au client avec la liste d'utilisateurs
 	utils.RespondWithUsers(w, followers, 200)
 }
 
@@ -356,4 +365,71 @@ func ContainsUser(list []models.User, id string) bool {
 		}
 	}
 	return false
+}
+
+/* -------------------------------------------------------------------------- */
+
+// ChangeNickname allows the user to update their nickname.
+func (handler *Handler) ChangeNickname(w http.ResponseWriter, r *http.Request) {
+	w = utils.ConfigHeader(w)
+	log.Println("Début de ChangeNickname")
+	// Retrieve the user ID from the request context
+	userId, ok := r.Context().Value(utils.UserKey).(string)
+	if !ok || userId == "" {
+		log.Println("Erreur : utilisateur non authentifié")
+		utils.RespondWithError(w, "User not authenticated", http.StatusUnauthorized)
+		return
+	}
+
+	// Read request body
+	type RequestBody struct {
+		Nickname string `json:"nickname"`
+	}
+	var body RequestBody
+	err := json.NewDecoder(r.Body).Decode(&body)
+	if err != nil || body.Nickname == "" {
+		log.Printf("Erreur de décodage ou nickname invalide : %v", err)
+		utils.RespondWithError(w, "Invalid nickname provided", http.StatusBadRequest)
+		return
+	}
+	log.Printf("Tentative de mise à jour du nickname pour l'utilisateur %s avec le nickname %s", userId, body.Nickname)
+	// Update nickname in the database
+	err = handler.repos.UserRepo.UpdateNickname(userId, body.Nickname)
+	if err != nil {
+		log.Printf("Erreur lors de la mise à jour du nickname dans la base de données : %v", err)
+		utils.RespondWithError(w, "Error updating nickname", http.StatusInternalServerError)
+		return
+	}
+	log.Println("Nickname mis à jour avec succès")
+	utils.RespondWithSuccess(w, "Nickname updated successfully", http.StatusOK)
+}
+
+// ChangeAvatar allows the user to update their avatar.
+func (handler *Handler) ChangeAvatar(w http.ResponseWriter, r *http.Request) {
+	w = utils.ConfigHeader(w)
+
+	userId, ok := r.Context().Value(utils.UserKey).(string)
+	if !ok || userId == "" {
+		log.Println("Utilisateur non authentifié")
+		utils.RespondWithError(w, "User not authenticated", http.StatusUnauthorized)
+		return
+	}
+
+	log.Printf("Tentative de mise à jour de l'avatar pour l'utilisateur %s", userId)
+	avatarPath := utils.SaveAvatar(r)
+	if avatarPath == "" {
+		log.Println("Aucun fichier valide reçu")
+		utils.RespondWithError(w, "Invalid avatar file", http.StatusBadRequest)
+		return
+	}
+
+	log.Printf("Chemin de l'avatar sauvegardé : %s", avatarPath)
+	err := handler.repos.UserRepo.UpdateAvatar(userId, avatarPath)
+	if err != nil {
+		log.Printf("Erreur lors de la mise à jour de l'avatar dans la base de données : %v", err)
+		utils.RespondWithError(w, "Error updating avatar", http.StatusInternalServerError)
+		return
+	}
+
+	utils.RespondWithSuccess(w, "Avatar updated successfully", http.StatusOK)
 }

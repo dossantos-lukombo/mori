@@ -1,7 +1,8 @@
 package handlers
 
 import (
-	"encoding/json"	
+	"encoding/json"
+	"log"
 	"net/http"
 	"strings"
 
@@ -21,6 +22,7 @@ func (handler *Handler) AllGroups(w http.ResponseWriter, r *http.Request) {
 	// request all groups + relations
 	groups, errGroups := handler.repos.GroupRepo.GetAllAndRelations(userId)
 	if errGroups != nil {
+		log.Printf("AllGroups error for user %s: %v", userId, errGroups)
 		utils.RespondWithError(w, "Error on getting data", 200)
 		return
 	}

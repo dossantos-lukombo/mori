@@ -243,3 +243,26 @@ func (repo *UserRepository) DeleteFollower(userID, followerID string) error {
 	_, err := repo.DB.Exec(query, userID, followerID)
 	return err
 }
+
+// UpdateNickname modifies the user's nickname.
+func (repo *UserRepository) UpdateNickname(userID, newNickname string) error {
+	query := `
+		UPDATE users 
+		SET nickname = $1 
+		WHERE user_id = $2;
+	`
+	_, err := repo.DB.Exec(query, newNickname, userID)
+	return err
+}
+
+// UpdateAvatar modifies the user's avatar.
+func (repo *UserRepository) UpdateAvatar(userID, avatarPath string) error {
+	query := `
+		UPDATE users 
+		SET image = $1 
+		WHERE user_id = $2;
+	`
+	_, err := repo.DB.Exec(query, avatarPath, userID)
+	return err
+}
+

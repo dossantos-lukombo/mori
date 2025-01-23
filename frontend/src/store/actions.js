@@ -10,7 +10,7 @@ export default {
         })
             .then((r) => r.json())
             .then((json) => {
-                // console.log("JSON response", json)
+                //console.log("JSON response", json)
                 commit("updateMyUserID", json.users[0].id)
             });
     },
@@ -49,7 +49,7 @@ export default {
             .then((json) => {
                 let groups = json.groups;
                 this.commit("updateAllGroups", groups);
-                // console.log("Allgroups:", json.groups);
+                //console.log("Allgroups:", json.groups);
             });
     },
 
@@ -121,6 +121,65 @@ export default {
         // { conversationsMsg: [ { ... }, { ... } ] }
         commit("setConversationsMsg", data.conversationsMsg);
     },
+
+    async changeNickname({ dispatch }, newNickname) {
+        if (!newNickname.trim()) {
+            alert("Veuillez entrer un pseudo valide.");
+            return;
+        }
+    
+        try {
+            const response = await fetch("http://localhost:8081/updateNickname", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                credentials: "include",
+                body: JSON.stringify({ nickname: newNickname }),
+            });
+    
+            const result = await response.json();
+            if (!response.ok) {
+                throw new Error(result.message || "Erreur lors de la modification du pseudo");
+            }
+    
+            alert("Pseudo modifié avec succès !");
+            await dispatch("getMyProfileInfo");
+        } catch (err) {
+            console.error("Erreur lors de la modification du pseudo :", err.message);
+            alert(err.message);
+        }
+    },
+    
+      /**
+       * Action pour changer l'avatar de l'utilisateur
+       */
+      async changeAvatar({ dispatch }, avatarFile) {
+        if (!avatarFile) {
+            alert("Veuillez sélectionner un avatar.");
+            return;
+        }
+        const formData = new FormData();
+        formData.append("avatar", avatarFile);
+        try {
+            const response = await fetch("http://localhost:8081/updateAvatar", {
+                method: "POST",
+                credentials: "include",
+                body: formData,
+            });
+            if (!response.ok) {
+                throw new Error("Erreur lors de la modification de l'avatar.");
+            }
+            alert("Avatar modifié avec succès !");
+            await dispatch("getMyProfileInfo");
+        } catch (err) {
+            console.error(err);
+            alert(err.message);
+        }
+    },
+    
+
+    
       
 
     createWebSocketConn({ commit, dispatch, state }) {

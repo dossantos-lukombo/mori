@@ -20,7 +20,7 @@ func (repo *GroupRepository) GetAllAndRelations(userID string) ([]models.Group, 
 			 FROM group_users 
 			 WHERE group_users.group_id = groups.group_id 
 			   AND group_users.user_id = $1) AS member, 
-			(administrator = $1) AS admin 
+			(administrator = $1)::int AS admin
 		FROM groups;
 	`
 	rows, err := repo.DB.Query(query, userID)
@@ -49,7 +49,7 @@ func (repo *GroupRepository) GetUserGroups(userID string) ([]models.Group, error
 		SELECT 
 			group_id, 
 			name, 
-			(administrator = $1) AS admin 
+			(administrator = $1)::int AS admin
 		FROM groups 
 		WHERE 
 			(SELECT COUNT(*) 
