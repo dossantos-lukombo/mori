@@ -400,17 +400,19 @@ func (handler *Handler) LLMConvoSave(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if conversation.NewConversation == true {
-			uuid := uuid.NewV4()
-			conversation.ConversationID = uuid.String()
+			conversation.ConversationID = uuid.NewV4().String()
 			fmt.Println("conversation", conversation)
-			conversation.UpdateAt = conversation.CreatedAt
 			err = handler.repos.LLMConvoRepo.SaveConvo(conversation)
 			if err != nil {
 				http.Error(w, "Error saving conversation: "+err.Error(), http.StatusInternalServerError)
 				return
 			}
 		} else {
-			conversation.UpdateAt = time.Now().Format("2025-01-16T11:23:47.515Z")
+			conversation.ConversationID, err = handler.repos.LLMConvoRepo.GetLastConvoID() //get the last conversation ID
+			if err != nil {
+				http.Error(w, "Error getting last conversation ID: "+err.Error(), http.StatusInternalServerError)
+				return
+			}
 			err = handler.repos.LLMConvoRepo.SaveConvo(conversation)
 			if err != nil {
 				http.Error(w, "Error saving conversation: "+err.Error(), http.StatusInternalServerError)
@@ -427,16 +429,47 @@ func (handler *Handler) LLMConvoGetAll(w http.ResponseWriter, convo models.Conve
 
 	var conversations []models.Conversation
 
+	fmt.Println("Convo: ", convo)
 	conversations, err := handler.repos.LLMConvoRepo.GetAllConvo(convo)
 	if err != nil {
 		http.Error(w, "Error getting all conversations: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
-
+	fmt.Println("Conversations: ", conversations)
 	w.Header().Set("Content-Type", "application/json")
 	err = json.NewEncoder(w).Encode(conversations)
 	if err != nil {
 		http.Error(w, "Error encoding JSON: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
+// LLMConvoGet gets the conversation from the database
+func (handler *Handler) LLMConvoGet(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("Method: ", r.Method)
+
+	if r.Method == http.MethodPost {
+		// Do something
+		//get the body of our POST request
+		var conversation models.Conversation
+		w.Header().Set("Content-Type", "application/json")
+
+		body, err := io.ReadAll(r.Body)
+		if err != nil {
+			http.Error(w, "Error reading request body",
+				http.StatusInternalServerError)
+		}
+		fmt.Println("Body: ", string(body))
+
+		err = json.Unmarshal(body, &conversation)
+		if err != nil {
+			http.Error(w, "Error unmarshalling JSON LLMConvoGet "+err.Error(),
+				http.StatusInternalServerError)
+			return
+		}
+
+		handler.LLMConvoGetAll(w, conversation)
+
 		return
 	}
 }

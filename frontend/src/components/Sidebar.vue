@@ -10,16 +10,18 @@
         </li>
       </ul>
 
-      <ContactsForChatBotView
+      <!-- <ContactsForChatBotView
         v-if="activeView === 'contacts'"
         @select-contact="handleContactSelection"
-      />
+      /> -->
+      <ChatHistory />
     </div>
   </div>
 </template>
 
 <script>
 import ContactsForChatBotView from "./ContactsForChatBoxView.vue";
+import ChatHistory from "./ChatHistory.vue";
 
 export default {
   props: {
@@ -37,7 +39,7 @@ export default {
       activeView: null, // Manage the active view in the sidebar
     };
   },
-  components: { ContactsForChatBotView },
+  components: { ContactsForChatBotView,ChatHistory },
   methods: {
     async navigateToMessages() {
       if (this.contactsList.length > 0) {

@@ -7,11 +7,8 @@
       <div class="mori" id="moriChatBot" v-if="!hasMessages">Mori</div>
       <div class="chatbot-message" v-if="!hasMessages">How can I help you?</div>
       <div class="chatbot-messages" v-if="hasMessages">
-        <div
-          v-for="(message, index) in messages"
-          :key="index"
-          :class="['message', message.sender === 'Utilisateur' ? 'Utilisateur' : 'LLM']"
-        >
+        <div v-for="(message, index) in messages" :key="index"
+          :class="['message', message.sender === 'Utilisateur' ? 'Utilisateur' : 'LLM']">
           <div v-if="message.sender !== 'Utilisateur'" class="bot-logo">
             <img src="../assets/mori.png" alt="Bot Logo" />
           </div>
@@ -19,30 +16,18 @@
             <Markdown :source="message.text" />
           </div>
           <div v-if="message.sender === 'LLM'" class="markdown-container-LLM">
-            <Markdown
-            class = "markdownLLM"
-            :source="message.text"
-            />
+            <Markdown class="markdownLLM" :source="message.text" />
           </div>
           <div class="timestamp">{{ message.timestamp }}</div>
         </div>
       </div>
 
-      <div 
-      :class="['chatbot-input-container', { 'chatbot-input-container--active': hasMessages }]"
-    >
-      <textarea
-        ref="textarea"
-        :rows="rows"
-        class="chatbot-textarea"
-        v-model="userInput"
-        @keydown="handleKeydown"
-        @click="handleKeydown"
-        placeholder="Type your message here..."
-      ></textarea>
-      <button @click="sendMessage">Send</button>
-    </div>
-    
+      <div :class="['chatbot-input-container', { 'chatbot-input-container--active': hasMessages }]">
+        <textarea ref="textarea" :rows="rows" class="chatbot-textarea" v-model="userInput" @keydown="handleKeydown"
+          @click="handleKeydown" placeholder="Type your message here..."></textarea>
+        <button @click="sendMessage">Send</button>
+      </div>
+
     </div>
   </div>
 </template>
@@ -61,13 +46,11 @@ export default {
       sourceLLM: "",
       sourceUtilisateur: "",
       markdownText: '',
-      conversation:{
-        user_id:"",
+      conversation: {
+        user_id: "",
         user_request: "",
         llm_response: "",
         new_conversation: false,
-        created_at: "",
-        updated_at: "",
       },
     };
   },
@@ -80,23 +63,23 @@ export default {
     this.initializeConversation();
   },
   methods: {
-     async getMyUserID() {
-      const response=await fetch("http://localhost:8081/currentUser", {
-      credentials: "include",
-      headers: new Headers({
-        "Content-Type": "application/json",
-      }),
-      method: "POST",
-    })
-    if (!response.ok) {
-      console.error("Erreur lors de la récupération de l'ID de l'utilisateur :", response.statusText);
-      return;
-    }else{
-      const resp = await response.json();
-      console.log(resp);
-      console.log(resp.users[0].id);
-      return resp.users[0].id;
-    }
+    async getMyUserID() {
+      const response = await fetch("http://localhost:8081/currentUser", {
+        credentials: "include",
+        headers: new Headers({
+          "Content-Type": "application/json",
+        }),
+        method: "POST",
+      })
+      if (!response.ok) {
+        console.error("Erreur lors de la récupération de l'ID de l'utilisateur :", response.statusText);
+        return;
+      } else {
+        const resp = await response.json();
+        console.log(resp);
+        console.log(resp.users[0].id);
+        return resp.users[0].id;
+      }
     },
     initializeConversation() {
       this.conversation.user_request = "";
@@ -106,10 +89,10 @@ export default {
     appendMessage(sender, text) {
       const timestamp = new Date().toLocaleTimeString();
       this.messages.push({ sender, text, timestamp });
-        this.$nextTick(() => {
-          const chatBox = this.$el.querySelector(".chatbot-messages");
-          chatBox.scrollTop = chatBox.scrollHeight;
-        });
+      this.$nextTick(() => {
+        const chatBox = this.$el.querySelector(".chatbot-messages");
+        chatBox.scrollTop = chatBox.scrollHeight;
+      });
     },
     async sendMessage() {
       if (this.userInput.trim() === "") return;
@@ -133,7 +116,7 @@ export default {
         },
         body: JSON.stringify(this.conversation),
       });
-      
+
       if (!response.ok) {
         console.error("Erreur lors de l'envoi des données :", response.statusText);
         return;
@@ -148,7 +131,7 @@ export default {
       try {
         accumulatedText = "";
         let { done, value } = await reader.read();
-        
+
         while (!done) {
           const chunk = decoder.decode(value, { stream: true });
           const lines = chunk.split("\n");
@@ -157,11 +140,11 @@ export default {
               const jsonData = line.replace("data: ", "").trim();
               try {
                 const parsedData = JSON.parse(jsonData);
-                
+
                 accumulatedText += parsedData.response.message.content;
                 lastLLMMessage.text = accumulatedText;
 
-             
+
               } catch (error) {
                 console.error("Erreur de parsing JSON :", error);
               }
@@ -169,28 +152,27 @@ export default {
           });
           ({ done, value } = await reader.read());
         }
-        
-        
+
+
         console.log("Accumulated Text", accumulatedText);
         this.conversation.llm_response = accumulatedText;
-        
+
         this.appendMessage("LLM", accumulatedText);
         this.messages.splice(this.messages.length - 2, 1);
         // console.log("LLMMessage Element: ",LLMMessageElement);
         lastLLMMessage.text = "";
-        
+
       } catch (error) {
         console.error("Erreur de lecture du flux", error);
       } finally {
         reader.releaseLock();
       }
-      
-      // LLMMessageElement[LLMMessageElement.length - 1].remove();
-      console.log("LLM RESPONSE",this.conversation.llm_response);
+
       this.conversation.user_id = await this.getMyUserID();
-      this.conversation.created_at = new Date().toLocaleTimeString();
-      if(this.messages.length === 2){
+      if (this.messages.length === 2) {
         this.conversation.new_conversation = true;
+      } else {
+        this.conversation.new_conversation = false;
       }
       this.sendConversation();
     },
@@ -208,22 +190,22 @@ export default {
         console.error("Erreur lors de l'envoi de la conversation :", response.statusText);
         return;
       }
-      
+
       console.log("Conversation envoyée avec succès !");
     },
     // Méthode pour gérer les événements de touche
     handleKeydown(event) {
-      
-      if (event.shiftKey && event.key === "Enter" ) {
+
+      if (event.shiftKey && event.key === "Enter") {
         event.preventDefault();
         this.userInput += "\n";
         let textarea = this.$el.querySelector("textarea");
-        textarea.style.height = `${textarea.scrollHeight+10}px`;
+        textarea.style.height = `${textarea.scrollHeight + 10}px`;
 
       } else if (event.key === "Enter") {
         event.preventDefault();
         this.sendMessage();
-        
+
       }
       let textarea = this.$el.querySelector("textarea");
       const textLength = textarea.value.length;
@@ -232,118 +214,127 @@ export default {
 
         // Vérifie si le caractère à supprimer est un retour chariot
         if (textarea.value[cursorPosition - 1] === "\n") {
-        // Réduit la hauteur du textarea
+          // Réduit la hauteur du textarea
           textarea.style.height = `${textarea.scrollHeight - 22}px`;
         }
-      }else if (event.key === "Backspace" && textLength === 1) {
+      } else if (event.key === "Backspace" && textLength === 1) {
         textarea.style.height = `50px`;
       }
+    },
+    
+    //Méthode qui détecte le rafraichissement de la page
+    beforeunload() {
+      window.addEventListener('beforeunload', this.getConversations());
     },
   },
 };
 </script>
 
 <style scoped>
-  .Utilisateur {
-    align-self: flex-end;
-    background-color: var(--purple-color);
-    color: var(--color-white);
-  }
-  
-  .LLM {
-    align-self: flex-start;
-    text-align: left;
-    background-color: var(--page-bg);
-    color: var(--color-white);
-  }
-  
-  .chatbot-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    width: 100%;
-    height: 100%;
-    background-color: var(--page-bg);
-    font-family: Arial, sans-serif;
-  }
-  
-  .chatbot-box {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    max-width: 800px;
-    border-radius: 10px;
-    padding: 30px;
-    text-align: center;
-    gap: 20px;
-    margin-bottom: 130px;
-    transition: all 0.5s ease;
-  }
-  
-  .chatbot-box--active {
-    justify-content: space-between;
-    width: 80%;
-    height: 85vh;
-  }
+.Utilisateur {
+  align-self: flex-end;
+  background-color: var(--purple-color);
+  color: var(--color-white);
+}
 
-  .bot-logo {
-    display: inline-block;
-    vertical-align: top;
-    margin-right: 10px;
-    margin-top: -5px;
-    margin-left: -5px;
-  
-  }
-  
-  .bot-logo img {
-    width: 35px; /* Adjust size as needed */
-    height: 35px; /* Adjust size as needed */
-    border-radius: 50%; /* Optional: Make the image circular */
-    object-fit: cover; /* Ensure the image scales properly */
-  }
-  
-  
-  .mori-img {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    transition: opacity 0.5s ease;
-  }
-  
-  #moriChatBot {
-    user-select: none;
-    font-size: 50px;
-    font-weight: bold;
-    transition: opacity 0.5s ease;
-  }
-  
-  .chatbot-message {
-    user-select: none;
-    margin-bottom: 20px;
-    font-size: 20px;
-    color: var(--color-white);
-    transition: opacity 0.5s ease;
-  }
-  
-  .chatbot-messages {
-    flex: 1;
-    overflow-y: auto;
-    padding: 10px;
-    border-radius: 10px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-  }
-  
-  .message {
-    max-width: 70%;
-    padding: 10px;
-    border-radius: 10px;
-    font-size: 16px;
-    position: relative;
-  }
-  
-  /* .user {
+.LLM {
+  align-self: flex-start;
+  text-align: left;
+  background-color: var(--page-bg);
+  color: var(--color-white);
+}
+
+.chatbot-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  background-color: var(--page-bg);
+  font-family: Arial, sans-serif;
+}
+
+.chatbot-box {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 800px;
+  border-radius: 10px;
+  padding: 30px;
+  text-align: center;
+  gap: 20px;
+  margin-bottom: 130px;
+  transition: all 0.5s ease;
+}
+
+.chatbot-box--active {
+  justify-content: space-between;
+  width: 80%;
+  height: 85vh;
+}
+
+.bot-logo {
+  display: inline-block;
+  vertical-align: top;
+  margin-right: 10px;
+  margin-top: -5px;
+  margin-left: -5px;
+
+}
+
+.bot-logo img {
+  width: 35px;
+  /* Adjust size as needed */
+  height: 35px;
+  /* Adjust size as needed */
+  border-radius: 50%;
+  /* Optional: Make the image circular */
+  object-fit: cover;
+  /* Ensure the image scales properly */
+}
+
+
+.mori-img {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: opacity 0.5s ease;
+}
+
+#moriChatBot {
+  user-select: none;
+  font-size: 50px;
+  font-weight: bold;
+  transition: opacity 0.5s ease;
+}
+
+.chatbot-message {
+  user-select: none;
+  margin-bottom: 20px;
+  font-size: 20px;
+  color: var(--color-white);
+  transition: opacity 0.5s ease;
+}
+
+.chatbot-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.message {
+  max-width: 70%;
+  padding: 10px;
+  border-radius: 10px;
+  font-size: 16px;
+  position: relative;
+}
+
+/* .user {
     align-self: flex-end;
     background-color: var(--purple-color);
     color: var(--color-white);
@@ -354,17 +345,17 @@ export default {
     background-color: var(--bg-neutral);
     color: var(--color-white);
   } */
-  
-  .timestamp {
-    font-size: 12px;
-    color: var(--color-grey);
-    opacity: 0.5;
-    text-align: right;
-    margin-top: 5px;
-  }
-  
-  /* Input field animation */
-  /* 
+
+.timestamp {
+  font-size: 12px;
+  color: var(--color-grey);
+  opacity: 0.5;
+  text-align: right;
+  margin-top: 5px;
+}
+
+/* Input field animation */
+/* 
   1. The container that slides down with an animation 
      (replaces .chatbot-input in your old code)
 */
@@ -373,7 +364,8 @@ export default {
   gap: 10px;
   align-items: center;
   position: absolute;
-  top: 65%; /* Initially below the greeting message */
+  top: 65%;
+  /* Initially below the greeting message */
   left: 50%;
   transform: translate(-50%, -50%);
   width: calc(40% - 40px);
@@ -383,9 +375,11 @@ export default {
 }
 
 .chatbot-input-container--active {
-  width: calc(50% - 40px); /* Widen the container */
+  width: calc(50% - 40px);
+  /* Widen the container */
   position: absolute;
-  top: calc(97% - 80px);   /* Slide to bottom of viewport */
+  top: calc(97% - 80px);
+  /* Slide to bottom of viewport */
   transform: translateX(-50%);
 }
 
@@ -398,9 +392,11 @@ export default {
   border: 1px solid var(--color-grey);
   border-radius: 10px;
   font-size: 16px;
-  min-height: 50px;   /* Ensure it matches your old input height */
+  min-height: 50px;
+  /* Ensure it matches your old input height */
   padding: 13px;
-  resize: none;       /* Optional: remove manual resize handle */
+  resize: none;
+  /* Optional: remove manual resize handle */
 }
 
 /* 
@@ -422,9 +418,9 @@ export default {
   background-color: var(--hover-background-color);
 }
 
-  
-  .chatbot-input-container input:focus {
-    outline: none;
-    border-color: var(--color-primary);
-  }
+
+.chatbot-input-container input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
 </style>

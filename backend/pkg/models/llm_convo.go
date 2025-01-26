@@ -6,13 +6,12 @@ type Conversation struct {
 	UserRequest     string `json:"user_request"`
 	LLMResponse     string `json:"llm_response"`
 	NewConversation bool   `json:"new_conversation"`
-	CreatedAt       string `json:"created_at"`
-	UpdateAt        string `json:"update_at"`
 }
 
 type LLMConvoRepository interface {
 	SaveConvo(Conversation) error
 	GetAllConvo(Conversation) ([]Conversation, error)
+	GetLastConvoID() (string, error)
 	// get all for specific chat
 
 }
