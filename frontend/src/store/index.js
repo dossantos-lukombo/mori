@@ -1,21 +1,22 @@
 import { createStore } from "vuex";
-import chat from "@/store/modules/chat.js"
-import notifications from "@/store/modules/notifications.js"
-import actions from "@/store/actions.js"
+import chat from "@/store/modules/chat.js";
+import notifications from "@/store/modules/notifications.js";
+import actions from "@/store/actions.js";
 
 export default createStore({
   modules: {
     chat,
-    notifications
+    notifications,
   },
   //------------------------------------- state is like a variables, which hold a values.
   state: {
     id: "", // id is currently logged in user ID
-    wsConn: {}, // changed from null to {} for logout fix. (vic) 
+    wsConn: {}, // changed from null to {} for logout fix.
+
+    historyConvo: [],
 
     profileInfo: {},
     myFollowers: null,
-   
 
     users: {
       allusers: [],
@@ -26,17 +27,15 @@ export default createStore({
       userGroups: [],
     },
 
-
     dataLoaded: {
-      userGroups: false
-    }
-
+      userGroups: false,
+    },
   },
   //------------------------------------ getters is a way for check state values.
   getters: {
     getId(state) {
       return state.id;
-    },    
+    },
     userInfo(state) {
       return state.profileInfo;
     },
@@ -46,8 +45,8 @@ export default createStore({
     allGroups(state) {
       return state.groups.allGroups;
     },
-    followers(state){
-      return state.myFollowers
+    followers(state) {
+      return state.myFollowers;
     },
     filterUsers: (state) => (searchquery) => {
       if (searchquery === "") {
@@ -77,27 +76,29 @@ export default createStore({
 
     getMyFollowersNames({ myFollowers }) {
       if (myFollowers === null) {
-        return null
+        return null;
       }
 
       return myFollowers.map((follower) => {
         if (follower.nickname) {
-          return follower.nickname
+          return follower.nickname;
         } else {
-          return follower.firstName + follower.lastName
+          return follower.firstName + follower.lastName;
         }
-      })
+      });
     },
 
     getMyFollowerIDs({ myFollowers }) {
       if (Array.isArray(myFollowers) && myFollowers.length > 0) {
-        return myFollowers.map((follower) => follower.id)
+        return myFollowers.map((follower) => follower.id);
       }
     },
-
+    allConversations(state) {
+      return state.historyConvo;
+    },
   },
   //-------------------------------------- mutations is a way for change state.
-  mutations: {    
+  mutations: {
     updateProfileInfo(state, userinfo) {
       state.profileInfo = userinfo;
     },
@@ -114,22 +115,26 @@ export default createStore({
 
     updateMyUserID(state, id) {
       state.id = id;
-    },    
+    },
     updateWebSocketConn(state, wsConn) {
-      state.wsConn = wsConn
+      state.wsConn = wsConn;
     },
 
     updateUserGroups(state, userGroups) {
-      state.groups.userGroups = userGroups
+      state.groups.userGroups = userGroups;
     },
-
 
     updateDataLoaded(state, data) {
       state.dataLoaded[data] = true;
-    }
+    },
 
-
+    addConversation(state, message) {
+      state.historyConvo.push(message);
+    },
+    clearChatHistory(state) {
+      state.historyConvo = [];
+    },
   },
   //------------------------------------------Actions
-  actions: actions
+  actions: actions,
 });

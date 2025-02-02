@@ -150,4 +150,10 @@ export default {
 
     commit("updateWebSocketConn", ws);
   },
+  addConversation({ commit }, message) {
+    commit("addConversation", message);
+  },
+  clearChatHistory({ commit }) {
+    commit("clearChatHistory");
+  },
 };

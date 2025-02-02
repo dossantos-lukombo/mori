@@ -473,3 +473,49 @@ func (handler *Handler) LLMConvoGet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 }
+
+func (handler *Handler) LLMConvoGetLast(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("Method: ", r.Method)
+
+	if r.Method == http.MethodPost {
+		// Do something
+		//get the body of our POST request
+
+		type RequestConvo struct {
+			UserID string `json:"user_id"`
+		}
+
+		var requestConvo RequestConvo
+
+		w.Header().Set("Content-Type", "application/json")
+
+		body, err := io.ReadAll(r.Body)
+		if err != nil {
+			http.Error(w, "Error reading request body",
+				http.StatusInternalServerError)
+		}
+		fmt.Println("Body LLMConvoGetLast request: ", string(body))
+
+		err = json.Unmarshal(body, &requestConvo)
+		if err != nil {
+			http.Error(w, "Error unmarshalling JSON LLMConvoGet "+err.Error(),
+				http.StatusInternalServerError)
+			return
+		}
+
+		conversations, err := handler.repos.LLMConvoRepo.GetLastConvo()
+		if err != nil {
+			http.Error(w, "Error getting last conversation: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+		fmt.Println("Last conversation: ", conversations)
+		w.Header().Set("Content-Type", "application/json")
+		err = json.NewEncoder(w).Encode(conversations)
+		if err != nil {
+			http.Error(w, "Error encoding JSON: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		return
+	}
+}

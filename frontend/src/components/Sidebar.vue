@@ -39,7 +39,7 @@ export default {
       activeView: null, // Manage the active view in the sidebar
     };
   },
-  components: { ContactsForChatBotView,ChatHistory },
+  components: { ContactsForChatBotView, ChatHistory },
   methods: {
     async navigateToMessages() {
       if (this.contactsList.length > 0) {
@@ -82,7 +82,6 @@ export default {
   },
 };
 </script>
-
 
 <style scoped>
 /* Same styles */

@@ -7,12 +7,21 @@
       <div class="mori" id="moriChatBot" v-if="!hasMessages">Mori</div>
       <div class="chatbot-message" v-if="!hasMessages">How can I help you?</div>
       <div class="chatbot-messages" v-if="hasMessages">
-        <div v-for="(message, index) in messages" :key="index"
-          :class="['message', message.sender === 'Utilisateur' ? 'Utilisateur' : 'LLM']">
+        <div
+          v-for="(message, index) in messages"
+          :key="index"
+          :class="[
+            'message',
+            message.sender === 'Utilisateur' ? 'Utilisateur' : 'LLM',
+          ]"
+        >
           <div v-if="message.sender !== 'Utilisateur'" class="bot-logo">
             <img src="../assets/mori.png" alt="Bot Logo" />
           </div>
-          <div v-if="message.sender === 'Utilisateur'" class="markdown-container-Utilisateur">
+          <div
+            v-if="message.sender === 'Utilisateur'"
+            class="markdown-container-Utilisateur"
+          >
             <Markdown :source="message.text" />
           </div>
           <div v-if="message.sender === 'LLM'" class="markdown-container-LLM">
@@ -22,22 +31,33 @@
         </div>
       </div>
 
-      <div :class="['chatbot-input-container', { 'chatbot-input-container--active': hasMessages }]">
-        <textarea ref="textarea" :rows="rows" class="chatbot-textarea" v-model="userInput" @keydown="handleKeydown"
-          @click="handleKeydown" placeholder="Type your message here..."></textarea>
+      <div
+        :class="[
+          'chatbot-input-container',
+          { 'chatbot-input-container--active': hasMessages },
+        ]"
+      >
+        <textarea
+          ref="textarea"
+          :rows="rows"
+          class="chatbot-textarea"
+          v-model="userInput"
+          @keydown="handleKeydown"
+          @click="handleKeydown"
+          placeholder="Type your message here..."
+        ></textarea>
         <button @click="sendMessage">Send</button>
       </div>
-
     </div>
   </div>
 </template>
 
 <script>
-import Markdown from 'vue3-markdown-it';
-
+import Markdown from "vue3-markdown-it";
 
 export default {
   components: { Markdown },
+
   data() {
     return {
       userInput: "",
@@ -45,7 +65,7 @@ export default {
       rows: 10,
       sourceLLM: "",
       sourceUtilisateur: "",
-      markdownText: '',
+      markdownText: "",
       conversation: {
         user_id: "",
         user_request: "",
@@ -70,9 +90,12 @@ export default {
           "Content-Type": "application/json",
         }),
         method: "POST",
-      })
+      });
       if (!response.ok) {
-        console.error("Erreur lors de la récupération de l'ID de l'utilisateur :", response.statusText);
+        console.error(
+          "Erreur lors de la récupération de l'ID de l'utilisateur :",
+          response.statusText
+        );
         return;
       } else {
         const resp = await response.json();
@@ -110,7 +133,7 @@ export default {
       let accumulatedText = "";
       const response = await fetch(`http://localhost:8081/llmConvo`, {
         method: "POST",
-        credentials: 'include',
+        credentials: "include",
         headers: {
           "Content-Type": "application/json",
         },
@@ -118,7 +141,10 @@ export default {
       });
 
       if (!response.ok) {
-        console.error("Erreur lors de l'envoi des données :", response.statusText);
+        console.error(
+          "Erreur lors de l'envoi des données :",
+          response.statusText
+        );
         return;
       }
       const reader = response.body.getReader();
@@ -143,8 +169,6 @@ export default {
 
                 accumulatedText += parsedData.response.message.content;
                 lastLLMMessage.text = accumulatedText;
-
-
               } catch (error) {
                 console.error("Erreur de parsing JSON :", error);
               }
@@ -153,7 +177,6 @@ export default {
           ({ done, value } = await reader.read());
         }
 
-
         console.log("Accumulated Text", accumulatedText);
         this.conversation.llm_response = accumulatedText;
 
@@ -161,7 +184,6 @@ export default {
         this.messages.splice(this.messages.length - 2, 1);
         // console.log("LLMMessage Element: ",LLMMessageElement);
         lastLLMMessage.text = "";
-
       } catch (error) {
         console.error("Erreur de lecture du flux", error);
       } finally {
@@ -171,6 +193,7 @@ export default {
       this.conversation.user_id = await this.getMyUserID();
       if (this.messages.length === 2) {
         this.conversation.new_conversation = true;
+        this.$store.dispatch("addConversation", this.conversation);
       } else {
         this.conversation.new_conversation = false;
       }
@@ -179,7 +202,7 @@ export default {
     async sendConversation() {
       const response = await fetch(`http://localhost:8081/llmConvoSave`, {
         method: "POST",
-        credentials: 'include',
+        credentials: "include",
         headers: {
           "Content-Type": "application/json",
         },
@@ -187,7 +210,10 @@ export default {
       });
 
       if (!response.ok) {
-        console.error("Erreur lors de l'envoi de la conversation :", response.statusText);
+        console.error(
+          "Erreur lors de l'envoi de la conversation :",
+          response.statusText
+        );
         return;
       }
 
@@ -195,19 +221,17 @@ export default {
     },
     // Méthode pour gérer les événements de touche
     handleKeydown(event) {
-
       if (event.shiftKey && event.key === "Enter") {
         event.preventDefault();
         this.userInput += "\n";
         let textarea = this.$el.querySelector("textarea");
         textarea.style.height = `${textarea.scrollHeight + 10}px`;
-
       } else if (event.key === "Enter") {
         event.preventDefault();
         this.sendMessage();
-
       }
-      let textarea = this.$el.querySelector("textarea");
+      // let textarea = this.$el.querySelector("textarea");
+      let textarea = document.querySelector("textarea");
       const textLength = textarea.value.length;
       if (event.key === "Backspace" && textLength > 0) {
         const cursorPosition = textarea.selectionEnd; // Position actuelle du curseur
@@ -221,11 +245,11 @@ export default {
         textarea.style.height = `50px`;
       }
     },
-    
+
     //Méthode qui détecte le rafraichissement de la page
-    beforeunload() {
-      window.addEventListener('beforeunload', this.getConversations());
-    },
+    // beforeunload() {
+    //   window.addEventListener("beforeunload", this.getConversations());
+    // },
   },
 };
 </script>
@@ -279,7 +303,6 @@ export default {
   margin-right: 10px;
   margin-top: -5px;
   margin-left: -5px;
-
 }
 
 .bot-logo img {
@@ -292,7 +315,6 @@ export default {
   object-fit: cover;
   /* Ensure the image scales properly */
 }
-
 
 .mori-img {
   display: flex;
@@ -339,7 +361,7 @@ export default {
     background-color: var(--purple-color);
     color: var(--color-white);
   }
-  
+
   .bot {
     align-self: flex-start;
     background-color: var(--bg-neutral);
@@ -355,8 +377,8 @@ export default {
 }
 
 /* Input field animation */
-/* 
-  1. The container that slides down with an animation 
+/*
+  1. The container that slides down with an animation
      (replaces .chatbot-input in your old code)
 */
 .chatbot-input-container {
@@ -383,8 +405,8 @@ export default {
   transform: translateX(-50%);
 }
 
-/* 
-  2. The textarea itself: 
+/*
+  2. The textarea itself:
      (new .chatbot-textarea class)
 */
 .chatbot-textarea {
@@ -399,8 +421,8 @@ export default {
   /* Optional: remove manual resize handle */
 }
 
-/* 
-  3. The Send button 
+/*
+  3. The Send button
   (same rules as your old .chatbot-input button style)
 */
 .chatbot-input-container button {
@@ -417,7 +439,6 @@ export default {
 .chatbot-input-container button:hover {
   background-color: var(--hover-background-color);
 }
-
 
 .chatbot-input-container input:focus {
   outline: none;

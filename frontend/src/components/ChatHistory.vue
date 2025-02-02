@@ -1,188 +1,275 @@
 <template>
-    <!-- <div id="app"> -->
-        <!-- <div class="sidebar"> -->
-            <!-- <h3>Historique du Chatbot</h3> -->
-            <ul>
-                <li v-for="(convo,index) in chatHistory" :key="index">
-                    <div v-if="convo.length > 0" @click="loadConvo(convo[0].conversation_id)">
-                        <button type="button">{{convo[convo.length-1].user_request}}</button>
-                    </div>
-                </li>
-            </ul>
-        <!-- </div> -->
-    <!-- </div> -->
+  <!-- <h3>Historique du Chatbot</h3> -->
+  <ul id="list_chat_convo">
+    <li v-for="(convo, index) in conversationsUpdate" :key="index">
+      <div @click="loadConvo(convo[0].conversation_id)">
+        <div class="elmt_history">
+          {{ convo[convo.length - 1].user_request }}
+          <button class="btn_delete_convo" @click="">X</button>
+        </div>
+      </div>
+    </li>
+  </ul>
 </template>
-  
+
 <script>
+// import ChatbotConversation from "./ChatbotConversation.vue";
+
 export default {
-    data() {
-        return {
-            userInput: "",
-            chatHistory: [],
-            currentChat: { messages: [] }
-        };
+  data() {
+    return {
+      userInput: "",
+      chatHistory: [],
+      // messages: ChatbotConversation.data().messages,
+      currentChat: { messages: [] },
+    };
+  },
+  computed: {
+    conversationsUpdate() {
+      console.log(
+        "allConversations.length: ",
+        this.$store.getters.allConversations.length
+      );
+      if (this.$store.getters.allConversations.length === 1) {
+        this.chatHistory.push(this.$store.getters.allConversations);
+        this.chatHistory.reverse();
+        this.$store.dispatch("clearChatHistory");
+      }
+      console.log("conversationsUpdate: ", this.chatHistory);
+      return this.chatHistory;
     },
-    mounted() {
-        this.getChatHistory();
+  },
+  mounted() {
+    this.getChatHistory();
+  },
+  methods: {
+    async getMyUserID() {
+      const response = await fetch("http://localhost:8081/currentUser", {
+        credentials: "include",
+        headers: new Headers({
+          "Content-Type": "application/json",
+        }),
+        method: "POST",
+      });
+      if (!response.ok) {
+        console.error(
+          "Erreur lors de la récupération de l'ID de l'utilisateur :",
+          response.statusText
+        );
+        return;
+      } else {
+        const resp = await response.json();
+        console.log(resp);
+        console.log(resp.users[0].id);
+        return resp.users[0].id;
+      }
     },
-    methods: {
-         async getMyUserID() {
-            const response = await fetch("http://localhost:8081/currentUser", {
-                credentials: "include",
-                headers: new Headers({
-                    "Content-Type": "application/json",
-                }),
-                method: "POST",
-            })
-            if (!response.ok) {
-                console.error("Erreur lors de la récupération de l'ID de l'utilisateur :", response.statusText);
-                return;
-            } else {
-                const resp = await response.json();
-                console.log(resp);
-                console.log(resp.users[0].id);
-                return resp.users[0].id;
-            }
-        },
+    // clearChatHistory() {
+    //   this.$store.dispatch("clearChatHistory");
+    // },
 
-        //Méthode pour obtenir la discussion selctionnée
-        async loadConvo(convo_id) {
-            const response = await fetch("http://localhost:8081/llmConvoGet", {
-                credentials: "include",
-                headers: new Headers({
-                    "Content-Type": "application/json",
-                }),
+    async getLastConvo() {
+      const response = await fetch("http://localhost:8081/llmConvoGetLast", {
+        credentials: "include",
+        headers: new Headers({
+          "Content-Type": "application/json",
+        }),
 
-                method: "POST",
-                body: JSON.stringify({
-                    user_id: await this.getMyUserID(),
-                    conversation_id: convo_id
-                }),
-            })
-            if (!response.ok) {
-                console.error("Erreur lors de la récupération de la conversation de l'utilisateur :", response.statusText);
-                return;
-            } else {
-                const resp = await response.json();
-                console.log("CONVERSATION: ", resp);
-                this.currentChat = resp;
-            }
-        },
+        method: "POST",
+        body: JSON.stringify({ user_id: await this.getMyUserID() }),
+      });
+      if (!response.ok) {
+        console.error(
+          "Erreur lors de la récupération des conversations de l'utilisateur :",
+          response.statusText
+        );
+        return;
+      }
+      const resp = await response.json();
+      return resp;
+    },
 
-        //Méthode pour obtenir les conversations de l'utilisateur
-        async getChatHistory() {
-            let same_conversations_id = {};
+    //Méthode pour obtenir la discussion selctionnée
+    async loadConvo(convo_id) {
+      const response = await fetch("http://localhost:8081/llmConvoSelected", {
+        credentials: "include",
+        headers: new Headers({
+          "Content-Type": "application/json",
+        }),
 
-            const response = await fetch("http://localhost:8081/llmConvoGet", {
-                credentials: "include",
-                headers: new Headers({
-                    "Content-Type": "application/json",
-                }),
+        method: "POST",
+        body: JSON.stringify({
+          user_id: await this.getMyUserID(),
+          conversation_id: convo_id,
+        }),
+      });
+      if (!response.ok) {
+        console.error(
+          "Erreur lors de la récupération de la conversation de l'utilisateur :",
+          response.statusText
+        );
+        return;
+      } else {
+        const resp = await response.json();
+        console.log("CONVERSATION: ", resp);
+        this.currentChat = resp;
+      }
+    },
+    chatHistoryListUpdate() {
+      return;
+    },
 
-                method: "POST",
-                body: JSON.stringify({ user_id: await this.getMyUserID() }),
-            })
-            if (!response.ok) {
-                console.error("Erreur lors de la récupération des conversations de l'utilisateur :", response.statusText);
-                return;
-            } else {
-                const resp = await response.json();
+    //Méthode pour obtenir les conversations de l'utilisateur
+    async getChatHistory() {
+      const response = await fetch("http://localhost:8081/llmConvoGet", {
+        credentials: "include",
+        headers: new Headers({
+          "Content-Type": "application/json",
+        }),
 
-                console.log("LIST OF CONVERSATION: ", resp);
-                let same_convo = [];
-                let diff_convo = [];
-                for (let i = 0; i < resp.length; i++) {
-                    if (i<resp.length-1 && resp[i].conversation_id === resp[i+1].conversation_id) {
-                        same_convo.push(resp[i]);
-                        
-                    }else if (i<resp.length-1 && resp[i].conversation_id !== resp[i+1].conversation_id) {
-                        if (i>0 && resp[i].conversation_id === resp[i-1].conversation_id) {
-                            same_convo.push(resp[i]);
-                        }
-                    }
-                }
-                this.chatHistory.push(same_convo);
-                for (let i = 0; i < resp.length; i++) {
-                    if (!same_convo.includes(resp[i])) {
-                        this.chatHistory.push([resp[i]]);
-                    }
-                }
+        method: "POST",
 
-                
-                
-                
-                // return same_conversations_id;
-                // this.chatHistory = same_conversations_id;
-                console.log("SAME CONVERSATION ID: ", this.chatHistory);
-            }
-            // this.chatHistory = same_conversations_id;
-        },
-    }
+        body: JSON.stringify({ user_id: await this.getMyUserID() }),
+      });
+      if (!response.ok) {
+        console.error(
+          "Erreur lors de la récupération des conversations de l'utilisateur :",
+          response.statusText
+        );
+        return;
+      }
+      const resp = await response.json();
+
+      this.$store.dispatch("clearChatHistory"); //clear the chat history variable
+      let same_convo = [];
+      // this.chatHistory = this.$store.getters.allConversations; //get the list variable of all conversations
+      for (let i = 0; i < resp.length; i++) {
+        if (
+          i < resp.length - 1 &&
+          resp[i].conversation_id === resp[i + 1].conversation_id
+        ) {
+          if (resp[i].llm_response !== "") {
+            same_convo.push(resp[i]);
+          }
+        } else if (
+          i < resp.length - 1 &&
+          resp[i].conversation_id !== resp[i + 1].conversation_id
+        ) {
+          if (
+            i > 0 &&
+            resp[i].conversation_id === resp[i - 1].conversation_id &&
+            resp[i].llm_response !== ""
+          ) {
+            same_convo.push(resp[i]);
+          }
+        }
+      }
+      this.chatHistory.push(same_convo);
+      for (let i = 0; i < resp.length; i++) {
+        if (!same_convo.includes(resp[i]) && resp[i] !== null) {
+          this.chatHistory.push([resp[i]]);
+        }
+      }
+      this.chatHistory = this.chatHistory.filter((convo) => convo.length > 0);
+      this.chatHistory.reverse();
+
+      console.log("chatHistory: ", this.chatHistory);
+    },
+  },
+  // watch: {
+  //   chatHistory(newValue, oldValue) {
+  //     if (newValue.length > oldValue.length) {
+  //       console.log("New conversation added");
+  //     }
+  //   },
+  //   messages(newValue, oldValue) {
+  //     if (newValue.sender === "LLM" && newValue.length === 1) {
+  //       console.log("messages newValue: ", newValue);
+  //       console.log("messages oldValue: ", oldValue);
+  //       console.log("New message from LLM");
+  //       element = this.getLastConvo();
+  //       this.$store.dispatch("addMessage", element);
+  //     }
+  //   },
+  // },
 };
 </script>
-  
+
 <style>
 #app {
-    display: flex;
-    height: 100vh;
+  display: flex;
+  height: 100vh;
 }
 
 .sidebar {
-    width: 25%;
-    background: #f4f4f4;
-    border-right: 1px solid #ddd;
-    padding: 10px;
+  width: 25%;
+  background: #f4f4f4;
+  border-right: 1px solid #ddd;
+  padding: 10px;
 }
 
 .sidebar ul {
-    list-style: none;
-    padding: 0;
+  list-style: none;
+  padding: 0;
 }
 
 .sidebar li {
-    cursor: pointer;
-    padding: 5px;
-    border-bottom: 1px solid #ddd;
+  cursor: pointer;
+  padding: 5px;
+  border-bottom: 1px solid #ddd;
 }
 
 .sidebar li:hover {
-    background: #eaeaea;
+  background: #eaeaea;
 }
 
 .chat-window {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    padding: 10px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 10px;
 }
 
 .chat-content {
-    flex: 1;
-    overflow-y: auto;
-    margin-bottom: 10px;
+  flex: 1;
+  overflow-y: auto;
+  margin-bottom: 10px;
 }
 
 .user-message {
-    text-align: right;
-    background: #d1ffd1;
-    margin: 5px;
-    padding: 5px 10px;
-    border-radius: 5px;
+  text-align: right;
+  background: #d1ffd1;
+  margin: 5px;
+  padding: 5px 10px;
+  border-radius: 5px;
 }
 
 .bot-message {
-    text-align: left;
-    background: #f0f0f0;
-    margin: 5px;
-    padding: 5px 10px;
-    border-radius: 5px;
+  text-align: left;
+  background: #f0f0f0;
+  margin: 5px;
+  padding: 5px 10px;
+  border-radius: 5px;
+}
+
+.elmt_history {
+  padding: 10px;
+  border: 1px solid #ddd;
+  margin: 5px;
+  border-radius: 5px;
+  background-color: black;
+  color: white;
+}
+
+.elmt_history:hover {
+  background-color: none;
+  border-color: none;
 }
 
 input[type="text"] {
-    padding: 10px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    outline: none;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  outline: none;
 }
 </style>
-  

@@ -12,6 +12,7 @@ type LLMConvoRepository interface {
 	SaveConvo(Conversation) error
 	GetAllConvo(Conversation) ([]Conversation, error)
 	GetLastConvoID() (string, error)
+	GetLastConvo() (Conversation, error)
 	// get all for specific chat
 
 }

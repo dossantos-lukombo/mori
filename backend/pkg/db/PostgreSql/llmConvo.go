@@ -13,7 +13,7 @@ type LLMConvoRepository struct {
 // Save inserts a new message into the conversations table.
 func (repo *LLMConvoRepository) SaveConvo(convo models.Conversation) error {
 	query := `
-		INSERT INTO conversations (user_id, conversation_id, user_request, llm_response, new_conversation) 
+		INSERT INTO conversations (user_id, conversation_id, user_request, llm_response, new_conversation)
 		VALUES ($1, $2, $3, $4, $5);
 	`
 	_, err := repo.DB.Exec(query, convo.UserID, convo.ConversationID, convo.UserRequest, convo.LLMResponse, convo.NewConversation)
@@ -55,4 +55,17 @@ func (repo *LLMConvoRepository) GetLastConvoID() (string, error) {
 	var convoID string
 	err := repo.DB.QueryRow(query).Scan(&convoID)
 	return convoID, err
+}
+
+// get the last conversation from the conversations table
+func (repo *LLMConvoRepository) GetLastConvo() (models.Conversation, error) {
+	query := `
+		SELECT conversation_id, user_id, user_request, llm_response, new_conversation
+		FROM conversations
+		ORDER BY conversation_id DESC
+		LIMIT 1
+	`
+	var convo models.Conversation
+	err := repo.DB.QueryRow(query).Scan(&convo.ConversationID, &convo.UserID, &convo.UserRequest, &convo.LLMResponse, &convo.NewConversation)
+	return convo, err
 }
