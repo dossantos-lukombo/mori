@@ -69,3 +69,14 @@ func (repo *LLMConvoRepository) GetLastConvo() (models.Conversation, error) {
 	err := repo.DB.QueryRow(query).Scan(&convo.ConversationID, &convo.UserID, &convo.UserRequest, &convo.LLMResponse, &convo.NewConversation)
 	return convo, err
 }
+
+// delete a conversation from the conversations table
+func (repo *LLMConvoRepository) DeleteConvo(convo models.Conversation) error {
+	query := `
+		DELETE FROM conversations
+		WHERE conversation_id = $1 AND user_id = $2
+	`
+	_, err := repo.DB.Exec(query, convo.ConversationID, convo.UserID)
+
+	return err
+}

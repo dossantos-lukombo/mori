@@ -24,6 +24,11 @@ type CustomClaims struct {
 	UserID         string `json:"user_id"`
 	ConversationID string `json:"conversation_id"`
 	Message        string `json:"message"`
+	// History        []struct {
+	// 	UserRequest string `json:"user_request"`
+	// 	LLMResponse string `json:"llm_response"`
+	// } `json:"history"`
+	// Stop           bool   `json:"stop"`
 
 	jwt.RegisteredClaims
 }
@@ -123,6 +128,8 @@ func (handler *Handler) LLMHandler(w http.ResponseWriter, r *http.Request) {
 			"user_id":         conversation.UserID,
 			"conversation_id": conversation.ConversationID,
 			"message":         conversation.UserRequest,
+			// "history":         conversation.History,
+			// "stop":            conversation.Stop,
 		}
 
 		data, err := json.Marshal(llmConversation)
@@ -515,6 +522,42 @@ func (handler *Handler) LLMConvoGetLast(w http.ResponseWriter, r *http.Request) 
 			http.Error(w, "Error encoding JSON: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
+
+		return
+	}
+}
+
+// LLMConvoDelete deletes the conversation from the database
+func (handler *Handler) LLMConvoDelete(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("Method: ", r.Method)
+
+	if r.Method == http.MethodPost {
+		// Do something
+		//get the body of our POST request
+		var conversation models.Conversation
+		w.Header().Set("Content-Type", "application/json")
+
+		body, err := io.ReadAll(r.Body)
+		if err != nil {
+			http.Error(w, "Error reading request body",
+				http.StatusInternalServerError)
+		}
+		fmt.Println("Body: ", string(body))
+
+		err = json.Unmarshal(body, &conversation)
+		if err != nil {
+			http.Error(w, "Error unmarshalling JSON LLMConvoDelete "+err.Error(),
+				http.StatusInternalServerError)
+			return
+		}
+
+		err = handler.repos.LLMConvoRepo.DeleteConvo(conversation)
+		if err != nil {
+			http.Error(w, "Error deleting conversation: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		fmt.Println("Conversation deleted")
 
 		return
 	}

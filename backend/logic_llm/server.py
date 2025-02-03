@@ -8,6 +8,7 @@ from fastapi.responses import StreamingResponse
 from datetime import datetime, timezone
 import json,time,jwt,os
 from dotenv import load_dotenv
+from idlelib import history
 
 app = FastAPI()
 
@@ -23,14 +24,16 @@ class Data(BaseModel):
     user_id: str
     conversation_id: str
     message: str
-    
+    # history: list
+    # stop: bool
+
 class SendData(BaseModel):
     status: Literal["success", "error"]
     user_id: str
     conversation_id: str
     response: str
     timestamp: str
-    
+
 global llm_response
 llm_response = ""
 
@@ -83,4 +86,3 @@ async def receive_data(data: Data,credentials: HTTPAuthorizationCredentials = De
     }
 
     return StreamingResponse(generate_stream(entry_data),media_type="text/event-stream")
-

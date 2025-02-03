@@ -2,12 +2,16 @@
   <!-- <h3>Historique du Chatbot</h3> -->
   <ul id="list_chat_convo">
     <li v-for="(convo, index) in conversationsUpdate" :key="index">
-      <div @click="loadConvo(convo[0].conversation_id)">
-        <div class="elmt_history">
-          {{ convo[convo.length - 1].user_request }}
-          <button class="btn_delete_convo" @click="">X</button>
-        </div>
+      <!-- <div @click="loadConvo(convo[0].conversation_id)"></div> -->
+      <div class="elmt_history">
+        {{ convo[convo.length - 1].user_request }}
       </div>
+      <button
+        class="btn_delete_convo"
+        @click="deleteConvo(convo[index].conversation_id, index)"
+      >
+        X
+      </button>
     </li>
   </ul>
 </template>
@@ -20,7 +24,6 @@ export default {
     return {
       userInput: "",
       chatHistory: [],
-      // messages: ChatbotConversation.data().messages,
       currentChat: { messages: [] },
     };
   },
@@ -64,29 +67,32 @@ export default {
         return resp.users[0].id;
       }
     },
-    // clearChatHistory() {
-    //   this.$store.dispatch("clearChatHistory");
-    // },
 
-    async getLastConvo() {
-      const response = await fetch("http://localhost:8081/llmConvoGetLast", {
+    async deleteConvo(conversation_id, index) {
+      console.log("conversation_id FOR DELETING: ", conversation_id);
+      const response = await fetch("http://localhost:8081/llmConvoDelete", {
         credentials: "include",
         headers: new Headers({
           "Content-Type": "application/json",
         }),
-
         method: "POST",
-        body: JSON.stringify({ user_id: await this.getMyUserID() }),
+        body: JSON.stringify({
+          user_id: await this.getMyUserID(),
+          conversation_id: conversation_id,
+        }),
       });
       if (!response.ok) {
         console.error(
-          "Erreur lors de la récupération des conversations de l'utilisateur :",
+          "Erreur lors de la suppression de la conversation de l'utilisateur :",
           response.statusText
         );
         return;
+      } else {
+        this.$store.dispatch("deleteConversation", index);
+        this.$store.dispatch("clearMessages");
+        this.chatHistory.splice(index, 1);
+        console.log("Conversation supprimée");
       }
-      const resp = await response.json();
-      return resp;
     },
 
     //Méthode pour obtenir la discussion selctionnée
@@ -115,9 +121,6 @@ export default {
         this.currentChat = resp;
       }
     },
-    chatHistoryListUpdate() {
-      return;
-    },
 
     //Méthode pour obtenir les conversations de l'utilisateur
     async getChatHistory() {
@@ -126,9 +129,7 @@ export default {
         headers: new Headers({
           "Content-Type": "application/json",
         }),
-
         method: "POST",
-
         body: JSON.stringify({ user_id: await this.getMyUserID() }),
       });
       if (!response.ok) {
@@ -172,26 +173,8 @@ export default {
       }
       this.chatHistory = this.chatHistory.filter((convo) => convo.length > 0);
       this.chatHistory.reverse();
-
-      console.log("chatHistory: ", this.chatHistory);
     },
   },
-  // watch: {
-  //   chatHistory(newValue, oldValue) {
-  //     if (newValue.length > oldValue.length) {
-  //       console.log("New conversation added");
-  //     }
-  //   },
-  //   messages(newValue, oldValue) {
-  //     if (newValue.sender === "LLM" && newValue.length === 1) {
-  //       console.log("messages newValue: ", newValue);
-  //       console.log("messages oldValue: ", oldValue);
-  //       console.log("New message from LLM");
-  //       element = this.getLastConvo();
-  //       this.$store.dispatch("addMessage", element);
-  //     }
-  //   },
-  // },
 };
 </script>
 

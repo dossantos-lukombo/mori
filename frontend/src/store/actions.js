@@ -153,7 +153,19 @@ export default {
   addConversation({ commit }, message) {
     commit("addConversation", message);
   },
+  deleteConversation({ commit }, message) {
+    commit("deleteConversation", message);
+  },
   clearChatHistory({ commit }) {
     commit("clearChatHistory");
+  },
+  addMessage({ commit }, message) {
+    commit("addMessage", message);
+  },
+  deletingMessage({ commit }, message) {
+    commit("deletingMessage", message);
+  },
+  clearMessages({ commit }) {
+    commit("clearMessages");
   },
 };

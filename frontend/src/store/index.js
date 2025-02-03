@@ -14,6 +14,7 @@ export default createStore({
     wsConn: {}, // changed from null to {} for logout fix.
 
     historyConvo: [],
+    messages: [],
 
     profileInfo: {},
     myFollowers: null,
@@ -96,6 +97,9 @@ export default createStore({
     allConversations(state) {
       return state.historyConvo;
     },
+    allMessages(state) {
+      return state.messages;
+    },
   },
   //-------------------------------------- mutations is a way for change state.
   mutations: {
@@ -131,8 +135,20 @@ export default createStore({
     addConversation(state, message) {
       state.historyConvo.push(message);
     },
+    deleteConversation(state, index) {
+      state.historyConvo.splice(index, 1);
+    },
     clearChatHistory(state) {
       state.historyConvo = [];
+    },
+    addMessage(state, message) {
+      state.messages.push(message);
+    },
+    clearMessages(state) {
+      state.messages = [];
+    },
+    removingMessage(state, index) {
+      state.messages.splice(index, 1);
     },
   },
   //------------------------------------------Actions

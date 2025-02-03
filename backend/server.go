@@ -51,7 +51,7 @@ func setRoutes(handler *handlers.Handler, wsServer *ws.Server) http.Handler {
 	mux.HandleFunc("/llmConvoSave", handler.Auth(handler.LLMConvoSave))
 	mux.HandleFunc("/llmConvoGet", handler.Auth(handler.LLMConvoGet))
 	mux.HandleFunc("/llmConvoGetLast", handler.Auth(handler.LLMConvoGetLast))
-	// mux.HandleFunc("/llmConvoCreate", handler.Auth(handler.LLMCreateConvo))
+	mux.HandleFunc("/llmConvoDelete", handler.Auth(handler.LLMConvoDelete))
 
 	/* ---------------------------------- users --------------------------------- */
 	mux.HandleFunc("/allUsers", handler.Auth(handler.AllUsers))       // all users + info except current

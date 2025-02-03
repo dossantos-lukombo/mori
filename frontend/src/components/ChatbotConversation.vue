@@ -8,7 +8,7 @@
       <div class="chatbot-message" v-if="!hasMessages">How can I help you?</div>
       <div class="chatbot-messages" v-if="hasMessages">
         <div
-          v-for="(message, index) in messages"
+          v-for="(message, index) in allMessages"
           :key="index"
           :class="[
             'message',
@@ -76,11 +76,15 @@ export default {
   },
   computed: {
     hasMessages() {
-      return this.messages.length > 0;
+      return this.$store.getters.allMessages.length > 0;
+    },
+    allMessages() {
+      return this.$store.getters.allMessages;
     },
   },
   mounted() {
     this.initializeConversation();
+    this.messages = this.$store.getters.allMessages;
   },
   methods: {
     async getMyUserID() {
@@ -111,7 +115,8 @@ export default {
     },
     appendMessage(sender, text) {
       const timestamp = new Date().toLocaleTimeString();
-      this.messages.push({ sender, text, timestamp });
+      // this.messages.push({ sender, text, timestamp });
+      this.$store.dispatch("addMessage", { sender, text, timestamp });
       this.$nextTick(() => {
         const chatBox = this.$el.querySelector(".chatbot-messages");
         chatBox.scrollTop = chatBox.scrollHeight;
@@ -182,7 +187,7 @@ export default {
 
         this.appendMessage("LLM", accumulatedText);
         this.messages.splice(this.messages.length - 2, 1);
-        // console.log("LLMMessage Element: ",LLMMessageElement);
+        this.$store.dispatch("removeMessage", this.messages.length - 2);
         lastLLMMessage.text = "";
       } catch (error) {
         console.error("Erreur de lecture du flux", error);
@@ -245,6 +250,7 @@ export default {
         textarea.style.height = `50px`;
       }
     },
+    reloadPage() {},
 
     //Méthode qui détecte le rafraichissement de la page
     // beforeunload() {

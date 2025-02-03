@@ -1,4 +1,5 @@
 import ollama
+# from langchain_ollama import ChatOllama
 
 
 historique = [{"role": "system", "content": "Vous êtes un assistant utile."}]
@@ -26,6 +27,7 @@ def treating_user_request(output:dict):
     # return response
 
     historique.append({"role": "assistant", "content": stream})
+
 
 def conversation_resumed(output:dict):
 
