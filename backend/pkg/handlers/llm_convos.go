@@ -129,7 +129,6 @@ func (handler *Handler) LLMHandler(w http.ResponseWriter, r *http.Request) {
 			"conversation_id": conversation.ConversationID,
 			"message":         conversation.UserRequest,
 			// "history":         conversation.History,
-			// "stop":            conversation.Stop,
 		}
 
 		data, err := json.Marshal(llmConversation)
@@ -408,10 +407,10 @@ func (handler *Handler) LLMConvoSave(w http.ResponseWriter, r *http.Request) {
 
 		if conversation.NewConversation == true {
 			conversation.ConversationID = uuid.NewV4().String()
-			fmt.Println("conversation", conversation)
+			fmt.Println("New conversation", conversation)
 			err = handler.repos.LLMConvoRepo.SaveConvo(conversation)
 			if err != nil {
-				http.Error(w, "Error saving conversation: "+err.Error(), http.StatusInternalServerError)
+				http.Error(w, "Error saving new conversation: "+err.Error(), http.StatusInternalServerError)
 				return
 			}
 		} else {

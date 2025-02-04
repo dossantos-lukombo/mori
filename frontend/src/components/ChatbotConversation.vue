@@ -84,7 +84,7 @@ export default {
   },
   mounted() {
     this.initializeConversation();
-    this.messages = this.$store.getters.allMessages;
+    // this.messages = this.$store.getters.allMessages;
   },
   methods: {
     async getMyUserID() {
@@ -155,7 +155,10 @@ export default {
       const reader = response.body.getReader();
       const decoder = new TextDecoder("utf-8");
       this.appendMessage("LLM", "");
-      let lastLLMMessage = this.messages[this.messages.length - 1]; // Référence au dernier message LLM
+      let lastLLMMessage =
+        this.$store.getters.allMessages[
+          this.$store.getters.allMessages.length - 1
+        ]; // Référence au dernier message LLM
       // let LLMMessageElement = document.querySelectorAll(".message LLM");
       // console.log("LLMMessage Element: ",LLMMessageElement);
 
@@ -172,7 +175,7 @@ export default {
               try {
                 const parsedData = JSON.parse(jsonData);
 
-                accumulatedText += parsedData.response.message.content;
+                accumulatedText += parsedData.response;
                 lastLLMMessage.text = accumulatedText;
               } catch (error) {
                 console.error("Erreur de parsing JSON :", error);
@@ -186,8 +189,8 @@ export default {
         this.conversation.llm_response = accumulatedText;
 
         this.appendMessage("LLM", accumulatedText);
-        this.messages.splice(this.messages.length - 2, 1);
-        this.$store.dispatch("removeMessage", this.messages.length - 2);
+        this.allMessages.splice(this.allMessages.length - 2, 1);
+        this.$store.dispatch("removeMessage", this.allMessages.length - 2);
         lastLLMMessage.text = "";
       } catch (error) {
         console.error("Erreur de lecture du flux", error);
@@ -196,7 +199,7 @@ export default {
       }
 
       this.conversation.user_id = await this.getMyUserID();
-      if (this.messages.length === 2) {
+      if (this.allMessages.length === 1) {
         this.conversation.new_conversation = true;
         this.$store.dispatch("addConversation", this.conversation);
       } else {

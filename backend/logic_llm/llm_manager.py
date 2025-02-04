@@ -42,4 +42,4 @@ def conversation_resumed(output:dict):
     messages=historique,
     )
 
-    response = response.choices[0].message.content
+    response = response.message.content

@@ -8,7 +8,6 @@ from fastapi.responses import StreamingResponse
 from datetime import datetime, timezone
 import json,time,jwt,os
 from dotenv import load_dotenv
-from idlelib import history
 
 app = FastAPI()
 
@@ -24,8 +23,6 @@ class Data(BaseModel):
     user_id: str
     conversation_id: str
     message: str
-    # history: list
-    # stop: bool
 
 class SendData(BaseModel):
     status: Literal["success", "error"]
@@ -60,7 +57,7 @@ async def generate_stream(entry_data):
                     "status": "success",
                     "user_id":entry_data["user_id"],
                     "conversation_id": entry_data["conversation_id"],
-                    "response": chunk,
+                    "response": chunk["message"]["content"],
                     "timestamp": chunk["created_at"]
                 }
                 yield f"data: {json.dumps(output)}\n\n"
