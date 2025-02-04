@@ -193,46 +193,34 @@ export default {
     
       
 
-    createWebSocketConn({ commit, dispatch, state }) {
-        const ws = new WebSocket("ws://localhost:8081/ws");
-      
-        ws.addEventListener("message", (e) => {
-            const data = JSON.parse(e.data);
-            if (data.action == "chat") {
-                // only broadcast messages when participants(sender and reciever) chat is open
-
-                const isParticipantsChatOpen = state.chat.openChats.some((chat) => {
-                    // Chat is open with the person who sent the message
-                    if (data.chatMessage.type === "PERSON" && data.chatMessage.senderId  === chat.receiverId) {
-                        return true
-                    }
-
-                    if (data.chatMessage.type === "GROUP" && data.chatMessage.receiverId === chat.receiverId) {
-                        return true
-                    }
-
-
-                })
-                if (isParticipantsChatOpen) {
-                    dispatch("addNewChatMessage", data.chatMessage)
-                    dispatch("markMessageRead", data.chatMessage)
-                } else {
-                    if (data.message === "NEW") {
-                        dispatch("fetchChatUserList");
-                    }
-    
-                    dispatch("addUnreadChatMessage", data.chatMessage)
-                }
-            } else if (data.action == "notification") {
-                dispatch("addNewNotification", data.notification);
-
-            } else if(data.action == "groupAccept"){
-                dispatch("getUserGroups");
-            }
-
-        })
-
-        commit("updateWebSocketConn", ws)  
-    }
-
-}
+    createWebSocketConn({ commit, dispatch }) {
+      const ws = new WebSocket("ws://localhost:8081/ws");
+  
+      ws.addEventListener("message", (e) => {
+        const data = JSON.parse(e.data);
+        console.log("WebSocket message received:", e.data);
+        if (data.action === "chat") {
+          const message = data.chatMessage;
+  
+          // Add the new chat message to the Vuex store
+          dispatch("addNewChatMessage", message);
+  
+          // Mark as read or unread depending on the current user's state
+          if (data.message === "NEW") {
+            dispatch("fetchChatUserList");
+          }
+  
+          // If the message is not read immediately, add it to unread
+          if (message.type === "PERSON" || message.type === "GROUP") {
+            dispatch("addUnreadChatMessage", message);
+          }
+        } else if (data.action === "notification") {
+          dispatch("addNewNotification", data.notification);
+        } else if (data.action === "groupAccept") {
+          dispatch("getUserGroups");
+        }
+      });
+  
+      commit("updateWebSocketConn", ws);
+    },
+  };
