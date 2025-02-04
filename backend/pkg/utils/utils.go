@@ -17,7 +17,7 @@ func ConfigHeader(w http.ResponseWriter) http.ResponseWriter {
 	w.Header().Set("Access-Control-Allow-Origin", AccesControlAllowOrigin)
 	w.Header().Set("Access-Control-Allow-Credentials", "true")
 	w.Header().Set("Access-Control-Allow-Headers", "content-type")
-	w.Header().Set("Access-Control-Allow-Methods", "POST, GET")
+	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
 	return w
 }
 

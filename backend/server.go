@@ -118,5 +118,10 @@ func setRoutes(handler *handlers.Handler, wsServer *ws.Server) http.Handler {
 		handler.SocketHandler(wsServer, w, r)
 	}))
 
+	// File upload endpoints.
+	mux.HandleFunc("/api/upload", handler.Auth(handler.UploadFiles))
+	mux.HandleFunc("/api/files", handler.Auth(handler.ListFiles))
+	mux.HandleFunc("/api/files/", handler.Auth(handler.DeleteFile))
+
 	return mux
 }
