@@ -71,6 +71,13 @@ const routes = [
     name: "ResetPassword",
     component: () => import("@/views/ResetPassword.vue"),
   },
+  // Update the Upgrade IA route to load the new DropFiles view
+  {
+    path: "/upgrade-ia",
+    name: "UpgradeIA",
+    component: () => import("../views/DropFiles.vue"),
+    meta: { requiresAuth: true },
+  },
 ];
 
 const router = createRouter({
@@ -81,7 +88,7 @@ const router = createRouter({
 router.beforeEach(async (to, from, next) => {
   const isAuthenticated = await store.dispatch("isLoggedIn");
 
-  // Add "Verified" to the allowed list of routes for unauthenticated users
+  // Allow unauthenticated access for specific routes
   if (
     !isAuthenticated &&
     to.name !== "sign-in" &&
@@ -98,7 +105,7 @@ router.beforeEach(async (to, from, next) => {
     await store.dispatch("createWebSocketConn");
   }
 
-  // If the route requires authentication and user is not authenticated => sign-in
+  // If route requires auth and user is not authenticated, redirect to sign-in
   if (to.meta.requiresAuth && !isAuthenticated) {
     return next({ name: "sign-in" });
   }
