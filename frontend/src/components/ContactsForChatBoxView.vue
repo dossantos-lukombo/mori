@@ -82,7 +82,7 @@
     </ul>
 
     <!-- Section Group Conversations -->
-    <h3 class="sous_titres">Conversations Groupes</h3>
+    <h3 class="sous_titres">Group conversations</h3>
     <div class="conversation-card-wrapper">
       <div
         v-for="convMsg in groups"
@@ -285,8 +285,11 @@ export default {
 .avatar {
   width: 50px;
   height: 50px;
+  background-color: var(--purple-color);
+  border: 1px solid var(--color-white);
   border-radius: 50%;
   background-size: cover;
+  background-repeat: no-repeat;
   background-position: center;
   margin-right: 15px;
 }
@@ -364,9 +367,10 @@ export default {
 }
 
 .user-picture.small {
-  background-color: transparent;
+  background-color: var(--purple-color);
+  border: 1px solid var(--color-white);
   background-repeat: no-repeat;
-  background-size: contain;
+  background-size: cover;
   background-position: center;
 }
 </style>

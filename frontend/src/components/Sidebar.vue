@@ -5,16 +5,16 @@
       <ul class="icon-container">
         <li @click="navigateToMessages" class="icon-wrapper">
           <div class="icon-circle">
-            <img src="@/assets/icons/messages.svg" alt="Messagerie" />
+            <img src="@/assets/icons/messages.png" alt="Messagerie" />
           </div>
           <span>Messages</span>
         </li>
 
         <li @click="navigateToChatBot" class="icon-wrapper">
           <div class="icon-circle">
-            <img src="@/assets/icons/chat.svg" alt="Chat" />
+            <img src="@/assets/icons/chat.png" alt="Chat" />
           </div>
-          <span>ChatBot</span>
+          <span>Mori Chatbot</span>
         </li>
       </ul>
 
@@ -142,15 +142,16 @@ export default {
 }
 
 .icon-circle {
-  width: 70px;
+  width: 100px;
   height: 70px;
   background-color: var(--purple-color);
-  border-radius: 50%;
+  border-radius: 15px;
   display: flex;
   align-items: center;
   justify-content: center;
   margin-bottom: 8px;
   transition: background-color 0.3s ease;
+  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.3);
 }
 
 .icon-circle:hover {
