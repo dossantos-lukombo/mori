@@ -13,7 +13,7 @@
                     <div class="row2">
                         <i class="uil uil-times decline" @click.stop="handleRequest(notification, 'decline')"></i>
                         <i class="uil uil-check accept" @click.stop="handleRequest(notification, 'accept')"></i>
-                    </div>-->
+                    </div>
                 </li>
                 <li v-else class="additional-info">No notifications</li>
             </ul>

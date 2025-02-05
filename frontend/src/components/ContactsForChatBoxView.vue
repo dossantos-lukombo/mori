@@ -2,8 +2,8 @@
   <div class="contacts-wrapper">
     <h2 class="titre">Contacts</h2>
 
-    <!-- Section Amis -->
-    <h3 class="sous_titres">Amis</h3>
+    <!-- Section Friends -->
+    <h3 class="sous_titres">Friends</h3>
     <ul class="horizontal-list">
       <li
         v-for="contact in chatUserList"
@@ -13,14 +13,16 @@
       >
         <div
           class="user-picture small"
-          :style="{ backgroundImage: `url(http://localhost:8081/${contact.avatar})` }"
+          :style="{
+            backgroundImage: `url(http://localhost:8081/${contact.avatar})`,
+          }"
         ></div>
         <div class="contact-name">{{ contact.nickname }}</div>
       </li>
     </ul>
 
-    <!-- Section Conversations Amis -->
-    <h3 class="sous_titres">Conversations Amis</h3>
+    <!-- Section Personal Conversations -->
+    <h3 class="sous_titres">Conversations</h3>
     <div class="conversation-card-wrapper">
       <div
         v-for="convMsg in friends"
@@ -30,7 +32,9 @@
       >
         <div
           class="avatar"
-          :style="{ backgroundImage: `url(http://localhost:8081/${convMsg.avatar})` }"
+          :style="{
+            backgroundImage: `url(http://localhost:8081/${convMsg.avatar})`,
+          }"
         ></div>
         <div class="content">
           <div class="header">
@@ -38,16 +42,29 @@
             <span class="time">{{ formatTime(convMsg.lastMessageTime) }}</span>
           </div>
           <div class="message-preview">
-            {{ convMsg.lastMessage.length > 40
-              ? convMsg.lastMessage.slice(0, 40) + "…"
-              : convMsg.lastMessage }}
+            {{
+              convMsg.lastMessageSenderId === myId
+                ? "You: "
+                : convMsg.name + ": "
+            }}
+            {{
+              convMsg.lastMessage && convMsg.lastMessage.length > 40
+                ? convMsg.lastMessage.slice(0, 40) + "…"
+                : convMsg.lastMessage
+            }}
+            <span
+              v-if="getUnreadMessagesCount(convMsg.id) > 0"
+              class="unread-badge"
+            >
+              {{ getUnreadMessagesCount(convMsg.id) }}
+            </span>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Section Groupes -->
-    <h3 class="sous_titres">Groupes</h3>
+    <!-- Section Groups -->
+    <h3 class="sous_titres">Your groups</h3>
     <NewGroup />
     <ul class="horizontal-list">
       <li
@@ -58,15 +75,13 @@
       >
         <div
           class="user-picture small"
-          :style="{
-            backgroundImage: `url(http://localhost:8081/${group.avatar || 'defaultGroup.png'})`
-          }"
+          :style="{ backgroundImage: `url(${defaultGroupLogo})` }"
         ></div>
         <div class="contact-name">{{ group.name }}</div>
       </li>
     </ul>
 
-    <!-- Section Conversations Groupes -->
+    <!-- Section Group Conversations -->
     <h3 class="sous_titres">Conversations Groupes</h3>
     <div class="conversation-card-wrapper">
       <div
@@ -77,7 +92,7 @@
       >
         <div
           class="avatar"
-          :style="{ backgroundImage: `url(http://localhost:8081/${convMsg.avatar || 'defaultGroup.png'})` }"
+          :style="{ backgroundImage: `url(${defaultGroupLogo})` }"
         ></div>
         <div class="content">
           <div class="header">
@@ -85,9 +100,22 @@
             <span class="time">{{ formatTime(convMsg.lastMessageTime) }}</span>
           </div>
           <div class="message-preview">
-            {{ convMsg.lastMessage.length > 40
-              ? convMsg.lastMessage.slice(0, 40) + "…"
-              : convMsg.lastMessage }}
+            {{
+              convMsg.lastMessageSenderId === myId
+                ? "You: "
+                : convMsg.name + ": "
+            }}
+            {{
+              convMsg.lastMessage && convMsg.lastMessage.length > 40
+                ? convMsg.lastMessage.slice(0, 40) + "…"
+                : convMsg.lastMessage
+            }}
+            <span
+              v-if="getUnreadGroupMessagesCount(convMsg.id) > 0"
+              class="unread-badge"
+            >
+              {{ getUnreadGroupMessagesCount(convMsg.id) }}
+            </span>
           </div>
         </div>
       </div>
@@ -98,6 +126,8 @@
 <script>
 import { mapState, mapGetters } from "vuex";
 import NewGroup from "@/components/NewGroup.vue";
+// Import the default group logo from your assets folder.
+import defaultGroupLogo from "@/assets/group.png";
 
 export default {
   name: "ContactsForChatBotView",
@@ -109,17 +139,49 @@ export default {
       chatUserList: (state) => state.chat.chatUserList,
       userGroups: (state) => state.groups.userGroups,
       conversationsMsg: (state) => state.conversationsMsg,
+      newChatMessages: (state) => state.chat.newChatMessages,
+      newGroupChatMessages: (state) => state.chat.newGroupChatMessages,
+      myId: (state) => state.id, // Adjust according to where your user id is stored.
     }),
     ...mapGetters([
       "getUnreadMessagesCount",
       "getUnreadGroupMessagesCount",
       "getUnreadMsgsCountFromDB",
+      "getMessages",
     ]),
+    // Update personal conversations with the latest message dynamically.
     friends() {
-      return this.conversationsMsg.filter((c) => c.type === "PERSON");
+      return this.conversationsMsg
+        .filter((c) => c.type === "PERSON")
+        .map((conv) => {
+          const msgs = this.getMessages(conv.id, "PERSON");
+          if (msgs.length > 0) {
+            const lastMsg = msgs[msgs.length - 1];
+            conv.lastMessage = lastMsg.content;
+            conv.lastMessageTime = lastMsg.time;
+            conv.lastMessageSenderId = lastMsg.senderId;
+          }
+          return conv;
+        });
     },
+    // Update group conversations similarly.
     groups() {
-      return this.conversationsMsg.filter((c) => c.type === "GROUP");
+      return this.conversationsMsg
+        .filter((c) => c.type === "GROUP")
+        .map((conv) => {
+          const msgs = this.getMessages(conv.id, "GROUP");
+          if (msgs.length > 0) {
+            const lastMsg = msgs[msgs.length - 1];
+            conv.lastMessage = lastMsg.content;
+            conv.lastMessageTime = lastMsg.time;
+            conv.lastMessageSenderId = lastMsg.senderId;
+          }
+          return conv;
+        });
+    },
+    // Make the default group logo available to the template.
+    defaultGroupLogo() {
+      return defaultGroupLogo;
     },
   },
   created() {
@@ -135,7 +197,13 @@ export default {
     },
     formatTime(isoString) {
       const date = new Date(isoString);
-      return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+      if (isNaN(date.getTime())) {
+        return "Now";
+      }
+      return date.toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
     },
   },
 };
@@ -159,7 +227,7 @@ export default {
   margin-bottom: 10px;
 }
 
-/* Liste horizontale */
+/* Horizontal list */
 .horizontal-list {
   display: flex;
   flex-wrap: nowrap;
@@ -193,7 +261,7 @@ export default {
   color: var(--text-primary);
 }
 
-/* Cards pour les conversations */
+/* Conversation cards */
 .conversation-card-wrapper {
   display: flex;
   flex-direction: column;
@@ -247,11 +315,58 @@ export default {
   color: #ccc;
 }
 
+/* Unread badge */
+.unread-badge {
+  padding: 2px 7px;
+  color: var(--color-white);
+  background-color: brown;
+  font-size: 12px;
+  border-radius: 5px;
+  align-self: flex-end;
+}
+
+/* Message preview */
 .message-preview {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   font-size: 13px;
   color: #ccc;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  max-width: 300px;
+}
+
+/* Filter Options */
+.filter-options {
+  margin-bottom: 10px;
+  display: flex;
+  gap: 20px;
+  align-items: center;
+}
+.filter-options .search-bar {
+  flex: 1;
+}
+.search-bar input {
+  width: 100%;
+  padding: 8px;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+}
+.extra-filters {
+  display: flex;
+  gap: 15px;
+  margin-top: 5px;
+}
+.extra-filters label {
+  color: var(--color-white);
+}
+
+.user-picture.small {
+  background-color: transparent;
+  background-repeat: no-repeat;
+  background-size: contain;
+  background-position: center;
 }
 </style>

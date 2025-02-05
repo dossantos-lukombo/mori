@@ -477,6 +477,7 @@ export default {
 }
 
 .follow-status {
+  
   display: flex;
   align-items: center;
   justify-content: center;
