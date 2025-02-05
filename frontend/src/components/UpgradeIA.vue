@@ -269,7 +269,6 @@ h1 {
 h2 {
   color: var(--color-white);
   font-weight: bold;
-  margin-bottom: 15px;
 }
 p {
   color: var(--color-white);
@@ -299,6 +298,7 @@ p {
   padding: 8px;
   border-radius: 10px;
   border: 1px solid #ccc;
+  margin-top: 14px;
 }
 .filter-options {
   margin-bottom: 10px;
@@ -319,11 +319,21 @@ p {
 }
 .uploaded-files ul,
 .uploaded-files-empty {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  flex-direction: column;
   list-style: none;
-  padding: 0;
+  padding: 10px;
   width: 100%;
+  overflow-y:scroll;
+  height: fit-content;
+  border-radius: 10px;
+  background-color: var(--bg-neutral);
+  max-height: 400px;
 }
 .uploaded-files li {
+  width: 95%;
   display: flex;
   align-items: center;
   justify-content: space-between;
