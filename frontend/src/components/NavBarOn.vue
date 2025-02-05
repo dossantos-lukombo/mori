@@ -48,7 +48,7 @@ export default {
   data() {
     return {
       user: {},
-      isSidebarActive: false, // Controls sidebar visibility
+      isSidebarActive: true, // Controls sidebar visibility
     };
   },
   created() {

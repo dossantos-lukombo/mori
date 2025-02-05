@@ -28,6 +28,7 @@
 </template>
 
 <script>
+import { mapState } from "vuex";
 import ContactsForChatBotView from "./ContactsForChatBoxView.vue";
 
 export default {
@@ -45,35 +46,60 @@ export default {
     },
   },
   data() {
-    return {
-      // Permet de savoir si on affiche la liste des contacts ou non
-      activeView: null,
-    };
+    if (this.$route.name === "messages") {
+      return {
+        activeView: "contacts",
+      };
+    }else{
+      return {
+        activeView: null,
+      };
+    }
   },
   components: { ContactsForChatBotView },
+  computed: {
+    // Map additional state so we can determine the most recent conversation.
+    ...mapState({
+      conversationsMsg: (state) => state.conversationsMsg,
+    }),
+  },
   methods: {
     async navigateToMessages() {
-      // Si tu n'as aucun contact, on ouvre la vue "contacts" pour en ajouter ou voir
-      if (this.contactsList.length === 0) {
+      // If there's conversation data available, sort by lastMessageTime and navigate to the most recent conversation.
+      if (this.conversationsMsg && this.conversationsMsg.length > 0) {
+        // Create a shallow copy and sort descending by lastMessageTime.
+        const convs = [...this.conversationsMsg];
+        convs.sort(
+          (a, b) => new Date(b.lastMessageTime) - new Date(a.lastMessageTime)
+        );
+        const recentConv = convs[0];
         this.activeView = "contacts";
-      } else {
-        // EXEMPLE : si tu veux ouvrir directement le premier contact => DM
-        // ou si tu préfères forcer l'utilisateur à cliquer => tu ouvres juste "contacts"
-        // Ici, on choisit de juste ouvrir la liste :
+        await this.$router.push({
+          name: "messages",
+          query: {
+            name: recentConv.nickname || recentConv.name,
+            receiverId: recentConv.id,
+            type: recentConv.type,
+          },
+        });
+      } else if (this.contactsList && this.contactsList.length > 0) {
+        // Fallback: if no conversation data, navigate to the first contact.
         this.activeView = "contacts";
-
-        // -- OU si tu veux ouvrir le 1er contact en DM, fais par ex. :
-        
         const firstContact = this.contactsList[0];
         await this.$router.push({
           name: "messages",
           query: {
             name: firstContact.nickname,
             receiverId: firstContact.id,
-            type: "PERSON", // <= si on sait que c'est un ami
+            type: "PERSON",
           },
         });
-      
+      } else {
+        // If no contacts, simply show the contacts view.
+        this.activeView = "contacts";
+        setTimeout(() => {
+          this.navigateToMessages();
+        }, 10);
       }
     },
 
@@ -81,11 +107,8 @@ export default {
       await this.$router.push({ name: "mainpage" });
     },
 
-    // >>> Correction principale <<<
-    // On récupère l'objet { id, name, type } (émit par ContactsForChatBotView)
-    // puis on navigue vers la route "messages" en passant 'type' tel quel.
     handleContactSelection({ id, name, type }) {
-      // type peut valoir "PERSON" ou "GROUP" selon l'élément cliqué
+      // Navigate to the selected conversation.
       this.$router.push({
         name: "messages",
         query: {

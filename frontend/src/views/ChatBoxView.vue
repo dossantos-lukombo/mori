@@ -141,17 +141,15 @@ export default {
       return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
     },
     async fetchUserDetails(userId) {
-      // For group conversations, set the header using the passed props.
       if (this.type === "GROUP") {
-        // You can adjust the avatar path as needed.
+        // For group conversations, use the passed name and default group avatar.
         this.user = {
           name: this.name || "Group",
-          avatar: require("@/assets/group.png"), // Alternatively, use a URL like "http://localhost:8081/assets/group.png"
+          avatar: require("@/assets/group.png"),
           following: "",
         };
         return;
       }
-      // Otherwise, for personal conversations, fetch user details.
       try {
         const response = await fetch("http://localhost:8081/allUsers", {
           credentials: "include",
@@ -183,7 +181,7 @@ export default {
       }
     },
     toggleSidebar() {
-      this.isSidebarActive = !this.isSidebarActive;
+        this.isSidebarActive = !this.isSidebarActive;
     },
     navigateTo(target) {
       if (target === "chatbot") {
@@ -261,7 +259,8 @@ export default {
       } else {
         const msgs = this.$store.state.chat.newChatMessages.filter(
           (msg) =>
-            msg.receiverId !== this.receiverId && msg.senderId !== this.receiverId
+            msg.receiverId !== this.receiverId &&
+            msg.senderId !== this.receiverId
         );
         this.$store.commit("updateNewChatMessages", msgs);
       }
