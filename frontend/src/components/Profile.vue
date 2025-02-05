@@ -1,5 +1,5 @@
 <template>
-    <div v-if="user && this.$store.state.id !== ''">
+    <div v-if="user && this.$store.state.id !== ''" class="user-profil">
         <div id="layout-profile">
 
             <div class="left-section ">
@@ -39,8 +39,30 @@
                     <h2 class="about-title">About me</h2>
                     <p class="about-text">{{ user.about }}</p>
                 </div>
+
+                <div v-if="isMyProfile" class="edit-profile">
+                    <h2 class="edit-profile-title">Modifier le profil</h2>
+
+                    <!-- Changer le pseudo -->
+                    <div class="edit-section">
+                        <h3 class="edit-section-title">Nouveau pseudo</h3>
+                        <input
+                        v-model="newNickname"
+                        type="text"
+                        placeholder="Entrez votre nouveau pseudo"
+                        class="input-field"
+                    />
+                        <button @click="changeNickname" class="btn-primary">Modifier le pseudo</button>
+                    </div>
                 
 
+                    <!-- Changer l'avatar -->
+                    <div class="edit-section">
+                        <h3 class="edit-section-title"> Nouvel avatar</h3>
+                        <input type="file" ref="avatarInput" class="file-input" accept="image/*" />
+                        <button @click="changeAvatar" class="btn-primary">Modifier l'avatar</button>
+                    </div>
+                </div>
             </div>
 
             <p v-else class="additional-info large"> This profile is private</p>
@@ -68,7 +90,11 @@ export default {
             isMyProfile: false,
             followers: [],
             following: [],
+            
+
             profileGroups: null,
+            newNickname: "", // Nouveau pseudo
+            selectedAvatar: null, // Fichier pour l'avatar 
         }
     },
 
@@ -103,7 +129,7 @@ export default {
             this.getFollowers()
             this.getFollowing()
             this.checkProfile()
-            this.getProfileGroups();
+            this.getProfileGroups()            
         },
         async getUserData() {
             await fetch("http://localhost:8081/userData?userId=" + this.$route.params.id, {
@@ -177,7 +203,24 @@ export default {
                     this.following = json.users
                 }))
 
-        },        
+        },
+        async changeNickname() {
+            await this.$store.dispatch("changeNickname", this.newNickname);
+            this.updateProfileData();
+        },
+
+        async changeAvatar() {
+            const input = this.$refs.avatarInput;
+            if (!input || !input.files || input.files.length === 0) {
+                alert("Veuillez sélectionner un fichier.");
+                return;
+            }
+            this.selectedAvatar = input.files[0];
+            await this.$store.dispatch("changeAvatar", this.selectedAvatar);
+            this.updateProfileData();
+        },
+
+     
         
         addChat() {
             // check if user doesnt have a chat with that person already
@@ -204,6 +247,11 @@ export default {
 </script>
 
 <style scoped>
+
+.user-profile {
+    overflow: scroll;
+}
+
 #layout-profile {
     display: grid;
     grid-template-columns: 1fr minmax(min-content, 550px) 1fr;
@@ -278,5 +326,53 @@ export default {
 
 .additional-info {
     text-align: center;
+}
+
+.edit-profile {
+  margin-top: 20px;
+  padding: 20px;
+  background-color: var(--bg-neutral);
+  border-radius: var(--container-border-radius);
+  box-shadow: 0 2px 10px rgb(0, 0, 0);
+  width: 550px;
+}
+
+.edit-section {
+  margin-bottom: 20px;
+}
+
+.input-field {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  margin-bottom: 10px;
+}
+
+.file-input {
+  margin-bottom: 10px;
+}
+
+.btn-primary {
+  padding: 10px 20px;
+  background-color: var(--purple-color);
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.btn-primary:hover {
+  background-color: var(--purple-hover-color);
+}
+
+.edit-profile-title {
+    text-align: center;
+    color: var(--purple-color);
+    margin-bottom: 20px;
+}
+
+.edit-section-title {
+    margin-bottom: 15px;    
 }
 </style>

@@ -11,10 +11,14 @@
         <Notifications />
       </li>
       <li>
-        <router-link v-if="typeof user.id !== 'undefined'" :to="{ name: 'Profile', params: { id: user.id } }">
+        <router-link
+          v-if="typeof user.id !== 'undefined'"
+          :to="{ name: 'Profile', params: { id: user.id } }"
+        >
           My profile
         </router-link>
       </li>
+      <li @click="navigateToUpgradeIA" style="cursor: pointer">Upgrade IA</li>
       <li @click="logout">Log out</li>
     </ul>
     <!-- Sidebar -->
@@ -52,7 +56,9 @@ export default {
   },
   methods: {
     async getUserInfo() {
-      const response = await fetch("http://localhost:8081/currentUser", { credentials: "include" });
+      const response = await fetch("http://localhost:8081/currentUser", {
+        credentials: "include",
+      });
       const json = await response.json();
       this.user = json.users[0];
     },
@@ -66,6 +72,9 @@ export default {
     },
     toggleSidebar() {
       this.isSidebarActive = !this.isSidebarActive;
+    },
+    navigateToUpgradeIA() {
+      this.$router.push({ name: "UpgradeIA" });
     },
     navigateToChatbot() {
       this.$router.push({ name: "mainpage" }); // Navigate to the Chatbot view
@@ -87,102 +96,93 @@ export default {
 };
 </script>
 
-
 <style scoped>
-
 #menu-btn {
-    width: 30px;
-    height: 30px;
-    margin-right: 20px;
-    background-image: url('../assets/menu.png');
-    background-size: cover;
-    cursor: pointer;
-    transition: all 0.3s;
+  width: 30px;
+  height: 30px;
+  margin-right: 20px;
+  background-image: url("../assets/menu.png");
+  background-size: cover;
+  cursor: pointer;
+  transition: all 0.3s;
 }
 
 #menu-btn:hover {
-    transform: scale(1.05);
+  transform: scale(1.05);
 }
 
 #navbar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    z-index: 3;
-    width: 100%;
-    min-width: min-content;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 10px 30px;
-    background-color: var(--purple-color);
-    color: var(--color-white);
-    position: sticky;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 3;
+  width: 100%;
+  min-width: min-content;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 30px;
+  background-color: var(--purple-color);
+  color: var(--color-white);
+  position: sticky;
 }
-
 
 #navbar a {
-    color: var(--color-white);
+  color: var(--color-white);
 }
-
 
 #nav-title {
-    user-select: none;
-    position: relative;
+  user-select: none;
+  position: relative;
 }
-
 
 .nav-links li {
-    user-select: none;
-    font-weight: 300;
-    display: inline-block;
-    margin-left: 20px;
-    cursor: pointer;
+  user-select: none;
+  font-weight: 300;
+  display: inline-block;
+  margin-left: 20px;
+  cursor: pointer;
 
-    position: relative;
+  position: relative;
 }
-
 
 #nav-titleSearch {
-    display: flex;
-    gap: 25px;
-    flex-grow: 1;
-    align-items: center;
-
-
+  display: flex;
+  gap: 25px;
+  flex-grow: 1;
+  align-items: center;
 }
-
 
 #navbar li:not(#notifications-link)::after,
 #nav-title::after {
-    content: "";
-    height: 2.5px;
-    width: 0;
-    display: block;
-    position: absolute;
+  content: "";
+  height: 2.5px;
+  width: 0;
+  display: block;
+  position: absolute;
 
-    transition: all 0.35s ease-out;
+  transition: all 0.35s ease-out;
 }
 
 #navbar li:not(#notifications-link):hover::after,
 #nav-title:hover::after {
-    width: 100%;
-    background-color: var(--hover-background-color);
+  width: 100%;
+  background-color: var(--hover-background-color);
 }
 
 a:link {
-    text-decoration: none;
+  text-decoration: none;
 }
 
 a:visited {
-    text-decoration: none;
+  text-decoration: none;
 }
 
 a:hover {
-    text-decoration: none;
+  text-decoration: none;
 }
 
 a:active {
-    text-decoration: none;
+  text-decoration: none;
 }
 </style>

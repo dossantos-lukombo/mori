@@ -13,7 +13,7 @@
                     <div class="row2">
                         <i class="uil uil-times decline" @click.stop="handleRequest(notification, 'decline')"></i>
                         <i class="uil uil-check accept" @click.stop="handleRequest(notification, 'accept')"></i>
-                    </div>
+                    </div>-->
                 </li>
                 <li v-else class="additional-info">No notifications</li>
             </ul>
@@ -48,6 +48,7 @@ export default {
         this.$store.commit("updateAllNotifications", []);
     },
     methods: {
+        
         toggleShowNotifications() {
             this.showNotifications = !this.showNotifications;
         },
@@ -106,6 +107,19 @@ export default {
                 this.toggleShowNotifications();
             }
         },
+     
+        isDataValid(resp) {
+            return resp.type === "Success" ? true : false;
+        },
+        additionalText(notification) {            let a = "";
+            
+            if (notification.type === "GROUP_INVITE") {
+                return `${notification.group.name}`;
+            }
+            // event need group name, event name
+            // group invite -> who invited and to what group
+            return a;
+        }
     },
     components: { NotificationMsg }
 };

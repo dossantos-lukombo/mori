@@ -56,6 +56,28 @@ const routes = [
     },
     meta: { requiresAuth: true },
   },
+  {
+    path: "/verified",
+    name: "Verified",
+    component: () => import("@/views/Verified.vue"),
+  },
+  {
+    path: "/forgotpassword",
+    name: "ForgotPassword",
+    component: () => import("@/views/ForgotPassword.vue"),
+  },
+  {
+    path: "/reset-password",
+    name: "ResetPassword",
+    component: () => import("@/views/ResetPassword.vue"),
+  },
+  // Update the Upgrade IA route to load the new DropFiles view
+  {
+    path: "/upgrade-ia",
+    name: "UpgradeIA",
+    component: () => import("../views/DropFiles.vue"),
+    meta: { requiresAuth: true },
+  },
 ];
 
 const router = createRouter({
@@ -66,8 +88,15 @@ const router = createRouter({
 router.beforeEach(async (to, from, next) => {
   const isAuthenticated = await store.dispatch("isLoggedIn");
 
-  // Redirect to sign-in if not authenticated, except for sign-in and register
-  if (!isAuthenticated && to.name !== "sign-in" && to.name !== "register") {
+  // Allow unauthenticated access for specific routes
+  if (
+    !isAuthenticated &&
+    to.name !== "sign-in" &&
+    to.name !== "register" &&
+    to.name !== "Verified" &&
+    to.name !== "ForgotPassword" &&
+    to.name !== "ResetPassword"
+  ) {
     return next({ name: "sign-in" });
   }
 
@@ -76,7 +105,7 @@ router.beforeEach(async (to, from, next) => {
     await store.dispatch("createWebSocketConn");
   }
 
-  // Handle authenticated routes
+  // If route requires auth and user is not authenticated, redirect to sign-in
   if (to.meta.requiresAuth && !isAuthenticated) {
     return next({ name: "sign-in" });
   }

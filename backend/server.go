@@ -44,7 +44,11 @@ func setRoutes(handler *handlers.Handler, wsServer *ws.Server) http.Handler {
 	mux.HandleFunc("/register", handler.Register)
 	mux.HandleFunc("/signin", handler.Signin)
 	mux.HandleFunc("/logout", handler.Auth(handler.Logout))
+	mux.HandleFunc("/captcha", handler.ServeCaptcha)
+	mux.HandleFunc("/verified", handler.VerifyEmail)
 	mux.HandleFunc("/sessionActive", handler.SessionActive)
+	mux.HandleFunc("/request-password-reset", handler.RequestPasswordReset)
+	mux.HandleFunc("/reset-password", handler.ResetPassword)
 
 	/* ------------------------------- LLM_conv ------------------------------- */
 	mux.HandleFunc("/llmConvo", handler.Auth(handler.LLMHandler))
@@ -103,11 +107,21 @@ func setRoutes(handler *handlers.Handler, wsServer *ws.Server) http.Handler {
 	})) // new chat message
 	mux.HandleFunc("/chatList", handler.Auth(handler.ChatList))                       // get list of users to display in chatbox
 	mux.HandleFunc("/responseChatRequest", handler.Auth(handler.ResponseChatRequest)) // response to chat request
+	/* ---------------------------- ConversationMsg Sidebar ---------------------------- */
+	mux.HandleFunc("/conversationsMsg", handler.Auth(handler.ConversationsMsg)) // get list of users to display in chatbox
+	/* ---------------------------- Update Profile ---------------------------- */
+	mux.HandleFunc("/updateNickname", handler.Auth(handler.ChangeNickname)) // Update user nickname
+	mux.HandleFunc("/updateAvatar", handler.Auth(handler.ChangeAvatar))     // Update user avatar
 
 	/* ---------------------------- websocket server ---------------------------- */
 	mux.HandleFunc("/ws", handler.Auth(func(w http.ResponseWriter, r *http.Request) {
 		handler.SocketHandler(wsServer, w, r)
 	}))
+
+	// File upload endpoints.
+	mux.HandleFunc("/api/upload", handler.Auth(handler.UploadFiles))
+	mux.HandleFunc("/api/files", handler.Auth(handler.ListFiles))
+	mux.HandleFunc("/api/files/", handler.Auth(handler.DeleteFile))
 
 	return mux
 }

@@ -323,3 +323,22 @@ func (handler *Handler) ResponseChatRequest(w http.ResponseWriter, r *http.Reque
 
 	utils.RespondWithSuccess(w, "Response successful", 200)
 }
+
+// Conversations renvoie la liste des conversations (DM ou groupe) de l'utilisateur
+func (handler *Handler) ConversationsMsg(w http.ResponseWriter, r *http.Request) {
+	w = utils.ConfigHeader(w)
+
+	userID := r.Context().Value(utils.UserKey).(string)
+
+	convs, err := handler.repos.MsgRepo.GetConversationsMsg(userID)
+	if err != nil {
+		utils.RespondWithError(w, "Error on getting conversations", 200)
+		return
+	}
+
+	type response struct {
+        ConversationsMsg []models.ConversationMsg `json:"conversationsMsg"`
+    }
+    // On envoie un VRAI JSON qui contient un tableau dans "conversationsMsg"
+    utils.RespondWithJSON(w, response{convs}, 200)
+}

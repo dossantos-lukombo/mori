@@ -187,8 +187,20 @@ export default {
         }
       );
 
-      const data = await response.json();
-      commit("updateChatUserList", data.users);
+        async fetchChatUserList({rootState, commit, dispatch}) {
+            await dispatch("getMyUserID");
+            console.log("fetchChatUserList: start");
+            const response = await fetch('http://localhost:8081/chatList?userId=' + rootState.id, {
+                credentials: 'include'
+            });
+
+            const data = await response.json();
+            console.log("fetchChatUserList => data", data);
+            commit("updateChatUserList", data.users);
+        }
+
     },
-  },
-};
+
+}
+
+

@@ -20,6 +20,9 @@
         <p>Need an account?
           <router-link to="/register" id="sign-up">Register here</router-link>
         </p>
+        <p>Forgot your password ? 
+          <router-link to="/forgotpassword" id="forgotPassword">click here</router-link>
+        </p>
       </div>
     </div>
   </div>
@@ -63,7 +66,7 @@ export default {
           .then((json) => {
             if (json.message === "Login successful") {
               this.$toast.open({
-                message: "Login success!",
+                message: "Login successful!",
                 type: "success",
               });
 
@@ -162,6 +165,19 @@ export default {
 }
 
 #sign-up:hover {
+  color: var(--hover-background-color);
+  text-decoration: underline;
+  font-size: 16.5px;
+}
+
+#forgotPassword{
+  color: var(--purple-color);
+  text-decoration: underline;
+  font-size: 16.5px;
+  transition: all 0.3s ease;
+}
+
+#forgotPassword:hover {
   color: var(--hover-background-color);
   text-decoration: underline;
   font-size: 16.5px;
