@@ -63,6 +63,32 @@ ul {
     list-style: none;
 }
 
+/* For WebKit browsers (Chrome, Safari, Opera, new Edge) */
+::-webkit-scrollbar {
+    width: 3px;
+  }
+  
+  /* Scrollbar Track */
+  ::-webkit-scrollbar-track {
+    box-shadow: inset 0 0 5px var(--bg-neutral);
+    border-radius: 10px;
+  }
+  
+  /* Scrollbar Handle */
+  ::-webkit-scrollbar-thumb {
+    background: var(--purple-color);
+    border-radius: 10px;
+  }
+  
+  /* For Firefox */
+  * {
+    /* "thin" or "auto" or "none" */
+    scrollbar-width:thin;
+    /* scrollbar-color: thumb color track color; */
+    scrollbar-color: var(--purple-color) var(--bg-neutral);
+  }
+  
+
 .mori{
     font-family: "TITLE";
     font-size: 2.5em;

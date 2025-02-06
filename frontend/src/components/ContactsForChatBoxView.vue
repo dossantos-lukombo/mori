@@ -3,7 +3,9 @@
     <h1 class="mori">Mori <span class="adder">- Messaging</span></h1>
 
     <!-- Section Friends -->
-    <h3 class="sous_titres">Friends</h3>
+    <h3 class="sous_titres">
+      Friends (<span class="purple-strong">{{ chatUserList.length }}</span>)
+    </h3>
     <ul class="horizontal-list">
       <li
         v-for="contact in chatUserList"
@@ -22,7 +24,9 @@
     </ul>
 
     <!-- Section Personal Conversations -->
-    <h3 class="sous_titres">Conversations</h3>
+    <h3 class="sous_titres">
+      Conversations (<span class="purple-strong">{{ friends.length }}</span>)
+    </h3>
     <div class="conversation-card-wrapper">
       <div
         v-for="convMsg in friends"
@@ -64,7 +68,9 @@
     </div>
 
     <!-- Section Groups -->
-    <h3 class="sous_titres">Your groups</h3>
+    <h3 class="sous_titres">
+      Your groups (<span class="purple-strong">{{ userGroups.length }}</span>)
+    </h3>
     <NewGroup />
     <ul class="horizontal-list">
       <li
@@ -82,7 +88,9 @@
     </ul>
 
     <!-- Section Group Conversations -->
-    <h3 class="sous_titres">Group conversations</h3>
+    <h3 class="sous_titres">
+      Group conversations (<span class="purple-strong">{{ groups.length }}</span>)
+    </h3>
     <div class="conversation-card-wrapper">
       <div
         v-for="convMsg in groups"
@@ -122,6 +130,7 @@
     </div>
   </div>
 </template>
+
 
 <script>
 import { mapState, mapGetters } from "vuex";
@@ -210,8 +219,12 @@ export default {
 </script>
 
 <style scoped>
+
+.purple-strong{
+  color: var(--purple-color);
+}
 .contacts-wrapper {
-  padding: 20px;
+  margin-top: -5px;
   background-color: var(--bg-neutral);
 }
 
@@ -277,6 +290,9 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  max-height: 150px;
+  overflow-y: scroll;
+  padding-right: 10px;
 }
 
 .conversation-card {

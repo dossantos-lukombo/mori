@@ -34,12 +34,15 @@
           >
             <div class="receiver-avatar-name">
               <div
-                class="receiver-avatar-chat"
-                v-if="displayName(message, index)"
-                :style="{
-                  backgroundImage: `url(${user.avatar ? user.avatar : 'default-avatar.png'})`
-                }"
-              ></div>
+  class="receiver-avatar-chat"
+  v-if="displayName(message, index)"
+  :style="{
+    backgroundImage: `url(${type === 'GROUP'
+      ? 'http://localhost:8081/' + (message.sender.avatar || 'default-avatar.png')
+      : (user.avatar.startsWith('http') ? user.avatar : 'http://localhost:8081/' + (user.avatar || 'default-avatar.png'))
+    })`
+  }"
+></div>
               <p class="message-author" v-if="displayName(message, index)">
                 {{ message.sender.nickname }}
               </p>
