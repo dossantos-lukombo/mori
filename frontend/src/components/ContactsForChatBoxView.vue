@@ -16,7 +16,7 @@
         <div
           class="user-picture small"
           :style="{
-            backgroundImage: `url(http://localhost:8081/${contact.avatar})`,
+            backgroundImage: `url(http://localhost:8081/${contact.avatar})`
           }"
         ></div>
         <div class="contact-name">{{ contact.nickname }}</div>
@@ -37,7 +37,7 @@
         <div
           class="avatar"
           :style="{
-            backgroundImage: `url(http://localhost:8081/${convMsg.avatar})`,
+            backgroundImage: `url(http://localhost:8081/${convMsg.avatar})`
           }"
         ></div>
         <div class="content">
@@ -57,10 +57,10 @@
                 : convMsg.lastMessage
             }}
             <span
-              v-if="getUnreadMessagesCount(convMsg.id) > 0"
+              v-if="unreadCount(convMsg.id) > 0"
               class="unread-badge"
             >
-              {{ getUnreadMessagesCount(convMsg.id) }}
+              {{ unreadCount(convMsg.id) }}
             </span>
           </div>
         </div>
@@ -119,10 +119,10 @@
                 : convMsg.lastMessage
             }}
             <span
-              v-if="getUnreadGroupMessagesCount(convMsg.id) > 0"
+              v-if="unreadGroupCount(convMsg.id) > 0"
               class="unread-badge"
             >
-              {{ getUnreadGroupMessagesCount(convMsg.id) }}
+              {{ unreadGroupCount(convMsg.id) }}
             </span>
           </div>
         </div>
@@ -131,11 +131,9 @@
   </div>
 </template>
 
-
 <script>
 import { mapState, mapGetters } from "vuex";
 import NewGroup from "@/components/NewGroup.vue";
-// Import the default group logo from your assets folder.
 import defaultGroupLogo from "@/assets/group.png";
 
 export default {
@@ -143,14 +141,22 @@ export default {
   components: {
     NewGroup,
   },
+  data() {
+    return {
+      // Tracks the conversation currently open
+      currentChatId: null,
+    };
+  },
   computed: {
     ...mapState({
       chatUserList: (state) => state.chat.chatUserList,
       userGroups: (state) => state.groups.userGroups,
       conversationsMsg: (state) => state.conversationsMsg,
       newChatMessages: (state) => state.chat.newChatMessages,
+      unreadMsgsStatsFromDB: (state) => state.chat.unreadMsgsStatsFromDB,
+      openChats: (state) => state.chat.openChats,
       newGroupChatMessages: (state) => state.chat.newGroupChatMessages,
-      myId: (state) => state.id, // Adjust according to where your user id is stored.
+      myId: (state) => state.id, // Adjust according to your store
     }),
     ...mapGetters([
       "getUnreadMessagesCount",
@@ -198,11 +204,15 @@ export default {
   },
   methods: {
     selectContact(contact, type) {
+      // Set the active conversation ID so that unread count for this chat becomes 0
+      this.currentChatId = contact.id;
       this.$emit("select-contact", {
         id: contact.id,
         name: contact.nickname || contact.name,
         type,
       });
+      // Clear unread messages for this conversation from the store
+      this.$store.dispatch("removeUnreadMessages", { receiverId: contact.id, type });
     },
     formatTime(isoString) {
       const date = new Date(isoString);
@@ -214,13 +224,26 @@ export default {
         minute: "2-digit",
       });
     },
+    // Helper method for personal conversations.
+    unreadCount(conversationId) {
+      if (this.currentChatId === conversationId) {
+        return 0;
+      }
+      return this.getUnreadMessagesCount(conversationId);
+    },
+    // Helper method for group conversations.
+    unreadGroupCount(conversationId) {
+      if (this.currentChatId === conversationId) {
+        return 0;
+      }
+      return this.getUnreadGroupMessagesCount(conversationId);
+    },
   },
 };
 </script>
 
 <style scoped>
-
-.purple-strong{
+.purple-strong {
   color: var(--purple-color);
 }
 .contacts-wrapper {
@@ -277,7 +300,6 @@ export default {
 .user-picture.small:hover {
   transform: scale(1.1);
   border: 1px solid var(--purple-color);
-
 }
 
 .contact-name {

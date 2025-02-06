@@ -78,9 +78,9 @@
   }
   
   .dropdown {
-    background-color: var(--input-bg);
+    background-color: var(--purple-color);
     box-shadow: var(--container-shadow);
-    border-radius: 5px;
+    border-radius: 10px;
     transition: var(--hover-box-shadow-transition);
   }
   
@@ -89,11 +89,12 @@
     border: none;
     font-family: "Poppins", sans-serif;
     text-align: left;
-    color: rgb(136, 136, 136); /* Texte gris */
-    background-color: white; /* Fond blanc pour le bouton */
+    color: var(--color-white);
+    background-color: var(--purple-color); /* Fond blanc pour le bouton */
     width: 100%;
     min-height: 35px;
     cursor: pointer;
+    border-radius: 5px;
   }
   
   .dropdown-button:hover {
@@ -103,7 +104,7 @@
   .dropdown .item-list {
     padding: 7.5px;
     width: 100%;
-    background-color: var(--bg-neutral); /* Fond des options */
+    background-color: var(--hover-color); /* Fond des options */
     border-radius: 5px;
   }
   

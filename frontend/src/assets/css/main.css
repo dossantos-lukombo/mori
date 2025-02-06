@@ -118,10 +118,11 @@ ul {
     height: 150px;
     border-radius: 50%;
     background-image: url('../mori.png');
+    background-color: #9146bc8b;
     background-size: cover;
     background-position: center;
+    border: 1px solid var(--color-white);
     flex-shrink: 0;
-    border: 0;
     border-radius: 50%;
 }
 
