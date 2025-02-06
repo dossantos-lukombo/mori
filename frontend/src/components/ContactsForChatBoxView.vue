@@ -1,6 +1,6 @@
 <template>
   <div class="contacts-wrapper">
-    <h2 class="titre">Contacts</h2>
+    <h1 class="mori">Mori <span class="adder">- Messaging</span></h1>
 
     <!-- Section Friends -->
     <h3 class="sous_titres">Friends</h3>
@@ -234,7 +234,10 @@ export default {
   overflow-x: auto;
   gap: 10px;
   list-style: none;
-  padding: 0;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  padding-left: 5px;
+  padding-right: 5px;
   margin: 10px 0;
 }
 
@@ -254,6 +257,14 @@ export default {
   background-size: cover;
   background-position: center;
   margin-bottom: 5px;
+  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.6);
+  transition: all 0.3s ease;
+}
+
+.user-picture.small:hover {
+  transform: scale(1.1);
+  border: 1px solid var(--purple-color);
+
 }
 
 .contact-name {

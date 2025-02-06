@@ -96,9 +96,12 @@
   .profile-view-wrapper {
     flex: 1;
     display: flex;
-    justify-content: center;
+    flex-direction: column;
+    padding-bottom: 30px;
+    justify-content: flex-start;
     align-items: center;
     background-color: var(--page-bg);
+    overflow-y: scroll;
   }
   </style>
   
