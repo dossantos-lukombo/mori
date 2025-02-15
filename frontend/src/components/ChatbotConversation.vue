@@ -156,7 +156,6 @@ export default {
     },
     appendMessage(sender, text) {
       let dict = {};
-      console.log("MESSAGES: ", this.messages);
       dict = {
         sender,
         text,
@@ -234,12 +233,11 @@ export default {
           ({ done, value } = await reader.read());
         }
 
-        console.log("Accumulated Text", accumulatedText);
         // this.conversation.llm_response = accumulatedText;
 
         this.appendMessage("LLM", accumulatedText);
         this.messages.splice(this.messages.length - 2, 1);
-        this.$store.dispatch("removeMessage", this.messages.length - 2);
+        this.$store.dispatch("deletingMessage", this.messages.length - 2);
 
         lastLLMMessage.text = "";
       } catch (error) {
@@ -254,19 +252,19 @@ export default {
 
       console.log(" Number of allMessages(): ", this.messages.length);
       if (this.messages.length <= 2) {
-        this.$store.dispatch("addConversation", this.conversation);
         this.conversation.conversation_id = uuidv4();
         this.messages.forEach((message) => {
           message.conversation_id = this.conversation.conversation_id;
         });
         this.conversation.new_conversation = true;
+        this.$store.dispatch("addConversation", this.conversation);
       } else {
         console.log("Messages before saving: ", this.messages);
         this.conversation.conversation_id = this.messages[0].conversation_id;
         this.conversation.new_conversation = false;
         this.addMessageToExistingConversation(
-          this.messages[this.messages.length - 1],
-          this.$store.getters.allConversations
+          this.$store.getters.allConversations,
+          this.conversation
         );
       }
 
@@ -290,40 +288,37 @@ export default {
         );
         return;
       }
+      console.log("Conversation envoyée avec succès");
+      this.conversation = {
+        user_id: "",
+        conversation_id: "",
+        convo: [],
+        new_conversation: false,
+      };
     },
     //Méthode pour gérer les messages dans une conversation existante
-    addMessageToExistingConversation(messages, allConversation) {
-      console.log("Messages in addMessageToExistingConversation: ", messages);
+    addMessageToExistingConversation(allConversation, currentConversation) {
       console.log(
         "Conversation in addMessageToExistingConversation: ",
         allConversation
       );
+      console.log("Current conversation: ", currentConversation);
       console.log(
-        "conversation_id in addMessageToExistingConversation: ",
-        messages.conversation_id
+        "Current conversation ID: ",
+        currentConversation.conversation_id
       );
-      let indice = 0;
+
       for (let t = 0; t < allConversation.length; t++) {
         const convo = allConversation[t];
-        if (convo.conversation_id === messages.conversation_id) {
-          indice = t;
+        if (convo.conversation_id === currentConversation.conversation_id) {
+          console.log("Conversation found");
+          console.log("Current conversation: ", currentConversation.convo);
+          // convo.convo.push(...currentConversation.convo);
+          currentConversation.convo.push(...convo.convo);
         }
       }
-      // for (let i = 0; i < messages.length; i++) {
-      if (
-        messages.sender === "Utilisateur" &&
-        !allConversation[indice].convo.includes(messages)
-      ) {
-        allConversation[indice].convo.push({
-          user_request: messages.text,
-          llm_response: "",
-        });
-      } else {
-        allConversation[indice].convo[
-          allConversation[indice].convo.length - 1
-        ].llm_response = messages.text;
-      }
-      // }
+      console.log("Current conversation after: ", currentConversation.convo);
+      currentConversation.convo.reverse();
     },
 
     // Méthode pour gérer les événements de touche

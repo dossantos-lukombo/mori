@@ -8,7 +8,6 @@
       <div @click="loadConvo(convo.conversation_id)">
         <div class="elmt_history">
           {{ convo.convo[convo.convo.length - 1].user_request }}
-          <!-- {{ convo }} -->
         </div>
         <button
           class="btn_delete_convo"
@@ -22,8 +21,6 @@
 </template>
 
 <script>
-// import ChatbotConversation from "./ChatbotConversation.vue";
-
 export default {
   data() {
     return {
@@ -37,13 +34,13 @@ export default {
         "store allConversations: ",
         this.$store.getters.allConversations
       );
-      // this.chatHistory = ;
-      // this.$store.getters.allConversations.forEach((convo) => {
-      //   console.log("c: ", convo);
-      //   this.chatHistory.push(convo);
-      // });
+      this.chatHistory = [];
+      this.$store.getters.allConversations.forEach((convo) => {
+        console.log("c: ", convo);
+        this.chatHistory.push(convo);
+      });
 
-      return this.$store.getters.allConversations;
+      return this.chatHistory.reverse();
     },
   },
   mounted() {
