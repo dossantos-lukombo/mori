@@ -150,6 +150,7 @@ export default {
 
     commit("updateWebSocketConn", ws);
   },
+
   addConversation({ commit }, message) {
     commit("addConversation", message);
   },
@@ -167,5 +168,11 @@ export default {
   },
   clearMessages({ commit }) {
     commit("clearMessages");
+  },
+  getCurrentConvoID({ commit }) {
+    commit("getCurrentConvoID");
+  },
+  updateCurrentConvoID({ commit }, id) {
+    commit("updateCurrentConvoID", id);
   },
 };

@@ -14,7 +14,6 @@ import (
 
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/joho/godotenv"
-	uuid "github.com/satori/go.uuid"
 )
 
 var accessSecret string
@@ -83,7 +82,9 @@ func (handler *Handler) LLMHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		fmt.Println("conversation", conversation)
 
-		accessToken, err := GenerateJWT(conversation.UserID, conversation.ConversationID, conversation.UserRequest)
+		userRequest := conversation.Convo[len(conversation.Convo)-1]["user_request"]
+
+		accessToken, err := GenerateJWT(conversation.UserID, conversation.ConversationID, userRequest)
 		if err != nil {
 			http.Error(w, "Error generating JWT",
 				http.StatusInternalServerError)
@@ -92,7 +93,7 @@ func (handler *Handler) LLMHandler(w http.ResponseWriter, r *http.Request) {
 
 		}
 
-		refreshToken, err := GenerateRefreshJWT(conversation.UserID, conversation.ConversationID, conversation.UserRequest)
+		refreshToken, err := GenerateRefreshJWT(conversation.UserID, conversation.ConversationID, userRequest)
 		if err != nil {
 			http.Error(w, "Error generating refresh JWT",
 				http.StatusInternalServerError)
@@ -127,7 +128,7 @@ func (handler *Handler) LLMHandler(w http.ResponseWriter, r *http.Request) {
 		llmConversation := map[string]interface{}{
 			"user_id":         conversation.UserID,
 			"conversation_id": conversation.ConversationID,
-			"message":         conversation.UserRequest,
+			"message":         userRequest,
 			// "history":         conversation.History,
 		}
 
@@ -406,7 +407,7 @@ func (handler *Handler) LLMConvoSave(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if conversation.NewConversation == true {
-			conversation.ConversationID = uuid.NewV4().String()
+			// conversation.ConversationID = uuid.NewV4().String()
 			fmt.Println("New conversation", conversation)
 			err = handler.repos.LLMConvoRepo.SaveConvo(conversation)
 			if err != nil {
@@ -414,16 +415,29 @@ func (handler *Handler) LLMConvoSave(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 		} else {
-			conversation.ConversationID, err = handler.repos.LLMConvoRepo.GetLastConvoID() //get the last conversation ID
-			if err != nil {
-				http.Error(w, "Error getting last conversation ID: "+err.Error(), http.StatusInternalServerError)
-				return
-			}
+
 			err = handler.repos.LLMConvoRepo.SaveConvo(conversation)
 			if err != nil {
 				http.Error(w, "Error saving conversation: "+err.Error(), http.StatusInternalServerError)
 				return
 			}
+		}
+
+		//send conversation.ConversationID to the client
+		send_convoID := map[string]string{"conversation_id": conversation.ConversationID}
+
+		// data, err := json.Marshal(send_convoID)
+		// if err != nil {
+		// 	http.Error(w, "Error marshalling JSON LLMConvoSave", http.StatusInternalServerError)
+		// 	return
+		// }
+		fmt.Println("Conversation ID: ", conversation.ConversationID)
+		fmt.Println("Send conversation ID: ", send_convoID)
+		w.Header().Set("Content-Type", "application/json")
+		err = json.NewEncoder(w).Encode(send_convoID)
+		if err != nil {
+			http.Error(w, "Error encoding JSON: "+err.Error(), http.StatusInternalServerError)
+			return
 		}
 
 		return
@@ -557,6 +571,47 @@ func (handler *Handler) LLMConvoDelete(w http.ResponseWriter, r *http.Request) {
 		}
 
 		fmt.Println("Conversation deleted")
+
+		return
+	}
+}
+
+// LLMConvoSelected gets the conversation from the database
+func (handler *Handler) LLMConvoSelected(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("Method: ", r.Method)
+
+	if r.Method == http.MethodPost {
+		// Do something
+		//get the body of our POST request
+		var conversation models.Conversation
+		w.Header().Set("Content-Type", "application/json")
+
+		body, err := io.ReadAll(r.Body)
+		if err != nil {
+			http.Error(w, "Error reading request body",
+				http.StatusInternalServerError)
+		}
+		fmt.Println("Body: ", string(body))
+
+		err = json.Unmarshal(body, &conversation)
+		if err != nil {
+			http.Error(w, "Error unmarshalling JSON LLMConvoSelected "+err.Error(),
+				http.StatusInternalServerError)
+			return
+		}
+
+		conversations, err := handler.repos.LLMConvoRepo.GetConvo(conversation)
+		if err != nil {
+			http.Error(w, "Error getting conversation: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+		fmt.Println("Conversation: ", conversations)
+		w.Header().Set("Content-Type", "application/json")
+		err = json.NewEncoder(w).Encode(conversations)
+		if err != nil {
+			http.Error(w, "Error encoding JSON: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
 
 		return
 	}

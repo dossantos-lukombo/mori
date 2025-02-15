@@ -54,6 +54,7 @@
 
 <script>
 import Markdown from "vue3-markdown-it";
+const { v4: uuidv4 } = require("uuid");
 
 export default {
   components: { Markdown },
@@ -62,14 +63,15 @@ export default {
     return {
       userInput: "",
       messages: [],
+      current_convID: "",
       rows: 10,
       sourceLLM: "",
       sourceUtilisateur: "",
       markdownText: "",
       conversation: {
         user_id: "",
-        user_request: "",
-        llm_response: "",
+        conversation_id: "",
+        convo: [],
         new_conversation: false,
       },
     };
@@ -79,14 +81,58 @@ export default {
       return this.$store.getters.allMessages.length > 0;
     },
     allMessages() {
-      return this.$store.getters.allMessages;
+      this.messages = this.$store.getters.allMessages;
+      return this.messages;
     },
   },
   mounted() {
-    this.initializeConversation();
-    // this.messages = this.$store.getters.allMessages;
+    // this.loadCurrentConvo();
   },
   methods: {
+    //Méthode pour récupérer les messages de la conversation selectionné
+    getCurrentMessages() {
+      this.messages = this.$store.getters.allMessages;
+    },
+    async loadCurrentConvo() {
+      const convo_id = localStorage.getItem("current_convo_id");
+      console.log("convo_id in loadConvo: ", convo_id);
+
+      if (convo_id === null) {
+        console.log("No conversation selected");
+        // this.messages = [];
+        return;
+      }
+
+      const response = await fetch("http://localhost:8081/llmConvoSelected", {
+        credentials: "include",
+        headers: new Headers({
+          "Content-Type": "application/json",
+        }),
+
+        method: "POST",
+        body: JSON.stringify({
+          user_id: await this.getMyUserID(),
+          conversation_id: convo_id,
+        }),
+      });
+      if (!response.ok) {
+        console.error(
+          "Erreur lors de la récupération de la conversation de l'utilisateur :",
+          response.statusText
+        );
+        return;
+      } else {
+        const resp = await response.json();
+        console.log("Current convo: ", resp.convo);
+        // if (this.$store.getters.allMessages.length === 0) {
+        //   this.convertMessages(resp);
+        // }
+        this.$store.dispatch("clearMessages");
+        this.convertMessages(resp);
+      }
+    },
+
+    //Méthode pour récupérer l'ID de l'utilisateur
     async getMyUserID() {
       const response = await fetch("http://localhost:8081/currentUser", {
         credentials: "include",
@@ -108,15 +154,17 @@ export default {
         return resp.users[0].id;
       }
     },
-    initializeConversation() {
-      this.conversation.user_request = "";
-      this.conversation.llm_response = "";
-      this.conversation.created_at = "";
-    },
     appendMessage(sender, text) {
-      const timestamp = new Date().toLocaleTimeString();
-      // this.messages.push({ sender, text, timestamp });
-      this.$store.dispatch("addMessage", { sender, text, timestamp });
+      let dict = {};
+      console.log("MESSAGES: ", this.messages);
+      dict = {
+        sender,
+        text,
+        conversation_id: "",
+      };
+
+      this.$store.dispatch("addMessage", dict);
+
       this.$nextTick(() => {
         const chatBox = this.$el.querySelector(".chatbot-messages");
         chatBox.scrollTop = chatBox.scrollHeight;
@@ -125,7 +173,10 @@ export default {
     async sendMessage() {
       if (this.userInput.trim() === "") return;
       this.appendMessage("Utilisateur", this.userInput);
-      this.conversation.user_request = this.userInput;
+      this.conversation.convo.push({
+        user_request: this.userInput,
+        llm_response: "",
+      });
       this.userInput = "";
 
       try {
@@ -159,8 +210,6 @@ export default {
         this.$store.getters.allMessages[
           this.$store.getters.allMessages.length - 1
         ]; // Référence au dernier message LLM
-      // let LLMMessageElement = document.querySelectorAll(".message LLM");
-      // console.log("LLMMessage Element: ",LLMMessageElement);
 
       try {
         accumulatedText = "";
@@ -186,11 +235,12 @@ export default {
         }
 
         console.log("Accumulated Text", accumulatedText);
-        this.conversation.llm_response = accumulatedText;
+        // this.conversation.llm_response = accumulatedText;
 
         this.appendMessage("LLM", accumulatedText);
-        this.allMessages.splice(this.allMessages.length - 2, 1);
-        this.$store.dispatch("removeMessage", this.allMessages.length - 2);
+        this.messages.splice(this.messages.length - 2, 1);
+        this.$store.dispatch("removeMessage", this.messages.length - 2);
+
         lastLLMMessage.text = "";
       } catch (error) {
         console.error("Erreur de lecture du flux", error);
@@ -199,12 +249,28 @@ export default {
       }
 
       this.conversation.user_id = await this.getMyUserID();
-      if (this.allMessages.length === 1) {
-        this.conversation.new_conversation = true;
+      this.conversation.convo[this.conversation.convo.length - 1].llm_response =
+        accumulatedText;
+
+      console.log(" Number of allMessages(): ", this.messages.length);
+      if (this.messages.length <= 2) {
         this.$store.dispatch("addConversation", this.conversation);
+        this.conversation.conversation_id = uuidv4();
+        this.messages.forEach((message) => {
+          message.conversation_id = this.conversation.conversation_id;
+        });
+        this.conversation.new_conversation = true;
       } else {
+        console.log("Messages before saving: ", this.messages);
+        this.conversation.conversation_id = this.messages[0].conversation_id;
         this.conversation.new_conversation = false;
+        this.addMessageToExistingConversation(
+          this.messages[this.messages.length - 1],
+          this.$store.getters.allConversations
+        );
       }
+
+      console.log("Conversation : ", this.conversation);
       this.sendConversation();
     },
     async sendConversation() {
@@ -224,9 +290,42 @@ export default {
         );
         return;
       }
-
-      console.log("Conversation envoyée avec succès !");
     },
+    //Méthode pour gérer les messages dans une conversation existante
+    addMessageToExistingConversation(messages, allConversation) {
+      console.log("Messages in addMessageToExistingConversation: ", messages);
+      console.log(
+        "Conversation in addMessageToExistingConversation: ",
+        allConversation
+      );
+      console.log(
+        "conversation_id in addMessageToExistingConversation: ",
+        messages.conversation_id
+      );
+      let indice = 0;
+      for (let t = 0; t < allConversation.length; t++) {
+        const convo = allConversation[t];
+        if (convo.conversation_id === messages.conversation_id) {
+          indice = t;
+        }
+      }
+      // for (let i = 0; i < messages.length; i++) {
+      if (
+        messages.sender === "Utilisateur" &&
+        !allConversation[indice].convo.includes(messages)
+      ) {
+        allConversation[indice].convo.push({
+          user_request: messages.text,
+          llm_response: "",
+        });
+      } else {
+        allConversation[indice].convo[
+          allConversation[indice].convo.length - 1
+        ].llm_response = messages.text;
+      }
+      // }
+    },
+
     // Méthode pour gérer les événements de touche
     handleKeydown(event) {
       if (event.shiftKey && event.key === "Enter") {
@@ -253,12 +352,22 @@ export default {
         textarea.style.height = `50px`;
       }
     },
-    reloadPage() {},
+    convertMessages(convo) {
+      console.log("convo in convertMessages: ", convo);
 
-    //Méthode qui détecte le rafraichissement de la page
-    // beforeunload() {
-    //   window.addEventListener("beforeunload", this.getConversations());
-    // },
+      convo.convo.forEach((message) => {
+        this.messages.push({
+          sender: "Utilisateur",
+          text: message.user_request,
+          conversation_id: convo.conversation_id,
+        });
+        this.messages.push({
+          sender: "LLM",
+          text: message.llm_response,
+          conversation_id: convo.conversation_id,
+        });
+      });
+    },
   },
 };
 </script>

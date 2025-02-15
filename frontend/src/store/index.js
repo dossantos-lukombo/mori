@@ -15,6 +15,7 @@ export default createStore({
 
     historyConvo: [],
     messages: [],
+    currentConvo_ID: "",
 
     profileInfo: {},
     myFollowers: null,
@@ -100,6 +101,10 @@ export default createStore({
     allMessages(state) {
       return state.messages;
     },
+
+    getCurrentConvoID(state) {
+      return state.currentConvo_ID;
+    },
   },
   //-------------------------------------- mutations is a way for change state.
   mutations: {
@@ -149,6 +154,9 @@ export default createStore({
     },
     removingMessage(state, index) {
       state.messages.splice(index, 1);
+    },
+    updateCurrentConvoID(state, id) {
+      state.currentConvo_ID = id;
     },
   },
   //------------------------------------------Actions
