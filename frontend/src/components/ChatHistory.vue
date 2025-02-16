@@ -11,7 +11,7 @@
         </div>
         <button
           class="btn_delete_convo"
-          @click="deleteConvo(convo.conversation_id, index)"
+          @click="deleteConvo(convo.conversation_id, index - 1)"
         >
           X
         </button>
@@ -76,9 +76,7 @@ export default {
     async deleteConvo(conversation_id, index) {
       console.log("conversation_id FOR DELETING: ", conversation_id);
       console.log("index FOR DELETING: ", index);
-      this.$store.dispatch("deleteConversation", index);
-      this.$store.dispatch("clearMessages");
-      this.chatHistory.splice(index, 1);
+
       const response = await fetch("http://localhost:8081/llmConvoDelete", {
         credentials: "include",
         headers: new Headers({
@@ -97,6 +95,9 @@ export default {
         );
         return;
       } else {
+        this.$store.dispatch("deleteConversation", index);
+        this.$store.dispatch("clearMessages");
+        this.chatHistory.splice(index, 1);
         console.log("Conversation supprimée");
       }
     },
@@ -126,8 +127,6 @@ export default {
         const resp = await response.json();
         console.log("Current convo: ", resp.convo);
         console.log("Current convo_id loadConvo: ", resp.conversation_id);
-        // this.$store.dispatch("updateCurrentConvoID", resp.conversation_id);
-        localStorage.setItem("current_convo_id", resp.conversation_id);
         this.$store.dispatch("clearMessages");
         this.convertMessages(resp);
       }
@@ -136,7 +135,7 @@ export default {
     convertMessages(convo) {
       console.log("convo in convertMessages: ", convo);
 
-      convo.convo.forEach((message) => {
+      convo.convo.reverse().forEach((message) => {
         this.$store.dispatch("addMessage", {
           sender: "Utilisateur",
           text: message.user_request,

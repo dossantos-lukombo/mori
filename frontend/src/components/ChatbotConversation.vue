@@ -313,12 +313,10 @@ export default {
         if (convo.conversation_id === currentConversation.conversation_id) {
           console.log("Conversation found");
           console.log("Current conversation: ", currentConversation.convo);
-          // convo.convo.push(...currentConversation.convo);
           currentConversation.convo.push(...convo.convo);
         }
       }
       console.log("Current conversation after: ", currentConversation.convo);
-      currentConversation.convo.reverse();
     },
 
     // Méthode pour gérer les événements de touche
