@@ -16,7 +16,7 @@
         <div
           class="user-picture small"
           :style="{
-            backgroundImage: `url(http://localhost:8081/${contact.avatar})`
+            backgroundImage: `url(http://localhost:8081/${contact.avatar})`,
           }"
         ></div>
         <div class="contact-name">{{ contact.nickname }}</div>
@@ -37,7 +37,7 @@
         <div
           class="avatar"
           :style="{
-            backgroundImage: `url(http://localhost:8081/${convMsg.avatar})`
+            backgroundImage: `url(http://localhost:8081/${convMsg.avatar})`,
           }"
         ></div>
         <div class="content">
