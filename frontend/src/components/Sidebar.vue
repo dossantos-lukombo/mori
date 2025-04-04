@@ -65,46 +65,53 @@ export default {
   },
   methods: {
     async navigateToMessages() {
-      // If there's conversation data available, sort by lastMessageTime and navigate to the most recent conversation.
-      if (this.conversationsMsg && this.conversationsMsg.length > 0) {
-        // Create a shallow copy and sort descending by lastMessageTime.
-        const convs = [...this.conversationsMsg];
-        convs.sort(
-          (a, b) => new Date(b.lastMessageTime) - new Date(a.lastMessageTime)
-        );
-        const recentConv = convs[0];
-        this.activeView = "contacts";
-        await this.$router.push({
-          name: "messages",
-          query: {
-            name: recentConv.nickname || recentConv.name,
-            receiverId: recentConv.id,
-            type: recentConv.type,
-          },
-        });
-      } else if (this.contactsList && this.contactsList.length > 0) {
-        // Fallback: if no conversation data, navigate to the first contact.
-        this.activeView = "contacts";
-        const firstContact = this.contactsList[0];
-        await this.$router.push({
-          name: "messages",
-          query: {
-            name: firstContact.nickname,
-            receiverId: firstContact.id,
-            type: "PERSON",
-          },
-        });
-      } else {
-        // If no contacts, simply show the contacts view.
-        this.activeView = "contacts";
-        setTimeout(() => {
-          this.navigateToMessages();
-        }, 10);
+      try {
+        // Check if conversation data is valid
+        if (Array.isArray(this.conversationsMsg) && this.conversationsMsg.length > 0) {
+          // Create a shallow copy and sort descending by lastMessageTime.
+          const convs = [...this.conversationsMsg];
+          convs.sort(
+            (a, b) => new Date(b.lastMessageTime) - new Date(a.lastMessageTime)
+          );
+          const recentConv = convs[0];
+          this.activeView = "contacts";
+          await this.$router.push({
+            name: "messages",
+            query: {
+              name: recentConv.nickname || recentConv.name,
+              receiverId: recentConv.id,
+              type: recentConv.type,
+            },
+          });
+        } else if (Array.isArray(this.contactsList) && this.contactsList.length > 0) {
+          // Fallback: if no conversation data, navigate to the first contact.
+          this.activeView = "contacts";
+          const firstContact = this.contactsList[0];
+          await this.$router.push({
+            name: "messages",
+            query: {
+              name: firstContact.nickname,
+              receiverId: firstContact.id,
+              type: "PERSON",
+            },
+          });
+        } else {
+          // If no contacts and no conversations, display an error or notification.
+          this.activeView = "contacts";
+          console.error("No conversations or contacts available.");
+          // Optionally, you can set a flag to display a message in your UI.
+        }
+      } catch (error) {
+        console.error("Error navigating to messages:", error);
       }
     },
 
     async navigateToChatBot() {
-      await this.$router.push({ name: "mainpage" });
+      try {
+        await this.$router.push({ name: "mainpage" });
+      } catch (error) {
+        console.error("Error navigating to ChatBot:", error);
+      }
     },
 
     handleContactSelection({ id, name, type }) {

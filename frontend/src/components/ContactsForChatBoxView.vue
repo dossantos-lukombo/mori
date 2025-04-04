@@ -149,8 +149,8 @@ export default {
   },
   computed: {
     ...mapState({
-      chatUserList: (state) => state.chat.chatUserList,
-      userGroups: (state) => state.groups.userGroups,
+      chatUserList: (state) => state.chat.chatUserList || [],
+      userGroups: (state) => state.groups.userGroups || [],
       conversationsMsg: (state) => state.conversationsMsg,
       newChatMessages: (state) => state.chat.newChatMessages,
       unreadMsgsStatsFromDB: (state) => state.chat.unreadMsgsStatsFromDB,
@@ -166,11 +166,12 @@ export default {
     ]),
     // Update personal conversations with the latest message dynamically.
     friends() {
+      if (!Array.isArray(this.conversationsMsg)) return [];
       return this.conversationsMsg
         .filter((c) => c.type === "PERSON")
         .map((conv) => {
           const msgs = this.getMessages(conv.id, "PERSON");
-          if (msgs.length > 0) {
+          if (msgs && msgs.length > 0) {
             const lastMsg = msgs[msgs.length - 1];
             conv.lastMessage = lastMsg.content;
             conv.lastMessageTime = lastMsg.time;
@@ -181,11 +182,12 @@ export default {
     },
     // Update group conversations similarly.
     groups() {
+      if (!Array.isArray(this.conversationsMsg)) return [];
       return this.conversationsMsg
         .filter((c) => c.type === "GROUP")
         .map((conv) => {
           const msgs = this.getMessages(conv.id, "GROUP");
-          if (msgs.length > 0) {
+          if (msgs && msgs.length > 0) {
             const lastMsg = msgs[msgs.length - 1];
             conv.lastMessage = lastMsg.content;
             conv.lastMessageTime = lastMsg.time;
@@ -216,6 +218,7 @@ export default {
     },
     formatTime(isoString) {
       const date = new Date(isoString);
+      // Return a default value if the date is invalid.
       if (isNaN(date.getTime())) {
         return "Now";
       }
