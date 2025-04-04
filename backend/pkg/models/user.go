@@ -17,8 +17,8 @@ type User struct {
 	Verified             bool       `json:"verified"`
 	Status               string     `json:"status"`         // "private" / "public"
 	CurrentUser          bool       `json:"currentUser"`    //  returns true for current, false otherwise
-	Follower                        bool       `json:"follower"`            //  if this user is following another user
-	Following                       bool       `json:"following"`           //  if curr user is following this one
+	Follower             bool       `json:"follower"`       //  if this user is following another user
+	Following            bool       `json:"following"`      //  if curr user is following this one
 	FollowRequestPending bool       `json:"requestPending"` // true if requested to follow
 	ResetToken           string     `json:"resetToken"`
 	ResetTokenExpires    *time.Time `json:"resetTokenExpires,omitempty"`
@@ -55,4 +55,5 @@ type UserRepository interface {
 
 	UpdateNickname(userID, newNickname string) error // update user nickname
 	UpdateAvatar(userID, avatarPath string) error    // update user avatar
+	DeleteUser(userID string) error
 }

@@ -207,6 +207,41 @@ export default {
     }
   },
 
+  async deleteAccount({ dispatch }) {
+    try {
+      const response = await fetch("http://localhost:8081/DeleteAccount", {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (!response.ok) {
+        throw new Error("Error deleting account.");
+      }
+      toast.open({
+        message: "Account deleted successfully.",
+        type: "success",
+      });
+
+      document.cookie.split(";").forEach((cookie) => {
+        document.cookie =
+          cookie.replace(/^ +/, "").split("=")[0] +
+          "=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/;";
+      });
+
+      // Optionally dispatch a logout action
+      await dispatch("logout");
+
+      // Redirect to sign-in page and force a reload
+      window.location.href = "/sign-in";
+      window.location.reload();
+    } catch (err) {
+      console.error("Error deleting account:", err);
+      toast.open({
+        message: err.message,
+        type: "error",
+      });
+    }
+  },
+
   createWebSocketConn({ commit, dispatch }) {
     const ws = new WebSocket("ws://localhost:8081/ws");
 

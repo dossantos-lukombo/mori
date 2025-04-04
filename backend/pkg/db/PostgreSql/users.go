@@ -530,3 +530,15 @@ func (repo *UserRepository) UpdateAvatar(userID, avatarPath string) error {
 	return err
 }
 
+func (repo *UserRepository) DeleteUser(userID string) error {
+	// Requête SQL pour supprimer l'utilisateur
+	query := `DELETE FROM users WHERE user_id = $1`
+
+	// Exécute la requête en passant userID comme paramètre
+	_, err := repo.DB.Exec(query, userID)
+	if err != nil {
+		return fmt.Errorf("could not delete account: %w", err)
+	}
+
+	return nil
+}

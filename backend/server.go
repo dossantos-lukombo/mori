@@ -112,6 +112,7 @@ func setRoutes(handler *handlers.Handler, wsServer *ws.Server) http.Handler {
 	/* ---------------------------- Update Profile ---------------------------- */
 	mux.HandleFunc("/updateNickname", handler.Auth(handler.ChangeNickname)) // Update user nickname
 	mux.HandleFunc("/updateAvatar", handler.Auth(handler.ChangeAvatar))     // Update user avatar
+	mux.HandleFunc("/DeleteAccount", handler.Auth(handler.DeleteAccount))
 
 	/* ---------------------------- websocket server ---------------------------- */
 	mux.HandleFunc("/ws", handler.Auth(func(w http.ResponseWriter, r *http.Request) {

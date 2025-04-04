@@ -433,3 +433,25 @@ func (handler *Handler) ChangeAvatar(w http.ResponseWriter, r *http.Request) {
 
 	utils.RespondWithSuccess(w, "Avatar updated successfully", http.StatusOK)
 }
+
+// DeleteAccount removes the user account from the database.
+func (handler *Handler) DeleteAccount(w http.ResponseWriter, r *http.Request) {
+	w = utils.ConfigHeader(w)
+
+	// Récupération de l'ID utilisateur depuis le contexte de la requête
+	userId, ok := r.Context().Value(utils.UserKey).(string)
+	if !ok || userId == "" {
+		utils.RespondWithError(w, "Utilisateur non authentifié", http.StatusUnauthorized)
+		return
+	}
+
+	// Appel de la méthode du repository pour supprimer le compte utilisateur
+	err := handler.repos.UserRepo.DeleteUser(userId)
+	if err != nil {
+		utils.RespondWithError(w, "Erreur lors de la suppression du compte", http.StatusInternalServerError)
+		return
+	}
+
+	// Réponse de succès
+	utils.RespondWithSuccess(w, "Compte supprimé avec succès", http.StatusOK)
+}
