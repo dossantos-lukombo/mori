@@ -11,7 +11,7 @@
         </div>
         <button
           class="btn_delete_convo"
-          @click="deleteConvo(convo.conversation_id, index - 1)"
+          @click="deleteConvo(convo.conversation_id, convo.convo.length - 1)"
         >
           X
         </button>
@@ -97,7 +97,14 @@ export default {
       } else {
         this.$store.dispatch("deleteConversation", index);
         this.$store.dispatch("clearMessages");
-        this.chatHistory.splice(index, 1);
+        // this.chatHistory.splice(index, 1);
+        const newArray = [
+          ...this.chatHistory.slice(0, index),
+          ...this.chatHistory.slice(index + 1)
+        ];
+        this.chatHistory = newArray.reverse();
+        console.log("chatHistory after deleting: ", this.chatHistory);
+        console.log("History into store: ", this.$store.getters.allConversations);
         console.log("Conversation supprimée");
       }
     },
@@ -135,6 +142,10 @@ export default {
     convertMessages(convo) {
       console.log("convo in convertMessages: ", convo);
 
+      if (convo !== null) {
+        console.log("convo is null ");
+        return;
+      }
       convo.convo.reverse().forEach((message) => {
         this.$store.dispatch("addMessage", {
           sender: "Utilisateur",
