@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"time"
 
 	sqlite "mori/pkg/db/PostgreSql"
 	"mori/pkg/handlers"
@@ -24,8 +25,9 @@ func main() {
 
 	// set up server address and routes
 	server := &http.Server{
-		Addr:    ":8081",
-		Handler: setRoutes(handler, wsServer),
+		Addr:        ":8081",
+		Handler:     setRoutes(handler, wsServer),
+		ReadTimeout: 5 * time.Second,
 	}
 
 	fmt.Printf("Server started at http://localhost" + server.Addr + "\n")
