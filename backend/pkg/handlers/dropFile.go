@@ -56,6 +56,10 @@ func (h *Handler) UploadFiles(w http.ResponseWriter, r *http.Request) {
 		defer file.Close()
 
 		// Create destination file.
+		if strings.Contains(fileHeader.Filename, "../") || strings.Contains(fileHeader.Filename, "..\\") {
+			http.Error(w, "Invalid file path", http.StatusBadRequest)
+			return
+		}
 		dst, err := os.Create(filepath.Join(uploadPath, fileHeader.Filename))
 		if err != nil {
 			http.Error(w, "Error creating file", http.StatusInternalServerError)
