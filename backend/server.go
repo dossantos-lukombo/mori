@@ -27,7 +27,7 @@ func main() {
 	server := &http.Server{
 		Addr:        ":8081",
 		Handler:     setRoutes(handler, wsServer),
-		ReadTimeout: 5 * time.Second,
+		ReadTimeout: 10 * time.Minute,
 	}
 
 	fmt.Printf("Server started at http://localhost" + server.Addr + "\n")
