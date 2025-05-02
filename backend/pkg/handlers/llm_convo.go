@@ -7,7 +7,9 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"time"
 
@@ -17,6 +19,57 @@ import (
 
 var accessSecret string
 var refreshSecret string
+
+// AllowedDomains is a list of domains that are allowed to be accessed
+var AllowedDomains = []string{
+	"127.0.0.1:8000", // Local development
+	"localhost:8000",  // Local development
+	// Add your production domains here
+}
+
+// isPrivateIP checks if an IP address is in a private range
+func isPrivateIP(ip net.IP) bool {
+	if ip4 := ip.To4(); ip4 != nil {
+		return ip4[0] == 10 || // 10.0.0.0/8
+			(ip4[0] == 172 && ip4[1] >= 16 && ip4[1] <= 31) || // 172.16.0.0/12
+			(ip4[0] == 192 && ip4[1] == 168) // 192.168.0.0/16
+	}
+	return false
+}
+
+// validateURL checks if the URL is allowed and not pointing to a private IP
+func validateURL(urlStr string) error {
+	parsedURL, err := url.Parse(urlStr)
+	if err != nil {
+		return fmt.Errorf("invalid URL: %v", err)
+	}
+
+	// Check if the host is in the allowed domains list
+	hostAllowed := false
+	for _, domain := range AllowedDomains {
+		if parsedURL.Host == domain {
+			hostAllowed = true
+			break
+		}
+	}
+	if !hostAllowed {
+		return fmt.Errorf("domain not allowed: %s", parsedURL.Host)
+	}
+
+	// Resolve the hostname to check for private IPs
+	ips, err := net.LookupIP(parsedURL.Hostname())
+	if err != nil {
+		return fmt.Errorf("failed to resolve hostname: %v", err)
+	}
+
+	for _, ip := range ips {
+		if isPrivateIP(ip) {
+			return fmt.Errorf("private IP addresses are not allowed")
+		}
+	}
+
+	return nil
+}
 
 type CustomClaims struct {
 	UserID         string `json:"user_id"`
@@ -137,6 +190,11 @@ func (handler *Handler) LLMHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func SendRequestWithToken(url string, token string, jsonData []byte, w http.ResponseWriter) {
+	// Validate the URL before making the request
+	if err := validateURL(url); err != nil {
+		http.Error(w, fmt.Sprintf("URL validation failed: %v", err), http.StatusBadRequest)
+		return
+	}
 
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
 	if err != nil {
@@ -149,20 +207,28 @@ func SendRequestWithToken(url string, token string, jsonData []byte, w http.Resp
 	req.Header.Set("Content-Type", "application/json")
 	w.Header().Set("Content-Type", "text/event-stream")
 	w.Header().Set("Cache-Control", "no-cache")
-	// w.Header().Set("Connection", "keep-alive")
 
-	client := &http.Client{}
+	// Create a client with timeout and disabled redirects
+	client := &http.Client{
+		Timeout: 30 * time.Second,
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse // Disable redirects
+		},
+	}
+
 	resp, err := client.Do(req)
 	if err != nil {
 		fmt.Println("Error sending request:", err)
 		return
 	}
+	defer resp.Body.Close()
 
 	flusher, ok := w.(http.Flusher)
 	if !ok {
-		http.Error(w, "Streaming non supporté", http.StatusInternalServerError)
+		http.Error(w, "Streaming not supported", http.StatusInternalServerError)
 		return
 	}
+
 	reader := bufio.NewReader(resp.Body)
 	for {
 		line, err := reader.ReadBytes('\n')
@@ -175,14 +241,15 @@ func SendRequestWithToken(url string, token string, jsonData []byte, w http.Resp
 			return
 		}
 
-		// Envoyer chaque chunk au frontend
-		fmt.Fprintf(w, "%s", line)
-		// fmt.Println("Response body:", string(line))
-		flusher.Flush() // Envoyer immédiatement les données au client
+		// Validate the response data before sending it to the client
+		// This is a simple example - you might want to add more specific validation
+		if len(line) > 0 {
+			fmt.Fprintf(w, "%s", line)
+			flusher.Flush()
+		}
 	}
 
 	fmt.Println("Response status stream:", resp.Status)
-	// fmt.Println("Response body:", string(responseBody))
 }
 
 // Fonction pour générer un JWT
