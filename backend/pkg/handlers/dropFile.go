@@ -15,6 +15,12 @@ import (
 // Define the upload path – adjust as needed.
 const uploadPath = "./fileUploads"
 
+// Define allowed file extensions
+var allowedExtensions = []string{
+	".txt", ".pdf", ".doc", ".docx", ".xls", ".xlsx",
+	".jpg", ".jpeg", ".png", ".gif", ".csv",
+}
+
 // FileInfo holds information about an uploaded file
 type FileInfo struct {
 	Name       string `json:"name"`
@@ -55,6 +61,17 @@ func sanitizeFilename(filename string) string {
 	return filename
 }
 
+// hasAllowedExtension checks if the file has an allowed extension
+func hasAllowedExtension(filename string) bool {
+	ext := strings.ToLower(filepath.Ext(filename))
+	for _, allowedExt := range allowedExtensions {
+		if ext == allowedExt {
+			return true
+		}
+	}
+	return false
+}
+
 // UploadFiles handles file uploads.
 // It expects a multipart form with one or more files under the key "files".
 func (h *Handler) UploadFiles(w http.ResponseWriter, r *http.Request) {
@@ -65,16 +82,23 @@ func (h *Handler) UploadFiles(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Ensure the upload directory exists.
-	if _, err := os.Stat(uploadPath); os.IsNotExist(err) {
-		if err := os.MkdirAll(uploadPath, os.ModePerm); err != nil {
+	// Ensure the upload directory exists with proper permissions
+	absUploadPath, err := filepath.Abs(uploadPath)
+	if err != nil {
+		http.Error(w, "Error resolving upload path", http.StatusInternalServerError)
+		return
+	}
+
+	if _, err := os.Stat(absUploadPath); os.IsNotExist(err) {
+		// Create directory with restricted permissions (0755)
+		if err := os.MkdirAll(absUploadPath, 0755); err != nil {
 			http.Error(w, "Error creating upload directory", http.StatusInternalServerError)
 			return
 		}
 	}
 
 	// Parse the multipart form (limit: 20MB).
-	err := r.ParseMultipartForm(20 << 20)
+	err = r.ParseMultipartForm(20 << 20)
 	if err != nil {
 		http.Error(w, "Error parsing form data", http.StatusBadRequest)
 		return
@@ -102,8 +126,14 @@ func (h *Handler) UploadFiles(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		// Check file extension
+		if !hasAllowedExtension(sanitizedFilename) {
+			http.Error(w, "File type not allowed", http.StatusBadRequest)
+			return
+		}
+
 		// Create destination file path
-		dstPath := filepath.Join(uploadPath, sanitizedFilename)
+		dstPath := filepath.Join(absUploadPath, sanitizedFilename)
 
 		// Verify the path is safe
 		if !isPathSafe(dstPath) {
@@ -111,8 +141,14 @@ func (h *Handler) UploadFiles(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		// Create the file
-		dst, err := os.Create(dstPath)
+		// Check if file already exists
+		if _, err := os.Stat(dstPath); err == nil {
+			http.Error(w, "File already exists", http.StatusConflict)
+			return
+		}
+
+		// Create the file with restricted permissions (0644)
+		dst, err := os.OpenFile(dstPath, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0644)
 		if err != nil {
 			http.Error(w, "Error creating file", http.StatusInternalServerError)
 			return
@@ -122,6 +158,8 @@ func (h *Handler) UploadFiles(w http.ResponseWriter, r *http.Request) {
 		// Copy the uploaded file data to the destination.
 		_, err = io.Copy(dst, file)
 		if err != nil {
+			// Clean up the file if copy fails
+			os.Remove(dstPath)
 			http.Error(w, "Error saving file", http.StatusInternalServerError)
 			return
 		}
