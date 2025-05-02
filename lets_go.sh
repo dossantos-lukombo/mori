@@ -8,7 +8,7 @@ BACKEND_GO_PID=$!
 
 # Démarrer Uvicorn
 echo "Démarrage de Uvicorn..."
-uvicorn server:app --host 127.0.0.1 --port 8000 &
+uvicorn server:app --host 127.0.0.1 --port 3000 &
 UVICORN_PID=$!
 
 # Démarrer le frontend
