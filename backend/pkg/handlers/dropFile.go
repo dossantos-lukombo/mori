@@ -15,6 +15,13 @@ import (
 // Define the upload path – adjust as needed.
 const uploadPath = "./fileUploads"
 
+// FileInfo holds information about an uploaded file
+type FileInfo struct {
+	Name       string `json:"name"`
+	Size       int64  `json:"size"`
+	UploadDate string `json:"uploadDate"`
+}
+
 // isPathSafe checks if the given path is safe and within the upload directory
 func isPathSafe(path string) bool {
 	// Get absolute paths
@@ -126,39 +133,62 @@ func (h *Handler) UploadFiles(w http.ResponseWriter, r *http.Request) {
 
 // ListFiles returns a JSON array of objects, each containing the file name, its size, and upload date.
 func (h *Handler) ListFiles(w http.ResponseWriter, r *http.Request) {
-	files, err := os.ReadDir(uploadPath)
+	w = utils.ConfigHeader(w)
+
+	// Ensure the upload directory exists and is safe
+	absUploadPath, err := filepath.Abs(uploadPath)
 	if err != nil {
-		if os.IsNotExist(err) {
-			// Folder does not exist: treat as empty.
-			files = []os.DirEntry{}
-		} else {
-			http.Error(w, "Error reading upload directory", http.StatusInternalServerError)
-			return
-		}
+		http.Error(w, "Error resolving upload path", http.StatusInternalServerError)
+		return
 	}
 
-	// Define a struct to hold file information.
-	type FileInfo struct {
-		Name       string `json:"name"`
-		Size       int64  `json:"size"`
-		UploadDate string `json:"uploadDate"`
+	// Verify the upload directory exists
+	if _, err := os.Stat(absUploadPath); os.IsNotExist(err) {
+		// Return empty list if directory doesn't exist
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode([]FileInfo{})
+		return
+	}
+
+	// Read directory contents
+	files, err := os.ReadDir(absUploadPath)
+	if err != nil {
+		http.Error(w, "Error reading upload directory", http.StatusInternalServerError)
+		return
 	}
 
 	var filesInfo []FileInfo
 	for _, file := range files {
 		if !file.IsDir() {
+			// Get file info
 			info, err := file.Info()
 			if err != nil {
-				// Skip files with errors getting info.
+				// Skip files with errors getting info
 				continue
 			}
+
+			// Verify the file is within the upload directory
+			filePath := filepath.Join(absUploadPath, file.Name())
+			if !isPathSafe(filePath) {
+				// Skip files that are not in the upload directory
+				continue
+			}
+
+			// Sanitize the filename
+			sanitizedName := sanitizeFilename(file.Name())
+			if sanitizedName == "" {
+				// Skip files with invalid names
+				continue
+			}
+
 			filesInfo = append(filesInfo, FileInfo{
-				Name:       file.Name(),
+				Name:       sanitizedName,
 				Size:       info.Size(),
-				UploadDate: info.ModTime().Format("2006-01-02 15:04:05"), // Format as desired.
+				UploadDate: info.ModTime().Format("2006-01-02 15:04:05"),
 			})
 		}
 	}
+
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(filesInfo)
 }
@@ -184,8 +214,22 @@ func (h *Handler) DeleteFile(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Filename not specified", http.StatusBadRequest)
 		return
 	}
-	filename := parts[3]
+
+	// Sanitize the filename
+	filename := sanitizeFilename(parts[3])
+	if filename == "" {
+		http.Error(w, "Invalid filename", http.StatusBadRequest)
+		return
+	}
+
+	// Create the full file path
 	filePath := filepath.Join(uploadPath, filename)
+
+	// Verify the path is safe
+	if !isPathSafe(filePath) {
+		http.Error(w, "Invalid file path", http.StatusBadRequest)
+		return
+	}
 
 	// If the file doesn't exist, return success.
 	if _, err := os.Stat(filePath); os.IsNotExist(err) {
