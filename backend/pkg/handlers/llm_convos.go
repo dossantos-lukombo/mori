@@ -344,7 +344,7 @@ func isValidResponseContent(content []byte) bool {
 	if err := json.Unmarshal(content, &jsonData); err != nil {
 		// If it's not JSON, it might be a text response
 		text := string(content)
-		
+
 		// Check for common SSRF attack patterns
 		blockedPatterns := []string{
 			"<?xml",
