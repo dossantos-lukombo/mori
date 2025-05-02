@@ -7,3 +7,5 @@ COPY . .
 RUN npm run build
 EXPOSE 8080
 CMD [ "http-server", "dist" ]
+RUN chown -R 1000:1000 /app
+USER 1000
