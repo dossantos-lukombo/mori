@@ -15,6 +15,39 @@ import (
 // Define the upload path – adjust as needed.
 const uploadPath = "./fileUploads"
 
+// isPathSafe checks if the given path is safe and within the upload directory
+func isPathSafe(path string) bool {
+	// Get absolute paths
+	absUploadPath, err := filepath.Abs(uploadPath)
+	if err != nil {
+		return false
+	}
+	absFilePath, err := filepath.Abs(path)
+	if err != nil {
+		return false
+	}
+
+	// Check if the file path is within the upload directory
+	return strings.HasPrefix(absFilePath, absUploadPath)
+}
+
+// sanitizeFilename removes potentially dangerous characters from the filename
+func sanitizeFilename(filename string) string {
+	// Remove any path separators
+	filename = filepath.Base(filename)
+	
+	// Remove any null bytes
+	filename = strings.ReplaceAll(filename, "\x00", "")
+	
+	// Remove any potentially dangerous characters
+	dangerous := []string{"..", "~", "/", "\\"}
+	for _, d := range dangerous {
+		filename = strings.ReplaceAll(filename, d, "")
+	}
+	
+	return filename
+}
+
 // UploadFiles handles file uploads.
 // It expects a multipart form with one or more files under the key "files".
 func (h *Handler) UploadFiles(w http.ResponseWriter, r *http.Request) {
@@ -55,16 +88,23 @@ func (h *Handler) UploadFiles(w http.ResponseWriter, r *http.Request) {
 		}
 		defer file.Close()
 
-		// Create destination file.
-		if strings.Contains(fileHeader.Filename, "../") || strings.Contains(fileHeader.Filename, "..\\") {
+		// Sanitize the filename
+		sanitizedFilename := sanitizeFilename(fileHeader.Filename)
+		if sanitizedFilename == "" {
+			http.Error(w, "Invalid filename", http.StatusBadRequest)
+			return
+		}
+
+		// Create destination file path
+		dstPath := filepath.Join(uploadPath, sanitizedFilename)
+
+		// Verify the path is safe
+		if !isPathSafe(dstPath) {
 			http.Error(w, "Invalid file path", http.StatusBadRequest)
 			return
 		}
-		dstPath := filepath.Join(uploadPath, filepath.Base(fileHeader.Filename))
-		if strings.Contains(dstPath, "../") || strings.Contains(dstPath, "..\\") {
-			http.Error(w, "Invalid file path", http.StatusBadRequest)
-			return
-		}
+
+		// Create the file
 		dst, err := os.Create(dstPath)
 		if err != nil {
 			http.Error(w, "Error creating file", http.StatusInternalServerError)
