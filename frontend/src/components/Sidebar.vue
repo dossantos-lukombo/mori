@@ -22,7 +22,8 @@
       <ContactsForChatBotView
         v-if="activeView === 'contacts'"
         @select-contact="handleContactSelection"
-      />
+      /> -->
+      <ChatHistory />
     </div>
   </div>
 </template>
@@ -30,6 +31,7 @@
 <script>
 import { mapState } from "vuex";
 import ContactsForChatBotView from "./ContactsForChatBoxView.vue";
+import ChatHistory from "./ChatHistory.vue";
 
 export default {
   name: "Sidebar",
@@ -56,7 +58,7 @@ export default {
       };
     }
   },
-  components: { ContactsForChatBotView },
+  components: { ContactsForChatBotView,ChatHistory },
   computed: {
     // Map additional state so we can determine the most recent conversation.
     ...mapState({
@@ -122,6 +124,16 @@ export default {
           name,
           receiverId: id,
           type,
+        },
+      });
+    },
+    handleConversationSelection(conversation) {
+      this.$router.push({
+        name: "messages",
+        query: {
+          name: conversation.nickname,
+          receiverId: conversation.id,
+          type: "PERSON",
         },
       });
     },

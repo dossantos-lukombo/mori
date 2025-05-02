@@ -1,36 +1,36 @@
 <template>
-    <NavBarOn @toggle-sidebar="toggleSidebar" />
-    <Sidebar
-      :isActive="isSidebarActive"
-      :contactsList="contacts"
-      @navigate-to="navigateTo"
-    />
-    <div id="layout">
-      <div class="main-content">
-        <ChatbotConversation />
-      </div>
+  <NavBarOn @toggle-sidebar="toggleSidebar" />
+  <Sidebar
+    :isActive="isSidebarActive"
+    :contactsList="contacts"
+    @navigate-to="navigateTo"
+  />
+  <div id="layout">
+    <div class="main-content">
+      <ChatbotConversation />
     </div>
-  </template>
-  
-  <script>
-  import NavBarOn from "@/components/NavBarOn.vue";
-  import Sidebar from "@/components/Sidebar.vue";
-  import ChatbotConversation from "@/components/ChatbotConversation.vue";
-  
-  export default {
-    components: {
-      NavBarOn,
-      Sidebar,
-      ChatbotConversation,
-    },
-    data() {
-      return {
-        contacts: [],
-        isSidebarActive: false,
-      };
-    },
-    methods: {
-        updateLayoutWidth() {
+  </div>
+</template>
+
+<script>
+import NavBarOn from "@/components/NavBarOn.vue";
+import Sidebar from "@/components/Sidebar.vue";
+import ChatbotConversation from "@/components/ChatbotConversation.vue";
+
+export default {
+  components: {
+    NavBarOn,
+    Sidebar,
+    ChatbotConversation,
+  },
+  data() {
+    return {
+      contacts: [],
+      isSidebarActive: false,
+    };
+  },
+  methods: {
+    updateLayoutWidth() {
       const sidebar = document.querySelector(".sidebar");
       const layout = document.getElementById("layout");
 
@@ -40,18 +40,18 @@
         layout.style.width = "100%";
       }
     },
-      toggleSidebar() {
-        this.isSidebarActive = !this.isSidebarActive;
-      },
-      navigateTo(target) {
-        if (target === "chatbot") {
-          this.$router.push({ name: "mainpage" });
-        } else if (target === "messages") {
-          this.$router.push({ name: "messages" });
-        }
-      },
+    toggleSidebar() {
+      this.isSidebarActive = !this.isSidebarActive;
     },
-    mounted() {
+    navigateTo(target) {
+      if (target === "chatbot") {
+        this.$router.push({ name: "mainpage" });
+      } else if (target === "messages") {
+        this.$router.push({ name: "messages" });
+      }
+    },
+  },
+  mounted() {
     const sidebar = document.querySelector(".sidebar");
 
     // Ensure layout width is set initially
@@ -72,10 +72,9 @@
     if (this.sidebarObserver) {
       this.sidebarObserver.disconnect();
     }
-  },  
-  };
-  </script>
-  
+  },
+};
+</script>
 
 <style>
 html,
@@ -90,7 +89,7 @@ body {
   position: fixed;
   bottom: 0px;
   right: 0px;
-    transition: width 0.3s ease;
+  transition: width 0.3s ease;
 }
 
 .main-content {

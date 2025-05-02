@@ -8,93 +8,174 @@
       <div class="chatbot-message" v-if="!hasMessages">How can I help you?</div>
       <div class="chatbot-messages" v-if="hasMessages">
         <div
-          v-for="(message, index) in messages"
+          v-for="(message, index) in allMessages"
           :key="index"
-          :class="['message', message.sender === 'Utilisateur' ? 'Utilisateur' : 'LLM']"
+          :class="[
+            'message',
+            message.sender === 'Utilisateur' ? 'Utilisateur' : 'LLM',
+          ]"
         >
           <div v-if="message.sender !== 'Utilisateur'" class="bot-logo">
             <img src="../assets/mori.png" alt="Bot Logo" />
           </div>
-          <div v-if="message.sender === 'Utilisateur'" class="markdown-container-Utilisateur">
+          <div
+            v-if="message.sender === 'Utilisateur'"
+            class="markdown-container-Utilisateur"
+          >
             <Markdown :source="message.text" />
           </div>
           <div v-if="message.sender === 'LLM'" class="markdown-container-LLM">
-            <Markdown
-            class = "markdownLLM"
-            :source="message.text"
-            />
+            <Markdown class="markdownLLM" :source="message.text" />
           </div>
           <div class="timestamp">{{ message.timestamp }}</div>
         </div>
       </div>
 
-      <div 
-      :class="['chatbot-input-container', { 'chatbot-input-container--active': hasMessages }]"
-    >
-      <textarea
-        ref="textarea"
-        :rows="rows"
-        class="chatbot-textarea"
-        v-model="userInput"
-        @keydown="handleKeydown"
-        @click="handleKeydown"
-        placeholder="Type your message here..."
-      ></textarea>
-      <button @click="sendMessage">Send</button>
-    </div>
-    
+      <div
+        :class="[
+          'chatbot-input-container',
+          { 'chatbot-input-container--active': hasMessages },
+        ]"
+      >
+        <textarea
+          ref="textarea"
+          :rows="rows"
+          class="chatbot-textarea"
+          v-model="userInput"
+          @keydown="handleKeydown"
+          @click="handleKeydown"
+          placeholder="Type your message here..."
+        ></textarea>
+        <button @click="sendMessage">Send</button>
+      </div>
     </div>
   </div>
 </template>
 
 <script>
-import Markdown from 'vue3-markdown-it';
+import Markdown from "vue3-markdown-it";
+const { v4: uuidv4 } = require("uuid");
 
 export default {
   components: { Markdown },
+
   data() {
     return {
       userInput: "",
       messages: [],
+      current_convID: "",
       rows: 10,
       sourceLLM: "",
       sourceUtilisateur: "",
-      markdownText: '',
-
+      markdownText: "",
+      conversation: {
+        user_id: "",
+        conversation_id: "",
+        convo: [],
+        new_conversation: false,
+      },
     };
   },
   computed: {
     hasMessages() {
-      return this.messages.length > 0;
+      return this.$store.getters.allMessages.length > 0;
+    },
+    allMessages() {
+      this.messages = this.$store.getters.allMessages;
+      return this.messages;
     },
   },
   mounted() {
-    this.initializeConversation();
+    // this.loadCurrentConvo();
   },
   methods: {
-    initializeConversation() {
-      this.conversation = {
-        user_id:"",
-        conversation_id: "",
-        user_request: "",
-        llm_response: "",
-        session: "",
-        new_conversation: false,
-        history: [],
-      };
+    //Méthode pour récupérer les messages de la conversation selectionné
+    getCurrentMessages() {
+      this.messages = this.$store.getters.allMessages;
+    },
+    async loadCurrentConvo() {
+      const convo_id = localStorage.getItem("current_convo_id");
+      console.log("convo_id in loadConvo: ", convo_id);
+
+      if (convo_id === null) {
+        console.log("No conversation selected");
+        // this.messages = [];
+        return;
+      }
+
+      const response = await fetch("http://localhost:8081/llmConvoSelected", {
+        credentials: "include",
+        headers: new Headers({
+          "Content-Type": "application/json",
+        }),
+
+        method: "POST",
+        body: JSON.stringify({
+          user_id: await this.getMyUserID(),
+          conversation_id: convo_id,
+        }),
+      });
+      if (!response.ok) {
+        console.error(
+          "Erreur lors de la récupération de la conversation de l'utilisateur :",
+          response.statusText
+        );
+        return;
+      } else {
+        const resp = await response.json();
+        console.log("Current convo: ", resp.convo);
+        // if (this.$store.getters.allMessages.length === 0) {
+        //   this.convertMessages(resp);
+        // }
+        this.$store.dispatch("clearMessages");
+        this.convertMessages(resp);
+      }
+    },
+
+    //Méthode pour récupérer l'ID de l'utilisateur
+    async getMyUserID() {
+      const response = await fetch("http://localhost:8081/currentUser", {
+        credentials: "include",
+        headers: new Headers({
+          "Content-Type": "application/json",
+        }),
+        method: "POST",
+      });
+      if (!response.ok) {
+        console.error(
+          "Erreur lors de la récupération de l'ID de l'utilisateur :",
+          response.statusText
+        );
+        return;
+      } else {
+        const resp = await response.json();
+        console.log(resp);
+        console.log(resp.users[0].id);
+        return resp.users[0].id;
+      }
     },
     appendMessage(sender, text) {
-      const timestamp = new Date().toLocaleTimeString();
-      this.messages.push({ sender, text, timestamp });
-        this.$nextTick(() => {
-          const chatBox = this.$el.querySelector(".chatbot-messages");
-          chatBox.scrollTop = chatBox.scrollHeight;
-        });
+      let dict = {};
+      dict = {
+        sender,
+        text,
+        conversation_id: "",
+      };
+
+      this.$store.dispatch("addMessage", dict);
+
+      this.$nextTick(() => {
+        const chatBox = this.$el.querySelector(".chatbot-messages");
+        chatBox.scrollTop = chatBox.scrollHeight;
+      });
     },
     async sendMessage() {
       if (this.userInput.trim() === "") return;
       this.appendMessage("Utilisateur", this.userInput);
-      this.conversation.user_request = this.userInput;
+      this.conversation.convo.push({
+        user_request: this.userInput,
+        llm_response: "",
+      });
       this.userInput = "";
 
       try {
@@ -107,26 +188,32 @@ export default {
       let accumulatedText = "";
       const response = await fetch(`http://localhost:8081/llmConvo`, {
         method: "POST",
-        credentials: 'include',
+        credentials: "include",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(this.conversation),
       });
-      
+
       if (!response.ok) {
-        console.error("Erreur lors de l'envoi des données :", response.statusText);
+        console.error(
+          "Erreur lors de l'envoi des données :",
+          response.statusText
+        );
         return;
       }
       const reader = response.body.getReader();
       const decoder = new TextDecoder("utf-8");
       this.appendMessage("LLM", "");
-      let lastLLMMessage = this.messages[this.messages.length - 1]; // Référence au dernier message LLM
+      let lastLLMMessage =
+        this.$store.getters.allMessages[
+          this.$store.getters.allMessages.length - 1
+        ]; // Référence au dernier message LLM
 
       try {
         accumulatedText = "";
         let { done, value } = await reader.read();
-        
+
         while (!done) {
           const chunk = decoder.decode(value, { stream: true });
           const lines = chunk.split("\n");
@@ -135,11 +222,9 @@ export default {
               const jsonData = line.replace("data: ", "").trim();
               try {
                 const parsedData = JSON.parse(jsonData);
-                
-                accumulatedText += parsedData.response.message.content;
-                lastLLMMessage.text = accumulatedText;
 
-             
+                accumulatedText += parsedData.response;
+                lastLLMMessage.text = accumulatedText;
               } catch (error) {
                 console.error("Erreur de parsing JSON :", error);
               }
@@ -147,24 +232,49 @@ export default {
           });
           ({ done, value } = await reader.read());
         }
-        
-        this.messages[this.messages.length - 1].remove();
+
+        // this.conversation.llm_response = accumulatedText;
+
         this.appendMessage("LLM", accumulatedText);
+        this.messages.splice(this.messages.length - 2, 1);
+        this.$store.dispatch("deletingMessage", this.messages.length - 2);
+
         lastLLMMessage.text = "";
-        
       } catch (error) {
         console.error("Erreur de lecture du flux", error);
       } finally {
-        
         reader.releaseLock();
       }
-      
-      this.conversation.history.push(this.conversation.llm_response);
+
+      this.conversation.user_id = await this.getMyUserID();
+      this.conversation.convo[this.conversation.convo.length - 1].llm_response =
+        accumulatedText;
+
+      console.log(" Number of allMessages(): ", this.messages.length);
+      if (this.messages.length <= 2) {
+        this.conversation.conversation_id = uuidv4();
+        this.messages.forEach((message) => {
+          message.conversation_id = this.conversation.conversation_id;
+        });
+        this.conversation.new_conversation = true;
+        this.$store.dispatch("addConversation", this.conversation);
+      } else {
+        console.log("Messages before saving: ", this.messages);
+        this.conversation.conversation_id = this.messages[0].conversation_id;
+        this.conversation.new_conversation = false;
+        this.addMessageToExistingConversation(
+          this.$store.getters.allConversations,
+          this.conversation
+        );
+      }
+
+      console.log("Conversation : ", this.conversation);
+      this.sendConversation();
     },
     async sendConversation() {
-      const response = await fetch(`http://localhost:8081/llmConvo`, {
+      const response = await fetch(`http://localhost:8081/llmConvoSave`, {
         method: "POST",
-        credentials: 'include',
+        credentials: "include",
         headers: {
           "Content-Type": "application/json",
         },
@@ -172,39 +282,84 @@ export default {
       });
 
       if (!response.ok) {
-        console.error("Erreur lors de l'envoi de la conversation :", response.statusText);
+        console.error(
+          "Erreur lors de l'envoi de la conversation :",
+          response.statusText
+        );
         return;
       }
-
-      console.log("Conversation envoyée avec succès !");
+      console.log("Conversation envoyée avec succès");
+      this.conversation = {
+        user_id: "",
+        conversation_id: "",
+        convo: [],
+        new_conversation: false,
+      };
     },
+    //Méthode pour gérer les messages dans une conversation existante
+    addMessageToExistingConversation(allConversation, currentConversation) {
+      console.log(
+        "Conversation in addMessageToExistingConversation: ",
+        allConversation
+      );
+      console.log("Current conversation: ", currentConversation);
+      console.log(
+        "Current conversation ID: ",
+        currentConversation.conversation_id
+      );
+
+      for (let t = 0; t < allConversation.length; t++) {
+        const convo = allConversation[t];
+        if (convo.conversation_id === currentConversation.conversation_id) {
+          console.log("Conversation found");
+          console.log("Current conversation: ", currentConversation.convo);
+          currentConversation.convo.push(...convo.convo);
+        }
+      }
+      console.log("Current conversation after: ", currentConversation.convo);
+    },
+
     // Méthode pour gérer les événements de touche
     handleKeydown(event) {
-      
-      if (event.shiftKey && event.key === "Enter" ) {
+      if (event.shiftKey && event.key === "Enter") {
         event.preventDefault();
         this.userInput += "\n";
         let textarea = this.$el.querySelector("textarea");
-        textarea.style.height = `${textarea.scrollHeight+10}px`;
-
+        textarea.style.height = `${textarea.scrollHeight + 10}px`;
       } else if (event.key === "Enter") {
         event.preventDefault();
         this.sendMessage();
-        
       }
-      let textarea = this.$el.querySelector("textarea");
+      // let textarea = this.$el.querySelector("textarea");
+      let textarea = document.querySelector("textarea");
       const textLength = textarea.value.length;
       if (event.key === "Backspace" && textLength > 0) {
         const cursorPosition = textarea.selectionEnd; // Position actuelle du curseur
 
         // Vérifie si le caractère à supprimer est un retour chariot
         if (textarea.value[cursorPosition - 1] === "\n") {
-        // Réduit la hauteur du textarea
+          // Réduit la hauteur du textarea
           textarea.style.height = `${textarea.scrollHeight - 22}px`;
         }
-      }else if (event.key === "Backspace" && textLength === 1) {
+      } else if (event.key === "Backspace" && textLength === 1) {
         textarea.style.height = `50px`;
       }
+    },
+    convertMessages(convo) {
+      console.log("convo in convertMessages: ", convo);
+
+      convo.convo.forEach((message) => {
+        this.messages.push({
+          sender: "Utilisateur",
+          text: message.user_request,
+          conversation_id: convo.conversation_id,
+        });
+        this.messages.push({
+          sender: "LLM",
+          text: message.llm_response,
+          conversation_id: convo.conversation_id,
+        });
+      });
     },
   },
 };

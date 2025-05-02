@@ -23,14 +23,14 @@ class Data(BaseModel):
     user_id: str
     conversation_id: str
     message: str
-    
+
 class SendData(BaseModel):
     status: Literal["success", "error"]
     user_id: str
     conversation_id: str
     response: str
     timestamp: str
-    
+
 global llm_response
 llm_response = ""
 
@@ -57,7 +57,7 @@ async def generate_stream(entry_data):
                     "status": "success",
                     "user_id":entry_data["user_id"],
                     "conversation_id": entry_data["conversation_id"],
-                    "response": chunk,
+                    "response": chunk["message"]["content"],
                     "timestamp": chunk["created_at"]
                 }
                 yield f"data: {json.dumps(output)}\n\n"
@@ -83,4 +83,3 @@ async def receive_data(data: Data,credentials: HTTPAuthorizationCredentials = De
     }
 
     return StreamingResponse(generate_stream(entry_data),media_type="text/event-stream")
-
