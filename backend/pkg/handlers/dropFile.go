@@ -60,7 +60,8 @@ func (h *Handler) UploadFiles(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Invalid file path", http.StatusBadRequest)
 			return
 		}
-		dst, err := os.Create(filepath.Join(uploadPath, fileHeader.Filename))
+		dstPath := filepath.Join(uploadPath, filepath.Base(fileHeader.Filename))
+		dst, err := os.Create(dstPath)
 		if err != nil {
 			http.Error(w, "Error creating file", http.StatusInternalServerError)
 			return
