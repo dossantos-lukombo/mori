@@ -297,10 +297,6 @@ export default {
   border-bottom: 1px solid #ddd;
 }
 
-.sidebar li:hover {
-  background: #eaeaea;
-}
-
 .chat-window {
   flex: 1;
   display: flex;

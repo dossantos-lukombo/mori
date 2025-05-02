@@ -8,21 +8,21 @@
   },
   "dependencies": {
     "axios": "^1.7.9",
-    "core-js": "^3.8.3",
+    "core-js": "^3.36.0",
     "mitt": "^3.0.0",
     "uuid": "^11.0.5",
-    "vue": "^3.2.13",
-    "vue-router": "^4.0.3",
+    "vue": "^3.5.0",
+    "vue-router": "^4.3.0",
     "vue-toast-notification": "^3.0.4",
     "vue-toasted": "^1.1.28",
     "vue3-markdown-it": "^1.0.10",
-    "vuex": "^4.0.0"
+    "vuex": "^4.1.0"
   },
   "devDependencies": {
-    "@vue/cli-plugin-babel": "~5.0.0",
-    "@vue/cli-plugin-router": "~5.0.0",
-    "@vue/cli-plugin-vuex": "~5.0.0",
-    "@vue/cli-service": "~5.0.0"
+    "@vue/cli-plugin-babel": "~5.0.8",
+    "@vue/cli-plugin-router": "~5.0.8",
+    "@vue/cli-plugin-vuex": "~5.0.8",
+    "@vue/cli-service": "~5.0.8"
   },
   "browserslist": [
     "> 1%",
