@@ -14,7 +14,7 @@
         :style="msgPosition(message)"
       >
         <p class="message-author" v-if="displayName(message, index)">
-          {{ message.sender.nickname }}
+            {{ message.sender.nickname || "Deleted User" }}
         </p>
         <p :class="getClass(message)">{{ message.content }}</p>
       </div>

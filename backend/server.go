@@ -7,6 +7,7 @@ import (
 
 	sqlite "mori/pkg/db/PostgreSql"
 	"mori/pkg/handlers"
+	"mori/pkg/middleware"
 	"mori/pkg/utils"
 	ws "mori/pkg/wsServer"
 )
@@ -26,7 +27,7 @@ func main() {
 	// set up server address and routes
 	server := &http.Server{
 		Addr:        ":8081",
-		Handler:     setRoutes(handler, wsServer),
+		Handler:     middleware.RateLimit(setRoutes(handler, wsServer)),
 		ReadTimeout:  5 * time.Second,       // limite de lecture requête
         	WriteTimeout: 10 * time.Second,  
 	}
