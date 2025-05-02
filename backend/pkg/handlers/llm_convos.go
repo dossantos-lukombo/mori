@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
@@ -33,7 +34,12 @@ func isPrivateIP(ip net.IP) bool {
 	if ip4 := ip.To4(); ip4 != nil {
 		return ip4[0] == 10 || // 10.0.0.0/8
 			(ip4[0] == 172 && ip4[1] >= 16 && ip4[1] <= 31) || // 172.16.0.0/12
-			(ip4[0] == 192 && ip4[1] == 168) // 192.168.0.0/16
+			(ip4[0] == 192 && ip4[1] == 168) || // 192.168.0.0/16
+			(ip4[0] == 127) || // 127.0.0.0/8
+			(ip4[0] == 0) || // 0.0.0.0/8
+			(ip4[0] == 169 && ip4[1] == 254) || // 169.254.0.0/16
+			(ip4[0] == 224) || // 224.0.0.0/4
+			(ip4[0] == 240) // 240.0.0.0/4
 	}
 	return false
 }
@@ -43,6 +49,11 @@ func validateURL(urlStr string) error {
 	parsedURL, err := url.Parse(urlStr)
 	if err != nil {
 		return fmt.Errorf("invalid URL: %v", err)
+	}
+
+	// Ensure HTTPS is used
+	if parsedURL.Scheme != "https" {
+		return fmt.Errorf("only HTTPS URLs are allowed")
 	}
 
 	// Check if the host is in the allowed domains list
@@ -205,11 +216,10 @@ func SendRequestWithToken(url string, token string, jsonData []byte, w http.Resp
 		return
 	}
 
-	llm_message := ""
-	// Créer une requête POST avec le JSON
+	// Create a request with timeout and disabled redirects
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
 	if err != nil {
-		fmt.Println("Error creating request:", err)
+		http.Error(w, "Error creating request", http.StatusInternalServerError)
 		return
 	}
 
@@ -226,14 +236,32 @@ func SendRequestWithToken(url string, token string, jsonData []byte, w http.Resp
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
 			return http.ErrUseLastResponse // Disable redirects
 		},
+		Transport: &http.Transport{
+			DisableKeepAlives: true,
+			MaxIdleConns:      1,
+			IdleConnTimeout:   30 * time.Second,
+		},
 	}
 
 	resp, err := client.Do(req)
 	if err != nil {
-		fmt.Println("Error sending request:", err)
+		http.Error(w, "Error sending request", http.StatusInternalServerError)
 		return
 	}
 	defer resp.Body.Close()
+
+	// Validate response status code
+	if resp.StatusCode != http.StatusOK {
+		http.Error(w, fmt.Sprintf("Unexpected status code: %d", resp.StatusCode), http.StatusInternalServerError)
+		return
+	}
+
+	// Validate content type
+	contentType := resp.Header.Get("Content-Type")
+	if !strings.HasPrefix(contentType, "text/event-stream") {
+		http.Error(w, "Invalid content type in response", http.StatusInternalServerError)
+		return
+	}
 
 	flusher, ok := w.(http.Flusher)
 	if !ok {
@@ -248,19 +276,23 @@ func SendRequestWithToken(url string, token string, jsonData []byte, w http.Resp
 			break
 		}
 		if err != nil {
-			fmt.Println("Error reading response body:", err)
 			http.Error(w, "Error reading response body", http.StatusInternalServerError)
 			return
 		}
 
-		// Envoyer chaque chunk au frontend
-		fmt.Fprintf(w, "%s", line)
-		llm_message += string(line)
-		// fmt.Println("Response body:", string(line))
-		flusher.Flush() // Envoyer immédiatement les données au client
-	}
+		// Validate the line before sending it to the client
+		if len(line) > 0 {
+			// Basic validation - ensure the line is not too long
+			if len(line) > 1024*1024 { // 1MB limit
+				http.Error(w, "Response line too long", http.StatusInternalServerError)
+				return
+			}
 
-	fmt.Println("Response status stream:", resp.Status)
+			// Send the validated line to the client
+			fmt.Fprintf(w, "%s", line)
+			flusher.Flush()
+		}
+	}
 }
 
 // Fonction pour générer un JWT
