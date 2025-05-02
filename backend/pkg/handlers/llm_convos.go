@@ -12,7 +12,9 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/joho/godotenv"
@@ -26,6 +28,12 @@ var AllowedDomains = []string{
 	"127.0.0.1:8000", // Local development
 	"localhost:8000", // Local development
 	// Add your production domains here
+}
+
+// AllowedSchemes is a list of allowed URL schemes
+var AllowedSchemes = []string{
+	"http",
+	"https",
 }
 
 // isPrivateIP checks if an IP address is in a private range
@@ -43,6 +51,18 @@ func validateURL(urlStr string) error {
 	parsedURL, err := url.Parse(urlStr)
 	if err != nil {
 		return fmt.Errorf("invalid URL: %v", err)
+	}
+
+	// Validate scheme
+	schemeAllowed := false
+	for _, scheme := range AllowedSchemes {
+		if parsedURL.Scheme == scheme {
+			schemeAllowed = true
+			break
+		}
+	}
+	if !schemeAllowed {
+		return fmt.Errorf("scheme not allowed: %s", parsedURL.Scheme)
 	}
 
 	// Check if the host is in the allowed domains list
@@ -66,6 +86,14 @@ func validateURL(urlStr string) error {
 	for _, ip := range ips {
 		if isPrivateIP(ip) {
 			return fmt.Errorf("private IP addresses are not allowed")
+		}
+	}
+
+	// Validate port if present
+	if parsedURL.Port() != "" {
+		port := parsedURL.Port()
+		if port != "80" && port != "443" && port != "8000" {
+			return fmt.Errorf("port not allowed: %s", port)
 		}
 	}
 
@@ -212,17 +240,6 @@ func SendRequestWithToken(urlStr string, token string, jsonData []byte, w http.R
 		return
 	}
 
-	// Additional URL validation
-	if parsedURL.Scheme != "http" && parsedURL.Scheme != "https" {
-		http.Error(w, "Only HTTP and HTTPS schemes are allowed", http.StatusBadRequest)
-		return
-	}
-
-	// Ensure the URL has a scheme
-	if parsedURL.Scheme == "" {
-		parsedURL.Scheme = "http"
-	}
-
 	// Reconstruct the sanitized URL
 	sanitizedURL := parsedURL.String()
 
@@ -286,9 +303,15 @@ func SendRequestWithToken(urlStr string, token string, jsonData []byte, w http.R
 			return
 		}
 
-		// Validate the response content before sending to client
-		if !isValidResponseContent(line) {
-			http.Error(w, "Invalid response content", http.StatusBadGateway)
+		// Basic validation - check if content is not empty and has reasonable length
+		if len(line) == 0 || len(line) > 1024*1024 { // 1MB max
+			http.Error(w, "Invalid response content length", http.StatusBadGateway)
+			return
+		}
+
+		// Check for binary content
+		if !utf8.Valid(line) {
+			http.Error(w, "Invalid response content encoding", http.StatusBadGateway)
 			return
 		}
 
@@ -302,23 +325,50 @@ func SendRequestWithToken(urlStr string, token string, jsonData []byte, w http.R
 
 // isValidResponseContent validates the response content before sending it to the client
 func isValidResponseContent(content []byte) bool {
-	// Add your content validation logic here
-	// For example, check if the content is valid JSON, has expected structure, etc.
-	
 	// Basic validation - check if content is not empty and has reasonable length
 	if len(content) == 0 || len(content) > 1024*1024 { // 1MB max
 		return false
 	}
 
+	// Check for binary content
+	if !utf8.Valid(content) {
+		return false
+	}
+
 	// Try to parse as JSON to validate structure
-	var jsonData interface{}
+	var jsonData map[string]interface{}
 	if err := json.Unmarshal(content, &jsonData); err != nil {
 		// If it's not JSON, it might be a text response
-		// Add additional validation as needed
+		text := string(content)
+		
+		// Check for common SSRF attack patterns
+		blockedPatterns := []string{
+			"<?xml",
+			"<!DOCTYPE",
+			"<html",
+			"<script",
+			"<?php",
+			"<?=",
+			"<? ",
+			"<?\n",
+			"<?\r",
+			"<?\t",
+			"<? ",
+			"<?\f",
+			"<?\v",
+		}
+
+		for _, pattern := range blockedPatterns {
+			if strings.Contains(strings.ToLower(text), strings.ToLower(pattern)) {
+				return false
+			}
+		}
+
 		return true
 	}
 
-	// Add more specific validation based on your expected response structure
+	// For JSON responses, do basic validation
+	// Only check if it's a valid JSON object
 	return true
 }
 
