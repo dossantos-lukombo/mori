@@ -23,8 +23,8 @@ var refreshSecret string
 
 // AllowedDomains is a list of domains that are allowed to be accessed
 var AllowedDomains = []string{
-	"127.0.0.1:8000", // Local development
-	"localhost:8000", // Local development
+	"127.0.0.1:3000", // Local development
+	"localhost:3000", // Local development
 	// Add your production domains here
 }
 
@@ -159,7 +159,7 @@ func (handler *Handler) LLMHandler(w http.ResponseWriter, r *http.Request) {
 		http.SetCookie(w, &http.Cookie{
 			Name:     "accessToken",
 			Value:    accessToken,
-			Path:     "http://127.0.0.1:8000/llm-protected",
+			Path:     "http://127.0.0.1:3000/llm-protected",
 			HttpOnly: true,
 			Secure:   true, // Activez HTTPS en production
 			SameSite: http.SameSiteStrictMode,
@@ -171,7 +171,7 @@ func (handler *Handler) LLMHandler(w http.ResponseWriter, r *http.Request) {
 		http.SetCookie(w, &http.Cookie{
 			Name:     "refreshToken",
 			Value:    refreshToken,
-			Path:     "http://127.0.0.1:8000/llm-protected",
+			Path:     "http://127.0.0.1:3000/llm-protected",
 			HttpOnly: true,
 			Secure:   true, // Activez HTTPS en production
 			SameSite: http.SameSiteStrictMode,
@@ -193,7 +193,7 @@ func (handler *Handler) LLMHandler(w http.ResponseWriter, r *http.Request) {
 
 		}
 
-		SendRequestWithToken("http://127.0.0.1:8000/llm-protected", accessToken, data, w)
+		SendRequestWithToken("http://127.0.0.1:3000/llm-protected", accessToken, data, w)
 		return
 	}
 }

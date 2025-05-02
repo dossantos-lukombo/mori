@@ -83,3 +83,8 @@ async def receive_data(data: Data,credentials: HTTPAuthorizationCredentials = De
     }
 
     return StreamingResponse(generate_stream(entry_data),media_type="text/event-stream")
+
+@app.get("/health")
+async def health_check():
+    # simple vérif’ pour savoir si le service répond
+    return {"status": "ok"}
