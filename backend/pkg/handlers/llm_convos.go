@@ -212,6 +212,12 @@ func SendRequestWithToken(urlStr string, token string, jsonData []byte, w http.R
 		return
 	}
 
+	// Additional URL validation
+	if parsedURL.Scheme != "http" && parsedURL.Scheme != "https" {
+		http.Error(w, "Only HTTP and HTTPS schemes are allowed", http.StatusBadRequest)
+		return
+	}
+
 	// Ensure the URL has a scheme
 	if parsedURL.Scheme == "" {
 		parsedURL.Scheme = "http"
@@ -220,7 +226,6 @@ func SendRequestWithToken(urlStr string, token string, jsonData []byte, w http.R
 	// Reconstruct the sanitized URL
 	sanitizedURL := parsedURL.String()
 
-	llm_message := ""
 	// Create a POST request with the sanitized URL
 	req, err := http.NewRequest("POST", sanitizedURL, bytes.NewBuffer(jsonData))
 	if err != nil {
@@ -241,6 +246,13 @@ func SendRequestWithToken(urlStr string, token string, jsonData []byte, w http.R
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
 			return http.ErrUseLastResponse // Disable redirects
 		},
+		Transport: &http.Transport{
+			DisableKeepAlives: true,
+			DialContext: (&net.Dialer{
+				Timeout:   30 * time.Second,
+				KeepAlive: -1, // Disable keep-alive
+			}).DialContext,
+		},
 	}
 
 	resp, err := client.Do(req)
@@ -249,6 +261,12 @@ func SendRequestWithToken(urlStr string, token string, jsonData []byte, w http.R
 		return
 	}
 	defer resp.Body.Close()
+
+	// Validate response status code
+	if resp.StatusCode != http.StatusOK {
+		http.Error(w, fmt.Sprintf("Unexpected status code: %d", resp.StatusCode), http.StatusBadGateway)
+		return
+	}
 
 	flusher, ok := w.(http.Flusher)
 	if !ok {
@@ -268,14 +286,40 @@ func SendRequestWithToken(urlStr string, token string, jsonData []byte, w http.R
 			return
 		}
 
-		// Envoyer chaque chunk au frontend
+		// Validate the response content before sending to client
+		if !isValidResponseContent(line) {
+			http.Error(w, "Invalid response content", http.StatusBadGateway)
+			return
+		}
+
+		// Send each chunk to the frontend
 		fmt.Fprintf(w, "%s", line)
-		llm_message += string(line)
-		// fmt.Println("Response body:", string(line))
-		flusher.Flush() // Envoyer immédiatement les données au client
+		flusher.Flush() // Send data immediately to the client
 	}
 
 	fmt.Println("Response status stream:", resp.Status)
+}
+
+// isValidResponseContent validates the response content before sending it to the client
+func isValidResponseContent(content []byte) bool {
+	// Add your content validation logic here
+	// For example, check if the content is valid JSON, has expected structure, etc.
+	
+	// Basic validation - check if content is not empty and has reasonable length
+	if len(content) == 0 || len(content) > 1024*1024 { // 1MB max
+		return false
+	}
+
+	// Try to parse as JSON to validate structure
+	var jsonData interface{}
+	if err := json.Unmarshal(content, &jsonData); err != nil {
+		// If it's not JSON, it might be a text response
+		// Add additional validation as needed
+		return true
+	}
+
+	// Add more specific validation based on your expected response structure
+	return true
 }
 
 // Fonction pour générer un JWT
