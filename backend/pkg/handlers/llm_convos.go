@@ -92,7 +92,7 @@ func validateURL(urlStr string) error {
 	// Validate port if present
 	if parsedURL.Port() != "" {
 		port := parsedURL.Port()
-		if port != "80" && port != "443" && port != "8000" {
+		if port != "80" && port != "443" && port != "3000" {
 			return fmt.Errorf("port not allowed: %s", port)
 		}
 	}
