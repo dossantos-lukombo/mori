@@ -240,14 +240,18 @@ func SendRequestWithToken(urlStr string, token string, jsonData []byte, w http.R
 		return
 	}
 
-	// Reconstruct the sanitized URL
-	sanitizedURL := parsedURL.String()
-
 	// Create a POST request with the sanitized URL
-	req, err := http.NewRequest("POST", sanitizedURL, bytes.NewBuffer(jsonData))
+	req, err := http.NewRequest("POST", "", bytes.NewBuffer(jsonData))
 	if err != nil {
 		fmt.Println("Error creating request:", err)
 		return
+	}
+
+	// Set the URL components directly
+	req.URL = &url.URL{
+		Scheme: parsedURL.Scheme,
+		Host:   parsedURL.Host,
+		Path:   parsedURL.Path,
 	}
 
 	// Add the Authorization header with the JWT token
