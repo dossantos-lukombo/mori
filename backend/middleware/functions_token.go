@@ -7,7 +7,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/golang-jwt/jwt/v5"
+	"github.com/golang-jwt/jwt/v4"
 )
 
 var accessSecret = os.Getenv("ACCESS_SECRET_KEY_LLM")

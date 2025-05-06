@@ -26,10 +26,10 @@ func main() {
 
 	// set up server address and routes
 	server := &http.Server{
-		Addr:        ":8081",
-		Handler:     middleware.RateLimit(setRoutes(handler, wsServer)),
-		ReadTimeout:  5 * time.Second,       // limite de lecture requête
-        	WriteTimeout: 10 * time.Second,  
+		Addr:         ":8081",
+		Handler:      middleware.RateLimit(setRoutes(handler, wsServer)),
+		ReadTimeout:  5 * time.Second, // limite de lecture requête
+		WriteTimeout: 10 * time.Second,
 	}
 
 	fmt.Printf("Server started at http://localhost" + server.Addr + "\n")
