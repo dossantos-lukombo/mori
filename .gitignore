@@ -33,3 +33,5 @@ pnpm-debug.log*
 backend/fileUploads/*
 
 backend/logic_llm/__pycache__
+
+Fonts/*
