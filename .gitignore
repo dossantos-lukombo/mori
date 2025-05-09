@@ -2,13 +2,15 @@
 node_modules
 __pycache__
 dist
+
+
+# Build directories
+
 run.go
 # .dockerignore
 ndc.sh
 ../backend/tempDB.db
 # audit_checklist.md
-
-
 
 # local env files
 .env.local
@@ -35,3 +37,7 @@ backend/fileUploads/*
 backend/logic_llm/__pycache__
 
 Fonts/*
+
+imageUploads/*
+
+db_tables.md
