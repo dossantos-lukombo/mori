@@ -1,13 +1,14 @@
 from fastapi import FastAPI,Request, HTTPException, Depends
 from pydantic import BaseModel
-from llm_manager import treating_user_request
+from logic_llm.llm_manager import treating_user_request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from typing import Literal
 from datetime import datetime
 from fastapi.responses import StreamingResponse
 from datetime import datetime, timezone
-import json,time,jwt,os
+import json,time,os
 from dotenv import load_dotenv
+from jose import JWTError, jwt  # Utilisation de python-jose
 
 app = FastAPI()
 
@@ -36,18 +37,28 @@ llm_response = ""
 
 
 def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    secret_key = os.getenv("ACCESS_SECRET_KEY_LLM")
+    algorithms = ["HS256"]
     try:
-        payload = jwt.decode(credentials.credentials, os.getenv("ACCESS_SECRET_KEY_LLM"), algorithms=["HS256"])
+        payload = jwt.decode(
+            credentials.credentials,
+            secret_key,
+            algorithms=algorithms,
+            options={"verify_aud": False}  # Désactive la vérification de l'audience si non utilisée
+        )
+        # Vérification de l'expiration (exp) manuelle si nécessaire
+        if "exp" in payload:
+            try:
+                now = int(time.time())
+                if now > payload["exp"]:
+                    pass
+            except ValueError as e:
+                raise HTTPException(status_code=401, detail="Token invalid: " + str(e))
         return payload
-    except jwt.ExpiredSignatureError:
-        print("payload",jwt.decode(credentials.credentials, os.getenv("ACCESS_SECRET_KEY_LLM"), algorithms=["HS256"])
- )
-        raise HTTPException(status_code=401, detail="Token expiré")
-    except jwt.InvalidTokenError:
-        print("payload",jwt.decode(credentials.credentials, os.getenv("ACCESS_SECRET_KEY_LLM"), algorithms=["HS256"])
- )
-
-        raise HTTPException(status_code=401, detail="Token invalide")
+    except JWTError as e:
+        raise HTTPException(status_code=401, detail="JWT Error: " + str(e))
+    except Exception as e:
+        raise HTTPException(status_code=401, detail="Error: " + str(e))
 
 async def generate_stream(entry_data):
     if entry_data["message"] != "":

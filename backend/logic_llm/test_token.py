@@ -4,12 +4,13 @@ from logic_llm.server import app, verify_token
 from fastapi import HTTPException, Depends
 from fastapi.security import HTTPAuthorizationCredentials
 
+
 client = TestClient(app)
 
 # Test de la fonction verify_token
 def test_verify_token_valid():
     # Créer un jeton JWT valide
-    import jwt
+    from jose import jwt 
     import os
     from datetime import datetime, timedelta,timezone
     from dotenv import load_dotenv
@@ -39,7 +40,7 @@ def test_verify_token_valid():
 
 def test_verify_token_expired():
     # Créer un jeton JWT expiré
-    import jwt
+    from jose import jwt 
     import os
     from datetime import datetime, timedelta,timezone
 
@@ -57,7 +58,7 @@ def test_verify_token_expired():
         verify_token(credentials)
 
     assert excinfo.value.status_code == 401
-    assert "Token expiré" in str(excinfo.value.detail)
+    assert "JWT Error: Signature has expired." == str(excinfo.value.detail)
 
 def test_verify_token_invalid():
     # Jeton invalide
@@ -68,4 +69,4 @@ def test_verify_token_invalid():
         verify_token(credentials)
 
     assert excinfo.value.status_code == 401
-    assert "Token invalide" in str(excinfo.value.detail)
+    assert "JWT Error: Not enough segments" == str(excinfo.value.detail)
