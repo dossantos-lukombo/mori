@@ -96,25 +96,24 @@ export default {
     async loadCurrentConvo() {
       const convo_id = localStorage.getItem("current_convo_id");
       console.log("convo_id in loadConvo: ", convo_id);
-
+    
       if (convo_id === null) {
         console.log("No conversation selected");
-        // this.messages = [];
         return;
       }
-
+    
       const response = await fetch("http://localhost:8081/llmConvoSelected", {
         credentials: "include",
         headers: new Headers({
           "Content-Type": "application/json",
         }),
-
         method: "POST",
         body: JSON.stringify({
           user_id: await this.getMyUserID(),
           conversation_id: convo_id,
         }),
       });
+    
       if (!response.ok) {
         console.error(
           "Erreur lors de la récupération de la conversation de l'utilisateur :",
@@ -124,9 +123,6 @@ export default {
       } else {
         const resp = await response.json();
         console.log("Current convo: ", resp.convo);
-        // if (this.$store.getters.allMessages.length === 0) {
-        //   this.convertMessages(resp);
-        // }
         this.$store.dispatch("clearMessages");
         this.convertMessages(resp);
       }

@@ -36,6 +36,13 @@ func (repo *LLMConvoRepository) SaveConvo(convo models.Conversation) error {
 		WHERE conversation_id = $2
 	`
 		_, err = repo.DB.Exec(query, pq.Array(conversations), convo.ConversationID)
+
+		query = `
+		UPDATE conversations
+		SET new_conversation = false
+		WHERE conversation_id = $1
+	`
+		_, err = repo.DB.Exec(query, convo.NewConversation)
 	}
 
 	return err

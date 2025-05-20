@@ -308,7 +308,7 @@ func SendRequestWithToken(urlStr string, token string, jsonData []byte, w http.R
 		}
 
 		// Basic validation - check if content is not empty and has reasonable length
-		if len(line) == 0 || len(line) > 1024*1024 { // 1MB max
+		if len(line) == 0 /*|| len(line) > 2048*2048*/ { // 1MB max
 			http.Error(w, "Invalid response content length", http.StatusBadGateway)
 			return
 		}
@@ -594,7 +594,6 @@ func (handler *Handler) LLMConvoSave(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 		} else {
-
 			err = handler.repos.LLMConvoRepo.SaveConvo(conversation)
 			if err != nil {
 				http.Error(w, "Error saving conversation: "+err.Error(), http.StatusInternalServerError)
@@ -634,7 +633,7 @@ func (handler *Handler) LLMConvoGetAll(w http.ResponseWriter, convo models.Conve
 		http.Error(w, "Error getting all conversations: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
-	fmt.Println("Conversations: ", conversations)
+	fmt.Println("ALL PREVIOUS CONVERSATIONS : ", conversations)
 	w.Header().Set("Content-Type", "application/json")
 	err = json.NewEncoder(w).Encode(conversations)
 	if err != nil {

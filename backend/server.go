@@ -29,7 +29,7 @@ func main() {
 		Addr:         ":8081",
 		Handler:      middleware.RateLimit(setRoutes(handler, wsServer)),
 		ReadTimeout:  5 * time.Second, // limite de lecture requête
-		WriteTimeout: 10 * time.Second,
+		WriteTimeout: 2 * time.Minute,
 	}
 
 	fmt.Printf("Server started at http://localhost" + server.Addr + "\n")

@@ -151,6 +151,11 @@ export default createStore({
     deleteConversation(state, index) {
       state.historyConvo.splice(index, 1);
     },
+    deleteConversationById(state, conversation_id) {
+      state.historyConvo = state.historyConvo.filter(
+        convo => convo.conversation_id !== conversation_id
+      );
+    },
     clearChatHistory(state) {
       state.historyConvo = [];
     },
