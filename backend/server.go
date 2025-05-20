@@ -8,7 +8,6 @@ import (
 	sqlite "mori/pkg/db/PostgreSql"
 	"mori/pkg/handlers"
 	"mori/pkg/middleware"
-	"mori/pkg/utils"
 	ws "mori/pkg/wsServer"
 )
 
@@ -42,8 +41,9 @@ func main() {
 func setRoutes(handler *handlers.Handler, wsServer *ws.Server) http.Handler {
 	mux := http.NewServeMux()
 	/* ------------------------------ image server ------------------------------ */
-	fs := http.FileServer(http.Dir("./imageUpload"))
-	mux.Handle("/imageUpload/", http.StripPrefix("/imageUpload/", utils.ConfigFSHeader(fs)))
+	fs := http.FileServer(http.Dir("./"))
+	// mux.Handle("/imageUpload/", http.StripPrefix("/imageUpload/", utils.ConfigFSHeader(fs)))
+	mux.Handle("", fs)
 	/* ------------------------------- auth route ------------------------------- */
 	mux.HandleFunc("/register", handler.Register)
 	mux.HandleFunc("/signin", handler.Signin)
