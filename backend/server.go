@@ -43,7 +43,7 @@ func setRoutes(handler *handlers.Handler, wsServer *ws.Server) http.Handler {
 	/* ------------------------------ image server ------------------------------ */
 	fs := http.FileServer(http.Dir("./"))
 	// mux.Handle("/imageUpload/", http.StripPrefix("/imageUpload/", utils.ConfigFSHeader(fs)))
-	mux.Handle("", fs)
+	mux.Handle("/", fs)
 	/* ------------------------------- auth route ------------------------------- */
 	mux.HandleFunc("/register", handler.Register)
 	mux.HandleFunc("/signin", handler.Signin)
