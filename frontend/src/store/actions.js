@@ -294,4 +294,7 @@ export default {
   updateCurrentConvoID({ commit }, id) {
     commit("updateCurrentConvoID", id);
   },
+  updateConversationMessageCount({ commit }, { conversationId, count }) {
+    commit('updateConversationMessageCount', { conversationId, count });
+  },
 };

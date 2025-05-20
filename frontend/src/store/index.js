@@ -171,6 +171,14 @@ export default createStore({
     updateCurrentConvoID(state, id) {
       state.currentConvo_ID = id;
     },
+    updateConversationMessageCount(state, { conversationId, count }) {
+      const conversation = state.historyConvo.find(
+        convo => convo.conversation_id === conversationId
+      );
+      if (conversation) {
+        conversation.messageCount = count;
+      }
+    },
   },
   //------------------------------------------Actions
   actions: actions,

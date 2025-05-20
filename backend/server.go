@@ -42,8 +42,13 @@ func main() {
 func setRoutes(handler *handlers.Handler, wsServer *ws.Server) http.Handler {
 	mux := http.NewServeMux()
 	/* ------------------------------ image server ------------------------------ */
-	fs := http.FileServer(http.Dir("./imageUpload"))
-	mux.Handle("/imageUpload/", http.StripPrefix("/imageUpload/", utils.ConfigFSHeader(fs)))
+	fs := http.FileServer(http.Dir("./imageUploads"))
+	mux.Handle("/imageUploads/", http.StripPrefix("/imageUploads/", utils.ConfigFSHeader(fs)))
+	
+	// Serve frontend images for default avatar
+	frontendFs := http.FileServer(http.Dir("./frontend"))
+	mux.Handle("/frontend/", http.StripPrefix("/frontend/", utils.ConfigFSHeader(frontendFs)))
+	
 	/* ------------------------------- auth route ------------------------------- */
 	mux.HandleFunc("/register", handler.Register)
 	mux.HandleFunc("/signin", handler.Signin)

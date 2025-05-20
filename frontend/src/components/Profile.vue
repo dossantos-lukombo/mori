@@ -1,109 +1,137 @@
 <template>
-  <div v-if="user && $store.state.id !== ''" class="user-profil">
-    <div id="layout-profile">
-      <!-- Left Section -->
-      <div class="left-section">
-        <div class="user-profile__public">
-          <div
-            class="user-picture"
-            :style="{ backgroundImage: `url(http://localhost:8081/${user.avatar})` }"
-          ></div>
-          <div class="user-profile__info">
-            <h2 class="username">{{ user.firstName }} {{ user.lastName }}</h2>
-            <h3 v-if="showNickname" class="username">{{ user.nickname }}</h3>
-            <p class="user-email" v-if="user.login">{{ user.login }}</p>
-            <p class="user-dateOfBirth" v-if="user.dateOfBirth">{{ user.dateOfBirth }}</p>
-          </div>
+  <div v-if="user && $store.state.id !== ''" class="profile-container">
+    <div class="profile-header">
+      <div class="profile-cover-photo"></div>
+      <div class="profile-avatar-container">
+        <div 
+          class="profile-avatar"
+          :style="{ backgroundImage: `url(${getAvatarUrl(user.avatar)})` }"
+        ></div>
+      </div>
+      
+      <div class="profile-header-content">
+        <div class="profile-user-info">
+          <h1 class="profile-name">{{ user.firstName }} {{ user.lastName }}</h1>
+          <h2 v-if="showNickname" class="profile-nickname">@{{ user.nickname }}</h2>
+          <p class="profile-email" v-if="user.login">{{ user.login }}</p>
+          <p class="profile-dateOfBirth" v-if="user.dateOfBirth">{{ user.dateOfBirth }}</p>
+        </div>
+        
+        <div class="profile-actions">
+          <PrivacyBtn v-if="isMyProfile" :status="user.status" class="profile-btn" />
+          <component
+            v-else
+            :is="displayBtn"
+            v-bind="{ user }"
+            @follow="checkFollowRequest"
+            @unfollow="unfollow"
+            class="profile-btn"
+          ></component>
+        </div>
+      </div>
+    </div>
 
-          <div class="profile-btns">
-            <PrivacyBtn v-if="isMyProfile" :status="user.status" />
-            <!-- Follow/unfollow button -->
-            <component
-              v-else
-              :is="displayBtn"
-              v-bind="{ user }"
-              @follow="checkFollowRequest"
-              @unfollow="unfollow"
-            ></component>
+    <div class="profile-content" v-if="showProfileData">
+      <div class="profile-sidebar">
+        <div class="profile-card">
+          <h3 class="card-title">Connections</h3>
+          <div class="connections-stats">
+            <div class="stat-item">
+              <span class="stat-value">{{ followers ? followers.length : 0 }}</span>
+              <span class="stat-label">Followers</span>
+            </div>
+            <div class="stat-divider"></div>
+            <div class="stat-item">
+              <span class="stat-value">{{ following ? following.length : 0 }}</span>
+              <span class="stat-label">Following</span>
+            </div>
           </div>
         </div>
-
-        <div class="multiple-item-list" v-if="showProfileData">
+        
+        <div class="multiple-item-list">
           <Following :following="following" />
           <Followers :followers="followers" />
         </div>
 
-        <Groups :groups="profileGroups" v-if="showProfileData" />
+        <Groups :groups="profileGroups" />
       </div>
 
-      <!-- Middle Section -->
-      <div class="middle-section" v-if="showProfileData">
-        <div class="about" v-if="user.about !== ''">
-          <h2 class="about-title">About me</h2>
+      <div class="profile-main">
+        <div v-if="user.about !== ''" class="profile-card about-card">
+          <h3 class="card-title">About me</h3>
           <p class="about-text">{{ user.about }}</p>
         </div>
 
-        <!-- Edit Profile Banner (only for own profile) -->
-        <div v-if="isMyProfile" class="edit-profile-banner">
-          <button class="toggle-edit-banner btn-primary" @click="toggleEditBanner">
+        <!-- Edit Profile Section (only for own profile) -->
+        <div v-if="isMyProfile" class="profile-card edit-profile-card">
+          <button class="toggle-edit-btn" @click="toggleEditBanner">
             {{ editBannerOpen ? "Close Edit Profile" : "Edit Profile" }}
           </button>
-          <transition name="slide">
-            <div v-if="editBannerOpen" class="edit-profile">
-              <h2 class="edit-profile-title">Modify profile</h2>
+          
+          <div v-if="editBannerOpen" class="edit-profile-form">
+            <h3 class="card-title">Edit Profile</h3>
 
-              <!-- Change Nickname -->
-              <div class="edit-section">
-                <h3 class="edit-section-title">New Nickname</h3>
-                <input
-                  v-model="newNickname"
-                  type="text"
-                  placeholder="Entrez votre nouveau pseudo"
-                  class="input-field"
-                />
-                <button @click="changeNickname" class="btn-primary">
-                  Modify Nickname
-                </button>
-              </div>
+            <!-- Change Nickname -->
+            <div class="edit-section">
+              <label for="nickname">New Nickname</label>
+              <input
+                id="nickname"
+                v-model="newNickname"
+                type="text"
+                placeholder="Enter your new nickname"
+                class="edit-input"
+              />
+              <button @click="changeNickname" class="edit-btn edit-btn-primary">
+                Update Nickname
+              </button>
+            </div>
 
-              <!-- Change Avatar -->
-              <div class="edit-section">
-                <h3 class="edit-section-title">New Avatar</h3>
+            <!-- Change Avatar -->
+            <div class="edit-section">
+              <label for="avatar">New Avatar</label>
+              <div class="file-upload-wrapper">
                 <input
+                  id="avatar"
                   type="file"
                   ref="avatarInput"
-                  class="file-input"
+                  class="file-upload"
                   accept="image/*"
                 />
-                <button @click="changeAvatar" class="btn-primary">
-                  Modify Avatar
-                </button>
+                <span class="file-upload-text">Choose a file</span>
               </div>
-
-              <!-- Delete Account Button -->
-              <div class="edit-section">
-                <button @click="openDeleteModal" class="btn-delete">
-                  Delete Account
-                </button>
-              </div>
+              <button @click="changeAvatar" class="edit-btn edit-btn-primary">
+                Update Avatar
+              </button>
             </div>
-          </transition>
+
+            <!-- Delete Account -->
+            <div class="edit-section danger-zone">
+              <h4 class="danger-title">Danger Zone</h4>
+              <button @click="openDeleteModal" class="edit-btn edit-btn-danger">
+                Delete Account
+              </button>
+            </div>
+          </div>
         </div>
       </div>
+    </div>
 
-      <!-- If profile is private -->
-      <p v-else class="additional-info large">
-        This profile is private
-      </p>
+    <!-- Private profile message -->
+    <div v-if="!showProfileData" class="private-profile-message">
+      <div class="lock-icon">
+        <i class="fas fa-lock"></i>
+      </div>
+      <p>This profile is private</p>
     </div>
 
     <!-- Delete Account Modal -->
     <div v-if="showDeleteModal" class="modal-overlay">
       <div class="modal-content">
-        <h3 id="deleteText">Are you sure you want to delete your account?</h3>
+        <h3 class="modal-title">Are you sure you want to delete your account?</h3>
+        <p class="modal-text">This action cannot be undone.</p>
         <div class="modal-buttons">
-          <button @click="confirmDelete" class="btn-confirm">Yes</button>
-          <button @click="cancelDelete" class="btn-cancel">No</button>
+          <button @click="cancelDelete" class="modal-btn modal-btn-cancel">Cancel</button>
+          <button @click="confirmDelete" class="modal-btn modal-btn-confirm">Delete Account</button>
         </div>
       </div>
     </div>
@@ -117,6 +145,7 @@ import FollowBtn from "./FollowBtn.vue";
 import PrivacyBtn from "./PrivacyBtn.vue";
 import UnfollowBtn from "./UnfollowBtn.vue";
 import Groups from "./Groups.vue";
+import { getAvatarUrl } from '../utils/imageHelper';
 
 export default {
   name: "Profile",
@@ -149,6 +178,7 @@ export default {
     },
   },
   methods: {
+    getAvatarUrl,
     updateProfileData() {
       this.getUserData();
       this.getFollowers();
@@ -207,7 +237,7 @@ export default {
       })
         .then((response) => response.json())
         .then((json) => {
-          this.followers = json.users;
+          this.followers = json.users || [];
         });
     },
     async getFollowing() {
@@ -216,7 +246,7 @@ export default {
       })
         .then((response) => response.json())
         .then((json) => {
-          this.following = json.users;
+          this.following = json.users || [];
         });
     },
     async changeNickname() {
@@ -281,177 +311,318 @@ export default {
 </script>
 
 <style scoped>
-h3 {
-  color: white;
-}
-
-#deleteText{
-  color: rgb(17, 17, 17);
-}
-.user-profile {
-  overflow: scroll;
-}
-
-#layout-profile {
-  display: grid;
-  grid-template-columns: 1fr minmax(min-content, 550px) 1fr;
-  column-gap: 50px;
-  margin-top: 50px;
-}
-
-.middle-section {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 50px;
-}
-
-.left-section {
-  display: flex;
-  flex-direction: column;
-  gap: 35px;
-  max-width: 250px;
-  justify-self: flex-end;
-}
-
-.user-profile__public,
-.user-profile__private {
-  display: flex;
-  flex-direction: column;
-  padding: var(--container-padding);
-  background-color: var(--bg-neutral);
-  box-shadow: 0 2px 10px rgb(0, 0, 0);
-  border-radius: var(--container-border-radius);
-  align-items: center;
-  text-align: center;
-  gap: 25px;
-}
-
-.user-profile__public p,
-.user-profile__private p,
-.user-profile__public h3,
-.user-profile__private h3 {
-  color: var(--color-white);
-}
-
-.user-profile__public h2,
-.user-profile__private h2 {
-  color: var(--purple-color);
-}
-
-.user-profile__privacy {
-  color: var(--color-white);
-}
-
-:is(.user-profile__public, .user-profile__private) .user-picture {
-  height: 185px;
-  width: 185px;
-}
-
-.user-profile__info {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.profile-btns {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-}
-
-.additional-info {
-  text-align: center;
-}
-
-/* Edit Profile Banner Styles */
-.edit-profile-banner {
+.profile-container {
+  margin: 35px auto;
   width: 100%;
-  margin-top: 20px;
+  max-width: 1200px;
+  padding: 0 20px;
+  color: var(--color-white);
+  animation: fadeIn-bf1681ae 0.5s ease;
 }
-.toggle-edit-banner {
-  margin-bottom: 10px;
-  padding: 10px 20px;
-  background-color: var(--purple-color);
-  color: white;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
+
+@keyframes fadeIn-bf1681ae {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
-.slide-enter-active,
-.slide-leave-active {
-  transition: max-height 0.3s ease, opacity 0.3s ease;
-}
-.slide-enter,
-.slide-leave-to {
-  max-height: 0;
-  opacity: 0;
+
+/* Profile Header */
+.profile-header {
+  position: relative;
+  margin-bottom: 30px;
+  background-color: var(--bg-neutral);
+  border-radius: 12px;
   overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.profile-cover-photo {
+  height: 200px;
+  background: linear-gradient(135deg, var(--clear-purple) 0%, var(--purple-color) 100%);
+  position: relative;
+}
+
+.profile-cover-photo::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect fill="none" width="100%" height="100%"/><path d="M0 0L100 100M100 0L0 100" stroke="rgba(255,255,255,0.05)" stroke-width="1"/></svg>');
+  opacity: 0.8;
+}
+
+.profile-avatar-container {
+  position: absolute;
+  left: 50px;
+  bottom: 5px;
+  z-index: 2;
+}
+
+.profile-avatar {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  border: 5px solid var(--bg-neutral);
+  background-color: var(--purple-color);
+  background-size: cover;
+  background-position: center;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+.profile-header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding: 20px 50px 20px 220px;
+  min-height: 100px;
+}
+
+.profile-user-info {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.profile-name {
+  font-size: 28px;
+  font-weight: 600;
+  margin: 0;
+  color: var(--color-white);
+}
+
+.profile-nickname {
+  font-size: 18px;
+  color: var(--purple-color);
+  margin: 0;
+}
+
+.profile-email, .profile-dateOfBirth {
+  font-size: 14px;
+  color: #bbbbbb;
+  margin: 0;
+}
+
+.profile-actions {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.profile-btn {
+  transform: scale(1.1);
+}
+
+/* Profile Content */
+.profile-content {
+  display: grid;
+  grid-template-columns: minmax(250px, 300px) 1fr;
+  gap: 30px;
+}
+
+.profile-sidebar, .profile-main {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+.profile-card {
+  background-color: var(--bg-neutral);
+  border-radius: 12px;
+  padding: 25px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.card-title {
+  font-size: 18px;
+  font-weight: 500;
+  margin-bottom: 20px;
+  color: var(--purple-color);
+  position: relative;
+}
+
+.card-title::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 0;
+  width: 40px;
+  height: 3px;
+  background-color: var(--purple-color);
+  border-radius: 3px;
+}
+
+.connections-stats {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+
+.stat-value {
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--color-white);
+}
+
+.stat-label {
+  font-size: 14px;
+  color: #bbbbbb;
+}
+
+.stat-divider {
+  width: 1px;
+  height: 40px;
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.about-text {
+  line-height: 1.6;
+  color: #e0e0e0;
 }
 
 /* Edit Profile Section */
-.edit-profile {
-  padding: 20px;
-  background-color: var(--bg-neutral);
-  border-radius: var(--container-border-radius);
-  box-shadow: 0 2px 10px rgb(0, 0, 0);
-  width: 550px;
-}
-
-.edit-section {
-  margin-bottom: 20px;
-}
-
-.input-field {
+.toggle-edit-btn {
   width: 100%;
-  padding: 10px;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-  margin-bottom: 10px;
-}
-
-.file-input {
-  margin-bottom: 10px;
-  border-radius: 5px;
-}
-
-.btn-primary {
-  padding: 10px 20px;
+  padding: 12px;
   background-color: var(--purple-color);
-  color: #fff;
+  color: white;
   border: none;
-  border-radius: 5px;
+  border-radius: 8px;
   cursor: pointer;
-  transition: all 0.3s ease;
+  font-weight: 500;
+  transition: background-color 0.2s ease;
 }
 
-.btn-primary:hover {
+.toggle-edit-btn:hover {
   background-color: var(--hover-background-color);
 }
 
-.btn-delete {
-  padding: 10px 20px;
-  background-color: #e74c3c;
-  color: #fff;
-  border: none;
-  border-radius: 5px;
+.edit-profile-form {
+  margin-top: 20px;
+}
+
+.edit-section {
+  margin-bottom: 25px;
+}
+
+.edit-section label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 14px;
+  color: #bbbbbb;
+}
+
+.edit-input {
+  width: 100%;
+  padding: 12px;
+  background-color: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: white;
+  margin-bottom: 12px;
+}
+
+.edit-input:focus {
+  border-color: var(--purple-color);
+  outline: none;
+}
+
+.file-upload-wrapper {
+  position: relative;
+  margin-bottom: 12px;
+}
+
+.file-upload {
+  position: absolute;
+  top: 0;
+  left: 0;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
   cursor: pointer;
-  transition: all 0.3s ease;
 }
 
-.btn-delete:hover {
-  background-color: #c0392b;
-}
-
-.edit-profile-title {
+.file-upload-text {
+  display: block;
+  padding: 12px;
+  background-color: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: #bbbbbb;
   text-align: center;
-  color: var(--purple-color);
-  margin-bottom: 20px;
 }
 
-.edit-section-title {
+.edit-btn {
+  padding: 10px 16px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.edit-btn-primary {
+  background-color: var(--purple-color);
+  color: white;
+}
+
+.edit-btn-primary:hover {
+  background-color: var(--hover-background-color);
+}
+
+.danger-zone {
+  margin-top: 30px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding-top: 20px;
+}
+
+.danger-title {
+  color: #ff5c5c;
   margin-bottom: 15px;
+  font-size: 16px;
+}
+
+.edit-btn-danger {
+  background-color: rgba(255, 87, 87, 0.1);
+  color: #ff5c5c;
+  border: 1px solid #ff5c5c;
+}
+
+.edit-btn-danger:hover {
+  background-color: #ff5c5c;
+  color: white;
+}
+
+/* Private Profile Message */
+.private-profile-message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 50px;
+  background-color: var(--bg-neutral);
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  text-align: center;
+  margin-top: 30px;
+}
+
+.lock-icon {
+  font-size: 50px;
+  margin-bottom: 20px;
+  color: var(--purple-color);
+}
+
+.private-profile-message p {
+  font-size: 18px;
+  color: var(--color-white);
 }
 
 /* Modal Styles */
@@ -461,43 +632,110 @@ h3 {
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0,0,0,0.5);
+  background-color: rgba(0, 0, 0, 0.7);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 1000;
+  backdrop-filter: blur(4px);
 }
 
 .modal-content {
   background-color: #fff;
-  padding: 30px;
-  border-radius: 10px;
-  text-align: center;
   width: 90%;
   max-width: 400px;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+  animation: modalFadeIn 0.3s ease;
+}
+
+@keyframes modalFadeIn {
+  from { transform: scale(0.9); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.modal-title {
+  padding: 20px;
+  margin: 0;
+  color: #333;
+  font-size: 18px;
+  font-weight: 500;
+  text-align: center;
+  border-bottom: 1px solid #eee;
+}
+
+.modal-text {
+  padding: 20px;
+  color: #666;
+  text-align: center;
 }
 
 .modal-buttons {
-  margin-top: 20px;
   display: flex;
-  justify-content: space-around;
+  border-top: 1px solid #eee;
 }
 
-.btn-confirm {
-  padding: 10px 20px;
+.modal-btn {
+  flex: 1;
+  padding: 15px;
+  border: none;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s ease;
+}
+
+.modal-btn-cancel {
+  background-color: #f8f8f8;
+  color: #333;
+}
+
+.modal-btn-cancel:hover {
+  background-color: #eee;
+}
+
+.modal-btn-confirm {
+  background-color: #ff5c5c;
+  color: white;
+}
+
+.modal-btn-confirm:hover {
   background-color: #e74c3c;
-  color: #fff;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
 }
 
-.btn-cancel {
-  padding: 10px 20px;
-  background-color: #95a5a6;
-  color: #fff;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
+/* Responsive Design */
+@media (max-width: 768px) {
+  .profile-content {
+    grid-template-columns: 1fr;
+  }
+  
+  .profile-header-content {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 20px 20px 20px 20px;
+  }
+  
+  .profile-avatar-container {
+    position: relative;
+    left: 20px;
+    bottom: -75px;
+  }
+  
+  .profile-avatar {
+    width: 100px;
+    height: 100px;
+  }
+  
+  .profile-actions {
+    margin-top: 15px;
+    margin-bottom: 0;
+  }
+}
+
+.small {
+  height: 1.4em;
+  width: 1.4em;
+  color: var(--color-white) !important;
+  margin-bottom: 5px;
 }
 </style>

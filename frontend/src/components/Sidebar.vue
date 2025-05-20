@@ -22,8 +22,8 @@
       <ContactsForChatBotView
         v-if="activeView === 'contacts'"
         @select-contact="handleContactSelection"
-      /> -->
-      <ChatHistory />
+      />
+      <ChatHistory v-if="showChatHistory" />
     </div>
   </div>
 </template>
@@ -51,10 +51,12 @@ export default {
     if (this.$route.name === "messages") {
       return {
         activeView: "contacts",
+        showChatHistory: false,
       };
     }else{
       return {
         activeView: null,
+        showChatHistory: true,
       };
     }
   },
@@ -68,6 +70,9 @@ export default {
   methods: {
     async navigateToMessages() {
       try {
+        // Hide the chat history when navigating to messages
+        this.showChatHistory = false;
+        
         // Check if conversation data is valid
         if (Array.isArray(this.conversationsMsg) && this.conversationsMsg.length > 0) {
           // Create a shallow copy and sort descending by lastMessageTime.
@@ -110,6 +115,8 @@ export default {
 
     async navigateToChatBot() {
       try {
+        // Show the chat history when navigating to the chatbot
+        this.showChatHistory = true;
         await this.$router.push({ name: "mainpage" });
       } catch (error) {
         console.error("Error navigating to ChatBot:", error);

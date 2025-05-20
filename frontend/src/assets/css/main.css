@@ -108,9 +108,31 @@ ul {
     background-size: cover;
     background-position: center;
     flex-shrink: 0;
-    border: 0;
+    border: 2px solid #9146bc;
     border-radius: 50%;
+    box-shadow: 0 2px 10px rgba(145, 70, 188, 0.3);
     margin-right: -16px;
+    transition: all 0.3s ease;
+}
+
+.smallMoriLogo:hover {
+    transform: scale(1.1);
+    box-shadow: 0 3px 12px rgba(145, 70, 188, 0.5);
+}
+
+@keyframes pulse-glow {
+    0% {
+        box-shadow: 0 0 15px rgba(145, 70, 188, 0.6);
+        border-color: #9146bc;
+    }
+    50% {
+        box-shadow: 0 0 25px rgba(181, 104, 230, 0.8);
+        border-color: #b368e6;
+    }
+    100% {
+        box-shadow: 0 0 15px rgba(145, 70, 188, 0.6);
+        border-color: #9146bc;
+    }
 }
 
 .moriImg{
@@ -118,12 +140,18 @@ ul {
     height: 150px;
     border-radius: 50%;
     background-image: url('../mori.png');
-    background-color: #9146bc8b;
+    background-color: #bf7eee98;
     background-size: cover;
     background-position: center;
-    border: 1px solid var(--color-white);
+    border: 3px solid #9146bc;
+    box-shadow: 0 0 20px rgba(145, 70, 188, 0.6);
     flex-shrink: 0;
-    border-radius: 50%;
+    transition: transform 0.3s ease;
+    animation: pulse-glow 3s infinite ease-in-out;
+}
+
+.moriImg:hover {
+    transform: scale(1.05) rotate(5deg);
 }
 
 h1 {
@@ -263,19 +291,16 @@ select {
 }
 
 .user-picture {
-    background-color: wheat;
-    background-image: url(http://localhost:8081/${user.avatar});
+    background-color: var(--purple-color);
     background-size: cover;
     background-position: center;
     flex-shrink: 0;
     border: 0;
     border-radius: 50%;
-
 }
 
 .contact-picture {
-    background-color: wheat;
-    background-image: url(http://localhost:8081/${contact.avatar});
+    background-color: var(--purple-color);
     background-size: cover;
     background-position: center;
     flex-shrink: 0;
@@ -292,10 +317,11 @@ select {
 }
 
 .small {
-    height: 1.1em;
-    width: 1.5em;
+    height: 1.4em;
+    width: 1.4em;
     color: var(--color-white) !important;
-}
+    margin-bottom: 5px;
+  }
 
 .medium {
     height: 3em;

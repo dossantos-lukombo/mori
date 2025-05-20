@@ -5,7 +5,7 @@
         <ul class="item-list users" v-if="this.followers">
             <li v-for="user in this.followers" :key="user.id">
                 <div class="user-picture small"
-                         :style="{ backgroundImage: `url(http://localhost:8081/${user.avatar})` }"></div>
+                         :style="{ backgroundImage: `url(${getAvatarUrl(user.avatar)})` }"></div>
                 <div class="item-text"><router-link :to="{ path: `/profile/${user.id}`}">{{ user.nickname }}
 </router-link></div>
             </li>
@@ -18,6 +18,8 @@
 
 
 <script>
+import { getAvatarUrl } from '../utils/imageHelper';
+
 export default {
     name: 'Followers',
     props: {       
@@ -25,6 +27,9 @@ export default {
         type: Array,
         default: () => []
       }
+    },
+    methods: {
+        getAvatarUrl
     }
 }
 </script>

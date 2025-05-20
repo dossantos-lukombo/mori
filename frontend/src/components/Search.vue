@@ -7,7 +7,7 @@
             <ul class="item-list">
                 <li @click="goToUserProfile(user.id)" id="dropdownitem" v-for="user in filteredUsers">
                     <div class="user-picture small"
-                         :style="{ backgroundImage: `url(http://localhost:8081/${user.avatar})` }"></div>
+                         :style="{ backgroundImage: `url(${getAvatarUrl(user.avatar)})` }"></div>
                     <div class="item-text">{{ user.nickname }}</div>
                 </li>
 
@@ -24,6 +24,7 @@
 
 <script>
 import { mapGetters } from 'vuex'
+import { getAvatarUrl } from '../utils/imageHelper'
 
 export default {
     name: 'Search',
@@ -60,6 +61,7 @@ export default {
         ...mapGetters(['allUsers', 'allGroups', 'filterUsers', 'filterGroups'])
     },
     methods: {
+        getAvatarUrl,
         goToUserProfile(userid) {
             this.$router.push({ name: 'Profile', params: { id: userid } })
             this.clearSearch();
