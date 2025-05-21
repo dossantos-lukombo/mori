@@ -5,10 +5,10 @@ import (
 	"net/http"
 	"time"
 
-	sqlite "mori/pkg/db/PostgreSql"
-	"mori/pkg/handlers"
-	"mori/pkg/middleware"
-	ws "mori/pkg/wsServer"
+	sqlite "github.com/dossantos-lukombo/mori/backend/pkg/db/PostgreSql"
+	"github.com/dossantos-lukombo/mori/backend/pkg/handlers"
+	"github.com/dossantos-lukombo/mori/backend/pkg/middleware"
+	ws "github.com/dossantos-lukombo/mori/backend/pkg/wsServer"
 )
 
 func main() {

@@ -6,9 +6,9 @@ import (
 	"net/http"
 	"strings"
 
-	"mori/pkg/models"
-	"mori/pkg/utils"
-	ws "mori/pkg/wsServer"
+	"github.com/dossantos-lukombo/mori/backend/pkg/models"
+	"github.com/dossantos-lukombo/mori/backend/pkg/utils"
+	ws "github.com/dossantos-lukombo/mori/backend/pkg/wsServer"
 )
 
 /* -------------------------------------------------------------------------- */

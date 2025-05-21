@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"time"
 
-	"mori/pkg/models"
-	. "mori/pkg/models"
+	"github.com/dossantos-lukombo/mori/backend/pkg/models"
+	. "github.com/dossantos-lukombo/mori/backend/pkg/models"
 )
 
 type contextKey string

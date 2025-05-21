@@ -1,6 +1,6 @@
 package ws
 
-import "mori/pkg/models"
+import "github.com/dossantos-lukombo/mori/backend/pkg/models"
 
 // represent websocket server
 type Server struct {

@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"mori/pkg/models"
 	"net"
 	"net/http"
 	"net/url"
@@ -15,6 +14,8 @@ import (
 	"strings"
 	"time"
 	"unicode/utf8"
+
+	"github.com/dossantos-lukombo/mori/backend/pkg/models"
 
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/joho/godotenv"

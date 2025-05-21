@@ -3,7 +3,7 @@ package db
 import (
 	"database/sql"
 
-	"mori/pkg/models"
+	"github.com/dossantos-lukombo/mori/backend/pkg/models"
 )
 
 type MsgRepository struct {
@@ -340,4 +340,3 @@ func (repo *MsgRepository) GetConversationsMsg(userID string) ([]models.Conversa
 	//--------------------------------------------------
 	return convs, nil
 }
-

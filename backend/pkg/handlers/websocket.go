@@ -4,8 +4,8 @@ import (
 	"log"
 	"net/http"
 
-	"mori/pkg/utils"
-	ws "mori/pkg/wsServer"
+	"github.com/dossantos-lukombo/mori/backend/pkg/utils"
+	ws "github.com/dossantos-lukombo/mori/backend/pkg/wsServer"
 
 	"github.com/gorilla/websocket"
 )

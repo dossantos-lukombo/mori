@@ -3,8 +3,9 @@ package handlers
 import (
 	"fmt"
 	"net/http"
-	"mori/pkg/models"
-	"mori/pkg/utils"
+
+	"github.com/dossantos-lukombo/mori/backend/pkg/models"
+	"github.com/dossantos-lukombo/mori/backend/pkg/utils"
 )
 
 // handler for logout/ validate user by id and delete session

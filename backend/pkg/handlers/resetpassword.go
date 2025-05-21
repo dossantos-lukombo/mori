@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"mori/pkg/utils"
+	"github.com/dossantos-lukombo/mori/backend/pkg/utils"
 
 	"golang.org/x/crypto/bcrypt"
 )

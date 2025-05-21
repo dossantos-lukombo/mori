@@ -1,6 +1,6 @@
 package handlers
 
-import "mori/pkg/models"
+import "github.com/dossantos-lukombo/mori/backend/pkg/models"
 
 // handler contains all repositories
 type Handler struct {

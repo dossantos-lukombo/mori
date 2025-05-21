@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"mori/pkg/models"
+	"github.com/dossantos-lukombo/mori/backend/pkg/models"
 )
 
 type UserRepository struct {

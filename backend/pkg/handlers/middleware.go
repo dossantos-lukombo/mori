@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	"mori/pkg/utils"
+	"github.com/dossantos-lukombo/mori/backend/pkg/utils"
 )
 
 // basic authentification/ check if user logged in

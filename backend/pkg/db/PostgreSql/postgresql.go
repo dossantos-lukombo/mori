@@ -6,7 +6,7 @@ import (
 	"log"
 	"os"
 
-	"mori/pkg/models"
+	"github.com/dossantos-lukombo/mori/backend/pkg/models"
 
 	_ "github.com/lib/pq" // PostgreSQL driver
 	migrate "github.com/rubenv/sql-migrate"

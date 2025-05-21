@@ -6,7 +6,7 @@ import (
 
 	"github.com/dchest/captcha"
 
-	"mori/pkg/models"
+	"github.com/dossantos-lukombo/mori/backend/pkg/models"
 )
 
 // ValidateNewUser checks captcha, user fields, and password rules.

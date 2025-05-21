@@ -3,7 +3,8 @@ package utils
 import (
 	"encoding/json"
 	"net/http"
-	"mori/pkg/models"
+
+	"github.com/dossantos-lukombo/mori/backend/pkg/models"
 )
 
 type ResponseMessage struct {
@@ -20,7 +21,6 @@ type GroupMessage struct {
 	Type   string         `json:"type"`
 	Groups []models.Group `json:"groups"`
 }
-
 
 type NotifMessage struct {
 	Type          string                `json:"type"`
@@ -72,9 +72,6 @@ func RespondWithUsers(w http.ResponseWriter, users []models.User, code int) {
 
 // responds with success group
 
-
-
-
 // responds with success notifs
 func RespondWithNotifications(w http.ResponseWriter, notifs []models.Notification, code int) {
 	w.WriteHeader(code)
@@ -100,9 +97,9 @@ func RespondWithChatStats(w http.ResponseWriter, msgs []models.ChatStats, code i
 }
 
 func RespondWithJSON(w http.ResponseWriter, data interface{}, status int) {
-    w.Header().Set("Content-Type", "application/json")
-    w.WriteHeader(status)
-    if err := json.NewEncoder(w).Encode(data); err != nil {
-        http.Error(w, err.Error(), http.StatusInternalServerError)
-    }
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	if err := json.NewEncoder(w).Encode(data); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 }
