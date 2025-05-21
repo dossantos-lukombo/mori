@@ -14,14 +14,15 @@ RUN CGO_ENABLED=0 GOOS=linux go build -o social-network .
 
 # Étape 2 : image de production légère, on réutilise Debian slim
 FROM debian:bullseye-slim
-# On réinstalle juste les certificats pour HTTPS si besoin
-RUN apt-get update && apt-get install -y \
-    ca-certificates \
-  && rm -rf /var/lib/apt/lists/*
+
+# → Pin dynamique de ca-certificates pour DL3008
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+      ca-certificates=$(apt-cache policy ca-certificates | awk '/Candidate/ {print $2}') && \
+    rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
-# Copier le binaire Go statique
 COPY --from=builder /app/social-network ./
-
 EXPOSE 8081
 ENTRYPOINT ["./social-network"]
+
