@@ -3,7 +3,10 @@ name: CD Production
 
 on:
   push:
-    branches: [ production ]
+      - production
+  pull_request:
+    branches:
+      - production
 
 jobs:
   # 1. Build Check (Dockerfile lint + build dry-run)
