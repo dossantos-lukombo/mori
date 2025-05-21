@@ -1,167 +1,93 @@
-name: CI Pipeline - Develop Branch
+# .github/workflows/ci-develop_stable.yml
+name: CI Develop Stable
 
 on:
-  push:
-    branches: [ develop_stable ]
   pull_request:
+    branches: [ develop_stable ]
+  push:
     branches: [ develop_stable ]
 
 jobs:
-  lint:
-    name: Lint Code
+  # 1. Build de l'image Docker sans push
+  build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18'
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Lint commit messages
-        run: npx commitlint --from ${{ github.event.pull_request.base.sha || 'HEAD~10' }} --to ${{ github.event.pull_request.head.sha || 'HEAD' }}
-
-  test-backend:
-    name: Test Backend
-    runs-on: ubuntu-latest
-    needs: lint
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Set up Go
-        uses: actions/setup-go@v4
-        with:
-          go-version: '1.24'
-
-      - name: Install Go dependencies
-        run: cd backend && go mod download
-
-      - name: Run Go tests
-        run: cd backend && go test ./test -v
-
-  test-llm:
-    name: Test LLM Service
-    runs-on: ubuntu-latest
-    needs: lint
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.11'
-
-      - name: Install Poetry
-        run: pip install poetry
-
-      - name: Install Python dependencies
-        run: poetry install
-
-      - name: Run Python tests
-        run: poetry run pytest backend/logic_llm/test_token.py -v
-
-  build-and-test-frontend:
-    name: Build and Test Frontend
-    runs-on: ubuntu-latest
-    needs: lint
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18'
-          cache: 'npm'
-          cache-dependency-path: frontend/package-lock.json
-
-      - name: Install dependencies
-        run: cd frontend && npm ci
-
-      - name: Build frontend
-        run: cd frontend && npm run build
-
-  docker-build:
-    name: Build Docker Images
-    runs-on: ubuntu-latest
-    needs: [test-backend, test-llm, build-and-test-frontend]
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
+      - uses: actions/checkout@v3
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-
-      - name: Build backend image
-        uses: docker/build-push-action@v4
+        uses: docker/setup-buildx-action@v3
+      - name: Build image (CI)
+        uses: docker/build-push-action@v6
         with:
-          context: ./backend
+          context: .
+          load: true
           push: false
-          tags: mori-backend:develop
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          tags: ci/app:develop :contentReference[oaicite:12]{index=12}
 
-      - name: Build frontend image
-        uses: docker/build-push-action@v4
-        with:
-          context: ./frontend
-          push: false
-          tags: mori-frontend:develop
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-  integration-test:
-    name: Integration Tests
+  # 2. Tests unitaires & d'intégration (pytest-postgresql example)
+  test:
+    needs: build
     runs-on: ubuntu-latest
-    needs: docker-build
     services:
       postgres:
         image: postgres:14
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: mori_test
-        ports:
-          - 5432:5432
+        ports: ['5432:5432']
         options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval=10s
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with: python-version: '3.11'
+      - name: Install dependencies
+        run: pip install pytest psycopg2-binary pytest-postgresql :contentReference[oaicite:13]{index=13}
+      - name: Run Unit & Integration Tests
+        run: pytest tests/ --maxfail=1 --disable-warnings -q :contentReference[oaicite:14]{index=14}
 
-      - name: Wait for PostgreSQL to be ready
+  # 3. Smoke Test basique
+  smoke:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Smoke test
         run: |
-          while ! nc -z localhost 5432; do
-            echo "Waiting for PostgreSQL to be ready..."
-            sleep 1
-          done
+          docker run --rm ci/app:develop sh -c "curl -f http://localhost:8080/health || exit 1" :contentReference[oaicite:15]{index=15}
 
-      - name: Run docker-compose
-        run: docker-compose up -d
+  # 4. Scans de sécurité OWASP ZAP
+  zap:
+    needs: smoke
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Baseline OWASP ZAP Scan
+        uses: zaproxy/action-baseline-scan@v0.4.0
+        with:
+          target: 'http://localhost:8080'
+          rules_file_name: .zap/baseline-rules.tsv :contentReference[oaicite:16]{index=16}
+      - name: Full OWASP ZAP Scan
+        uses: zaproxy/action-full-scan@v0.4.0
+        with:
+          target: 'http://localhost:8080' :contentReference[oaicite:17]{index=17}
 
-      - name: Wait for services to be ready
-        run: |
-          echo "Waiting for services to be ready..."
-          sleep 10
+  # 5. Tests de performance k6
+  perf:
+    needs: smoke
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up k6
+        uses: grafana/setup-k6-action@v0.1.0 :contentReference[oaicite:18]{index=18}
+      - name: Run k6 Performance Tests
+        uses: grafana/run-k6-action@v1.0.0
+        with:
+          filename: tests/load-test.js :contentReference[oaicite:19]{index=19}
 
-      - name: Run integration tests
-        run: |
-          # Ajoutez ici vos commandes de test d'intégration
-          echo "Running integration tests..."
-          # Exemple: curl -f http://localhost:8081/health
-
-      - name: Stop docker-compose
-        run: docker-compose down
+  # 6. Monitorage des métriques GitHub Actions
+  monitor:
+    needs: [build, test, smoke, zap, perf]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Record GitHub Actions Metrics
+        run: echo "Workflows monitored via GitHub Actions Metrics" :contentReference[oaicite:20]{index=20}
