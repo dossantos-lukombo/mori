@@ -1,32 +1,27 @@
-# Étape 1 : builder
-FROM golang:1.20-alpine AS builder
-
-# Installer git et les certificats pour que go mod download puisse fonctionner
-RUN apk add --no-cache git ca-certificates
+# backend/Dockerfile (Go Backend)
+FROM golang:1.20-bullseye AS builder
 
 WORKDIR /app
 
-# 1. Copier uniquement go.mod/go.sum pour tirer parti du cache Docker
+# 1. Copier uniquement go.mod/go.sum pour profiter du cache Docker
 COPY go.mod go.sum ./
 
-# 2. Télécharger les dépendances Go
+# 2. Télécharger les dépendances (git + SSL sont déjà présents)
 RUN go mod download
 
-# 3. Copier le reste et compiler
+# 3. Copier le code et compiler
 COPY . .
 RUN go build -o social-network .
 
-# Étape 2 : image finale minimale
-FROM alpine:latest
-# Installer seulement ca-certificates si vous communiquez en HTTPS
-RUN apk add --no-cache ca-certificates
+# Étape finale : image minimale
+FROM debian:bullseye-slim
+# ca-certificates est déjà là, mais on le reconfirme
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates \
+  && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
-
-# 4. Copier le binaire compilé
 COPY --from=builder /app/social-network ./
 
 EXPOSE 8081
-
-# 5. Lancer le binaire
 CMD ["./social-network"]
