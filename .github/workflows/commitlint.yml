@@ -1,4 +1,4 @@
-name: « Lint Conventional Commits »
+name: Lint Conventional Commits
 
 # On déclenche sur push et PR vers nos branches cibles
 on:
