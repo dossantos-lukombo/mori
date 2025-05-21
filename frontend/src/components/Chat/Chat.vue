@@ -132,8 +132,7 @@ export default {
     },
 
     openChat(e, obj) {
-      // console.log("Trying to add a chatbox")
-      // console.log(e.target.textContent)
+      // Check if chat is already open
       const found = this.openChats.some(
         (chat) => chat.name === e.target.textContent
       );
@@ -141,15 +140,23 @@ export default {
         return;
       }
 
-      if (this.$refs.messagingWrapper.clientWidth + 300 > window.innerWidth) {
+      // Calculate how many chats can fit on screen
+      const screenWidth = window.innerWidth;
+      const chatBoxWidth = 310; // 300px width + 10px margin
+      const maxChats = Math.floor((screenWidth * 0.9) / chatBoxWidth); // Use 90% of screen width
+      
+      // If we already have maximum chats open, remove the oldest one
+      if (this.openChats.length >= maxChats) {
         this.openChats.shift();
       }
 
+      // Add the new chat
       this.$store.dispatch("addNewChat", {
         name: e.target.textContent,
         ...obj,
       });
 
+      // Clear unread messages for this chat
       this.$store.dispatch("removeUnreadMessages", {
         receiverId: obj.receiverId,
         type: obj.type,
@@ -210,6 +217,14 @@ export default {
   display: flex;
   align-items: flex-end;
   border-radius: 15px;
+  max-height: calc(100vh - 50px); /* Ensure chat doesn't go beyond viewport height minus some padding */
+  overflow-y: auto; /* Allow scrolling if multiple chat boxes open */
+  padding-bottom: 10px; /* Add some bottom padding */
+  padding-right: 10px; /* Add right padding */
+  flex-wrap: wrap-reverse; /* Ensures chats flow from right to left and stack properly */
+  justify-content: flex-end; /* Align chats to the right */
+  gap: 10px; /* Add gap between chat boxes */
+  max-width: 90vw; /* Maximum width to prevent overflow */
 }
 
 .messaging {

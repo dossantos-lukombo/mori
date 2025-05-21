@@ -552,7 +552,6 @@ input[type="text"] {
   border: 1px solid #ddd;
   border-radius: 5px;
   outline: none;
-  padding-left: 40px;
 }
 .selected .elmt_history {
   background-color: #333;
@@ -599,6 +598,7 @@ input[type="text"] {
   transition: all 0.3s ease;
   backdrop-filter: blur(8px);
   box-shadow: none;
+  padding-left: 40px !important;
 }
 
 .search-input::placeholder {

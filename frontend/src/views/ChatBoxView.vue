@@ -487,6 +487,7 @@ export default {
   background-color: var(--bg-neutral);
   box-shadow: 0 2px 10px rgb(0, 0, 0);
   transition: all 0.3s ease;
+  margin-bottom: 35px;
 }
 .chatbox-view-input:hover {
   transform: scale(1.02);

@@ -6,31 +6,43 @@
       </div>
       <div class="mori" id="moriChatBot" v-if="!hasMessages">Mori</div>
       <div class="chatbot-message" v-if="!hasMessages">How can I help you?</div>
-      <div class="chatbot-messages" v-if="hasMessages">
+      <div class="chatbot-messages" v-if="hasMessages" ref="messagesContainer" @scroll="handleScroll">
         <div
           v-for="(message, index) in allMessages"
           :key="index"
           :class="[
-            'message',
-            message.sender === 'Utilisateur' ? 'Utilisateur' : 'LLM',
+            'message-wrapper',
+            message.sender === 'Utilisateur' ? 'message-wrapper--user' : 'message-wrapper--bot',
           ]"
         >
-          <div v-if="message.sender === 'LLM'" class="bot-logo">
+          <div v-if="message.sender === 'LLM'" class="bot-avatar">
             <img src="../assets/mori.png" alt="Bot Logo" />
           </div>
-          <div
-            v-if="message.sender === 'Utilisateur'"
-            class="markdown-container-Utilisateur"
-          >
-            <Markdown :source="message.text" />
+          <div class="message-content">
+            <div
+              :class="[
+                'message',
+                message.sender === 'Utilisateur' ? 'message--user' : 'message--bot',
+              ]"
+            >
+              <div
+                v-if="message.sender === 'Utilisateur'"
+                class="markdown-container-Utilisateur"
+              >
+                <Markdown :source="message.text" />
+              </div>
+              <div v-if="message.sender === 'LLM'" class="markdown-container-LLM">
+                <Markdown class="markdownLLM" :source="message.text" />
+              </div>
+            </div>
+            <div class="message-timestamp">{{ message.timestamp }}</div>
           </div>
-          <div v-if="message.sender === 'LLM'" class="markdown-container-LLM">
-            <Markdown class="markdownLLM" :source="message.text" />
-          </div>
-          <div class="timestamp">{{ message.timestamp }}</div>
         </div>
         <!-- Loading indicator -->
-        <div v-if="isGenerating && isLoading" class="message LLM loading-message">
+        <div v-if="isGenerating && isLoading" class="message-wrapper message-wrapper--bot loading-message-wrapper">
+          <div class="bot-avatar">
+            <img src="../assets/mori.png" alt="Bot Logo" />
+          </div>
           <div class="loading-container">
             <div class="loading-text">Mori is thinking</div>
             <div class="loading-indicator">
@@ -43,6 +55,18 @@
           </div>
         </div>
       </div>
+
+      <!-- Scroll to Bottom Button -->
+      <button 
+        v-if="showScrollButton" 
+        @click="scrollToBottom" 
+        class="scroll-to-bottom-button"
+        aria-label="Scroll to bottom"
+      >
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M7 10l5 5 5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
 
       <div
         :class="[
@@ -135,7 +159,9 @@ export default {
         "Tell me about yourself and how you can help me",
         "What can you do for me as an AI assistant?",
         "Give me some ideas for my next project"
-      ]
+      ],
+      showScrollButton: false,
+      scrollThreshold: 100
     };
   },
   computed: {
@@ -151,6 +177,27 @@ export default {
     // this.loadCurrentConvo();
   },
   methods: {
+    // Nouvelle méthode pour gérer le défilement
+    handleScroll() {
+      if (!this.$refs.messagesContainer) return;
+      
+      const container = this.$refs.messagesContainer;
+      const scrollBottom = container.scrollHeight - container.scrollTop - container.clientHeight;
+      
+      // Afficher le bouton si on n'est pas près du bas
+      this.showScrollButton = scrollBottom > this.scrollThreshold;
+    },
+    
+    // Méthode pour défiler jusqu'au bas
+    scrollToBottom() {
+      if (!this.$refs.messagesContainer) return;
+      
+      const container = this.$refs.messagesContainer;
+      container.scrollTo({
+        top: container.scrollHeight,
+        behavior: 'smooth'
+      });
+    },
     //Méthode pour récupérer les messages de la conversation selectionné
     getCurrentMessages() {
       this.messages = this.$store.getters.allMessages;
@@ -223,8 +270,7 @@ export default {
       this.$store.dispatch("addMessage", dict);
 
       this.$nextTick(() => {
-        const chatBox = this.$el.querySelector(".chatbot-messages");
-        chatBox.scrollTop = chatBox.scrollHeight;
+        this.scrollToBottom();
       });
     },
     async sendData() {
@@ -253,10 +299,44 @@ export default {
 
         accumulatedText = "";
         let { done, value } = await reader.read();
+        let buffer = "";
+
+        const updateMessageWithChunks = async (text) => {
+          // Process incoming text in small chunks rather than individual characters
+          // Split the text into small chunks (approximately 1-3 words or parts of words)
+          
+          // Add the new text to the accumulated text
+          accumulatedText += text;
+          
+          // Break the text into small chunks (approximately 2-4 words)
+          const chunks = text.match(/(.{1,12}(\s|$))|(.{1,12})/g) || [];
+          
+          // Display each chunk with a delay
+          for (const chunk of chunks) {
+            if (chunk) {
+              lastLLMMessage.text = accumulatedText.substring(0, accumulatedText.length - text.length + text.indexOf(chunk) + chunk.length);
+              
+              // Force Vue to update the view
+              this.$forceUpdate();
+              
+              // Random delay between chunks to simulate natural typing
+              const delay = Math.floor(Math.random() * 30) + 20; // 20-50ms delay
+              await new Promise(resolve => setTimeout(resolve, delay));
+            }
+          }
+          
+          // Ensure the full text is displayed at the end
+          lastLLMMessage.text = accumulatedText;
+          this.$forceUpdate();
+        };
 
         while (!done) {
           const chunk = decoder.decode(value, { stream: true });
-          const lines = chunk.split("\n");
+          buffer += chunk;
+          
+          // Process buffer for complete JSON objects
+          const lines = buffer.split("\n");
+          buffer = lines.pop() || ""; // Keep the last incomplete line in the buffer
           
           for (const line of lines) {
             if (line.startsWith("data: ")) {
@@ -268,10 +348,9 @@ export default {
                     hasStartedGenerating = true;
                     this.isLoading = false; // Clear loading state when we start receiving the response
                   }
-                  accumulatedText += parsedData.response;
-                  lastLLMMessage.text = accumulatedText;
-                  // Force Vue to update the view
-                  this.$forceUpdate();
+                  
+                  // Process the new text in chunks
+                  await updateMessageWithChunks(parsedData.response);
                 }
               } catch (error) {
                 console.error("Erreur de parsing JSON :", error);
@@ -280,6 +359,24 @@ export default {
           }
           
           ({ done, value } = await reader.read());
+        }
+
+        // Process any remaining text in the buffer
+        if (buffer) {
+          const lines = buffer.split("\n");
+          for (const line of lines) {
+            if (line.startsWith("data: ")) {
+              const jsonData = line.replace("data: ", "").trim();
+              try {
+                const parsedData = JSON.parse(jsonData);
+                if (parsedData.response) {
+                  await updateMessageWithChunks(parsedData.response);
+                }
+              } catch (error) {
+                console.error("Erreur de parsing JSON :", error);
+              }
+            }
+          }
         }
 
         // Update the final message
@@ -463,6 +560,134 @@ export default {
 </script>
 
 <style scoped>
+  /* Message styling */
+  .message-wrapper {
+    display: flex;
+    margin-bottom: 16px;
+    max-width: 75%; /* Reduced from 85% to prevent overflow */
+    position: relative;
+    width: 100%;
+  }
+
+  .message-wrapper--user {
+    align-self: flex-end;
+    margin-left: auto;
+    flex-direction: row-reverse;
+  }
+
+  .message-wrapper--bot {
+    align-self: flex-start;
+    margin-right: auto;
+  }
+
+  .bot-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
+    overflow: hidden;
+    margin-right: 12px;
+    flex-shrink: 0;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background-color: var(--purple-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .bot-avatar img {
+    width: 28px;
+    height: 28px;
+    object-fit: cover;
+  }
+
+  .message-content {
+    display: flex;
+    flex-direction: column;
+    max-width: calc(100% - 50px);
+    overflow: hidden; /* Added to prevent text overflow */
+  }
+
+  .message {
+    padding: 12px 16px;
+    border-radius: 18px;
+    font-size: 15px;
+    line-height: 1.5;
+    position: relative;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    overflow-wrap: break-word; /* Ensure text wraps */
+    word-wrap: break-word;
+    word-break: break-word; /* Break words to prevent overflow */
+    max-width: 100%; /* Ensure the message doesn't exceed its container */
+  }
+
+  .message:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+  }
+
+  .message--user {
+    background: linear-gradient(135deg, var(--purple-color), #8a56e5);
+    color: var(--color-white);
+    border-bottom-right-radius: 4px;
+    text-align: right;
+    box-shadow: 0 4px 12px rgba(var(--purple-color-rgb), 0.3);
+  }
+
+  .message--bot {
+    background: rgba(45, 45, 55, 0.5);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--color-white);
+    border-bottom-left-radius: 4px;
+    text-align: left;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+
+  .message-timestamp {
+    font-size: 11px;
+    color: var(--color-grey);
+    opacity: 0.7;
+    margin-top: 4px;
+    font-weight: 400;
+    padding: 0 4px;
+  }
+
+  .message-wrapper--user .message-timestamp {
+    text-align: right;
+  }
+
+  /* Custom markdown containers */
+  .markdown-container-Utilisateur,
+  .markdown-container-LLM {
+    max-width: 100%;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    word-break: break-word; /* Break words to prevent overflow */
+    hyphens: auto;
+  }
+
+  .loading-message-wrapper {
+    opacity: 0.9;
+    animation: fadeIn 0.3s ease-in-out;
+  }
+
+  .loading-container {
+    background: rgba(45, 45, 55, 0.5);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 18px;
+    border-bottom-left-radius: 4px;
+    padding: 12px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 120px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+
+  /* Keep existing styles */
   .Utilisateur {
     align-self: flex-end;
     background-color: var(--purple-color);
@@ -507,23 +732,6 @@ export default {
     margin-bottom: 100px;
   }
 
-  .bot-logo {
-    display: inline-block;
-    vertical-align: top;
-    margin-right: 10px;
-    margin-top: -5px;
-    margin-left: -5px;
-  }
-  
-  .bot-logo img {
-    width: 35px; /* Adjust size as needed */
-    height: 35px; /* Adjust size as needed */
-    border-radius: 50%; /* Optional: Make the image circular */
-    background-color: var(--purple-color);
-    object-fit: cover; /* Ensure the image scales properly */
-  }
-  
-  
   .mori-img {
     display: flex;
     justify-content: center;
@@ -556,417 +764,425 @@ export default {
     gap: 10px;
   }
   
-  .message {
-    max-width: 70%;
-    padding: 10px;
+  .loading-message {
+    opacity: 0.9;
+    animation: fadeIn 0.3s ease-in-out;
+    background: linear-gradient(135deg, rgba(var(--purple-color-rgb), 0.1), rgba(var(--purple-color-rgb), 0.05));
+    border: 1px solid rgba(var(--purple-color-rgb), 0.1);
+    backdrop-filter: blur(8px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    margin-left: 45px; /* Add margin to align with other messages */
+  }
+
+  .loading-text {
+    font-size: 0.9rem;
+    color: white;
+    opacity: 0.9;
+    font-weight: 500;
+    letter-spacing: 0.3px;
+  }
+
+  .loading-indicator {
+    display: flex;
+    gap: 6px;
+    justify-content: center;
+    align-items: center;
+    padding: 4px 0;
+  }
+
+  .loading-dot {
+    width: 6px;
+    height: 6px;
+    background: var(--purple-color);
+    border-radius: 50%;
+    animation: wave 1.5s infinite ease-in-out;
+    transform-origin: center;
+    opacity: 0.6;
+    box-shadow: 0 0 8px rgba(var(--purple-color-rgb), 0.3);
+  }
+
+  .loading-dot:nth-child(1) { animation-delay: -0.4s; }
+  .loading-dot:nth-child(2) { animation-delay: -0.3s; }
+  .loading-dot:nth-child(3) { animation-delay: -0.2s; }
+  .loading-dot:nth-child(4) { animation-delay: -0.1s; }
+  .loading-dot:nth-child(5) { animation-delay: 0s; }
+
+  @keyframes wave {
+    0%, 100% {
+      transform: translateY(0) scale(1);
+      opacity: 0.6;
+    }
+    50% {
+      transform: translateY(-8px) scale(1.2);
+      opacity: 1;
+    }
+  }
+
+  @keyframes fadeIn {
+    from { 
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to { 
+      opacity: 0.9;
+      transform: translateY(0);
+    }
+  }
+
+  /* Input field animation */
+  .chatbot-input-container {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    position: absolute;
+    top: 58%; /* Initially below the greeting message */
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: calc(40% - 40px);
+    border-radius: 10px;
+    padding: 10px 20px;
+    transition: top 0.7s ease, transform 0.7s ease, width 0.7s ease;
+  }
+
+  .chatbot-input-container--active {
+    width: calc(50% - 40px); /* Widen the container */
+    position: absolute;
+    top: calc(97% - 80px);   /* Slide to bottom of viewport */
+    transform: translateX(-50%);
+  }
+
+  .chatbot-textarea {
+    flex: 1;
+    border: 1px solid rgba(255, 255, 255, 0.3);
     border-radius: 10px;
     font-size: 16px;
-    position: relative;
+    min-height: 50px;
+    padding: 13px;
+    resize: none;
+    transition: all 0.3s ease;
+    background-color: rgba(255, 255, 255, 0.9);
+    color: #333;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
   }
-  
-  .user {
-    align-self: flex-end;
+
+  .chatbot-textarea:focus {
+    outline: none;
+    border-color: rgba(var(--purple-color-rgb), 0.6);
+    background-color: white;
+    box-shadow: 0 0 0 2px rgba(var(--purple-color-rgb), 0.1);
+  }
+
+  .chatbot-textarea:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    background: rgba(30, 30, 40, 0.7);
+    border: 1px dashed rgba(var(--purple-color-rgb), 0.3);
+    box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.1);
+    pointer-events: none;
+    color: rgba(255, 255, 255, 0.5);
+    position: relative;
+    backdrop-filter: blur(2px);
+  }
+
+  /* Add a pulsing effect to the textarea when disabled */
+  .chatbot-textarea:disabled::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: 10px;
+    animation: pulse-border 2s infinite;
+    pointer-events: none;
+  }
+
+  @keyframes pulse-border {
+    0% {
+      box-shadow: 0 0 0 0 rgba(var(--purple-color-rgb), 0.2);
+    }
+    70% {
+      box-shadow: 0 0 0 4px rgba(var(--purple-color-rgb), 0);
+    }
+    100% {
+      box-shadow: 0 0 0 0 rgba(var(--purple-color-rgb), 0);
+    }
+  }
+
+  .chatbot-input-container button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 16px 24px;
     background-color: var(--purple-color);
     color: var(--color-white);
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    min-width: 100px;
   }
-  
-  .bot {
-    align-self: flex-start;
-    background-color: var(--bg-neutral);
-    color: var(--color-white);
+
+  .chatbot-input-container button:hover:not(:disabled) {
+    background-color: var(--hover-background-color);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(var(--purple-color-rgb), 0.2);
   }
-  
-  .timestamp {
-    font-size: 12px;
-    color: var(--color-grey);
+
+  .chatbot-input-container button:disabled {
     opacity: 0.5;
-    text-align: right;
-    margin-top: 5px;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
   }
-  
-  /* Input field animation */
-  /* 
-  1. The container that slides down with an animation 
-     (replaces .chatbot-input in your old code)
-*/
-.chatbot-input-container {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  position: absolute;
-  top: 58%; /* Initially below the greeting message */
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: calc(40% - 40px);
-  border-radius: 10px;
-  padding: 10px 20px;
-  transition: top 0.7s ease, transform 0.7s ease, width 0.7s ease;
-}
 
-.chatbot-input-container--active {
-  width: calc(50% - 40px); /* Widen the container */
-  position: absolute;
-  top: calc(97% - 80px);   /* Slide to bottom of viewport */
-  transform: translateX(-50%);
-}
-
-/* 
-  2. The textarea itself: 
-     (new .chatbot-textarea class)
-*/
-.chatbot-textarea {
-  flex: 1;
-  border: 1px solid var(--color-grey);
-  border-radius: 10px;
-  font-size: 16px;
-  min-height: 50px;   /* Ensure it matches your old input height */
-  padding: 13px;
-  resize: none;       /* Optional: remove manual resize handle */
-  transition: all 0.3s ease;
-}
-
-/* 
-  3. The Send button 
-  (same rules as your old .chatbot-input button style)
-*/
-.chatbot-input-container button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 12px 24px;
-  background-color: var(--purple-color);
-  color: var(--color-white);
-  border: none;
-  border-radius: 10px;
-  cursor: pointer;
-  font-size: 16px;
-  font-weight: 500;
-  transition: all 0.3s ease;
-  min-width: 100px;
-}
-
-.chatbot-input-container button:hover:not(:disabled) {
-  background-color: var(--hover-background-color);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(var(--purple-color-rgb), 0.2);
-}
-
-.chatbot-input-container button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  transform: none;
-  box-shadow: none;
-}
-
-.chatbot-input-container button.stop-button {
-  background-color: #ff4444;
-  animation: pulse 2s infinite;
-}
-
-.chatbot-input-container button.stop-button:hover:not(:disabled) {
-  background-color: #ff3333;
-  box-shadow: 0 4px 12px rgba(255, 68, 68, 0.2);
-}
-
-.chatbot-input-container button svg {
-  width: 16px;
-  height: 16px;
-  transition: transform 0.2s ease;
-}
-
-.chatbot-input-container button:hover:not(:disabled) svg {
-  transform: scale(1.1);
-}
-
-@keyframes pulse {
-  0% {
-    box-shadow: 0 0 0 0 rgba(255, 68, 68, 0.4);
+  .chatbot-input-container button.stop-button {
+    background-color: #ff4444;
+    animation: pulse 2s infinite;
   }
-  70% {
-    box-shadow: 0 0 0 10px rgba(255, 68, 68, 0);
+
+  .chatbot-input-container button.stop-button:hover:not(:disabled) {
+    background-color: #ff3333;
+    box-shadow: 0 4px 12px rgba(255, 68, 68, 0.2);
   }
-  100% {
-    box-shadow: 0 0 0 0 rgba(255, 68, 68, 0);
+
+  .chatbot-input-container button svg {
+    width: 16px;
+    height: 16px;
+    transition: transform 0.2s ease;
   }
-}
 
-.loading-message {
-  opacity: 0.9;
-  animation: fadeIn 0.3s ease-in-out;
-  background: linear-gradient(135deg, rgba(var(--purple-color-rgb), 0.1), rgba(var(--purple-color-rgb), 0.05));
-  border: 1px solid rgba(var(--purple-color-rgb), 0.1);
-  backdrop-filter: blur(8px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  margin-left: 45px; /* Add margin to align with other messages */
-}
-
-.loading-container {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 12px 16px;
-  min-width: 120px;
-  position: relative;
-  min-height: 60px; /* Reduced height */
-}
-
-.loading-text {
-  font-size: 0.9rem;
-  color: var(--text-color);
-  opacity: 0.8;
-  font-weight: 500;
-  letter-spacing: 0.3px;
-}
-
-.loading-indicator {
-  display: flex;
-  gap: 6px;
-  justify-content: center;
-  align-items: center;
-  padding: 4px 0;
-}
-
-.loading-dot {
-  width: 6px;
-  height: 6px;
-  background: var(--purple-color);
-  border-radius: 50%;
-  animation: wave 1.5s infinite ease-in-out;
-  transform-origin: center;
-  opacity: 0.6;
-  box-shadow: 0 0 8px rgba(var(--purple-color-rgb), 0.3);
-}
-
-.loading-dot:nth-child(1) { animation-delay: -0.4s; }
-.loading-dot:nth-child(2) { animation-delay: -0.3s; }
-.loading-dot:nth-child(3) { animation-delay: -0.2s; }
-.loading-dot:nth-child(4) { animation-delay: -0.1s; }
-.loading-dot:nth-child(5) { animation-delay: 0s; }
-
-@keyframes wave {
-  0%, 100% {
-    transform: translateY(0) scale(1);
-    opacity: 0.6;
+  .chatbot-input-container button:hover:not(:disabled) svg {
+    transform: scale(1.1);
   }
-  50% {
-    transform: translateY(-8px) scale(1.2);
-    opacity: 1;
+
+  @keyframes pulse {
+    0% {
+      box-shadow: 0 0 0 0 rgba(255, 68, 68, 0.4);
+    }
+    70% {
+      box-shadow: 0 0 0 10px rgba(255, 68, 68, 0);
+    }
+    100% {
+      box-shadow: 0 0 0 0 rgba(255, 68, 68, 0);
+    }
   }
-}
 
-@keyframes fadeIn {
-  from { 
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to { 
-    opacity: 0.9;
-    transform: translateY(0);
-  }
-}
-
-/* Update the send button loading spinner */
-.loading-spinner {
-  display: inline-block;
-  width: 18px;
-  height: 18px;
-  border: 2px solid rgba(255, 255, 255, 0.2);
-  border-radius: 50%;
-  border-top-color: white;
-  animation: spin 0.8s linear infinite;
-  box-shadow: 0 0 8px rgba(255, 255, 255, 0.2);
-}
-
-@keyframes spin {
-  to { 
-    transform: rotate(360deg);
-  }
-}
-
-/* Update disabled states */
-button:disabled {
-  opacity: 0.8;
-  cursor: not-allowed;
-  background: linear-gradient(135deg, var(--purple-color), var(--hover-color));
-  box-shadow: 0 2px 8px rgba(var(--purple-color-rgb), 0.2);
-}
-
-.chatbot-textarea:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
-  background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(var(--purple-color-rgb), 0.2);
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
-  pointer-events: none;
-}
-
-.stop-generation-btn,
-.stop-generation-btn:hover,
-.stop-generation-btn:disabled,
-.stop-generation-btn svg,
-.stop-generation-btn:hover svg {
-  display: none;
-}
-
-/* Kickstart suggestions styles */
-.kickstart-container {
-  position: absolute;
-  top: calc(100% + 20px);
-  left: 0;
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1.2rem;
-  animation: fadeUpIn 0.8s cubic-bezier(0.22, 1, 0.36, 1);
-  padding: 1.5rem;
-  background: rgba(30, 30, 40, 0.7);
-  border-radius: 24px;
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  z-index: 5;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25), 
-              inset 0 1px 1px rgba(255, 255, 255, 0.1),
-              0 0 0 1px rgba(255, 255, 255, 0.05);
-}
-
-.kickstart-title {
-  font-size: 1rem;
-  color: rgba(255, 255, 255, 0.9);
-  font-weight: 600;
-  margin: 0;
-  background: linear-gradient(135deg, var(--purple-color), var(--hover-color));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  letter-spacing: 0.02em;
-}
-
-.kickstart-suggestions {
-  display: flex;
-  flex-direction: column;
-  gap: 0.85rem;
-  width: 100%;
-}
-
-.kickstart-button {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 1.2rem 1.5rem;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 16px;
-  cursor: pointer;
-  text-align: left;
-  transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
-  backdrop-filter: blur(8px);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-  color: var(--text-color);
-  position: relative;
-  overflow: hidden;
-}
-
-.kickstart-button::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: linear-gradient(90deg, 
-    rgba(255, 255, 255, 0),
-    rgba(255, 255, 255, 0.2),
-    rgba(255, 255, 255, 0));
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.kickstart-button::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: linear-gradient(90deg, 
-    rgba(255, 255, 255, 0),
-    rgba(255, 255, 255, 0.1),
-    rgba(255, 255, 255, 0));
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.kickstart-button:hover {
-  background: rgba(var(--purple-color-rgb), 0.1);
-  border-color: rgba(var(--purple-color-rgb), 0.3);
-  transform: translateY(-3px) scale(1.01);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3),
-              0 0 0 1px rgba(var(--purple-color-rgb), 0.2);
-}
-
-.kickstart-button:hover::before,
-.kickstart-button:hover::after {
-  opacity: 1;
-}
-
-.suggestion-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 38px;
-  height: 38px;
-  background: linear-gradient(135deg, var(--purple-color), var(--hover-color));
-  border-radius: 12px;
-  flex-shrink: 0;
-  color: white;
-  box-shadow: 0 4px 15px rgba(var(--purple-color-rgb), 0.3),
-              inset 0 1px 1px rgba(255, 255, 255, 0.3);
-  transition: all 0.3s ease;
-  transform: rotate(0deg);
-}
-
-.kickstart-button:hover .suggestion-icon {
-  transform: rotate(10deg) scale(1.1);
-  box-shadow: 0 6px 20px rgba(var(--purple-color-rgb), 0.4),
-              inset 0 1px 1px rgba(255, 255, 255, 0.3);
-}
-
-.suggestion-text {
-  font-size: 1rem;
-  line-height: 1.5;
-  font-weight: 500;
-  transition: color 0.3s ease;
-}
-
-.kickstart-button:hover .suggestion-text {
-  color: rgba(var(--purple-color-rgb), 1);
-}
-
-@keyframes fadeUpIn {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@media (max-width: 768px) {
+  /* Kickstart suggestions styles */
   .kickstart-container {
-    top: calc(100% + 15px);
-    padding: 1.2rem;
+    position: absolute;
+    top: calc(100% + 20px);
+    left: 0;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.2rem;
+    animation: fadeUpIn 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+    padding: 1.5rem;
+    background: rgba(30, 30, 40, 0.7);
+    border-radius: 24px;
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    z-index: 5;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25), 
+                inset 0 1px 1px rgba(255, 255, 255, 0.1),
+                0 0 0 1px rgba(255, 255, 255, 0.05);
   }
-  
+
+  .kickstart-title {
+    font-size: 1rem;
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 600;
+    margin: 0;
+    background: linear-gradient(135deg, var(--purple-color), var(--hover-color));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: 0.02em;
+  }
+
+  .kickstart-suggestions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    width: 100%;
+  }
+
   .kickstart-button {
-    padding: 1rem 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.2rem 1.5rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+    backdrop-filter: blur(8px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    color: var(--text-color);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .kickstart-button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, 
+      rgba(255, 255, 255, 0),
+      rgba(255, 255, 255, 0.2),
+      rgba(255, 255, 255, 0));
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .kickstart-button::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, 
+      rgba(255, 255, 255, 0),
+      rgba(255, 255, 255, 0.1),
+      rgba(255, 255, 255, 0));
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .kickstart-button:hover {
+    background: rgba(var(--purple-color-rgb), 0.1);
+    border-color: rgba(var(--purple-color-rgb), 0.3);
+    transform: translateY(-3px) scale(1.01);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3),
+                0 0 0 1px rgba(var(--purple-color-rgb), 0.2);
+  }
+
+  .kickstart-button:hover::before,
+  .kickstart-button:hover::after {
+    opacity: 1;
+  }
+
+  .suggestion-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    background: linear-gradient(135deg, var(--purple-color), var(--hover-color));
+    border-radius: 12px;
+    flex-shrink: 0;
+    color: white;
+    box-shadow: 0 4px 15px rgba(var(--purple-color-rgb), 0.3),
+                inset 0 1px 1px rgba(255, 255, 255, 0.3);
+    transition: all 0.3s ease;
+    transform: rotate(0deg);
+  }
+
+  .kickstart-button:hover .suggestion-icon {
+    transform: rotate(10deg) scale(1.1);
+    box-shadow: 0 6px 20px rgba(var(--purple-color-rgb), 0.4),
+                inset 0 1px 1px rgba(255, 255, 255, 0.3);
+  }
+
+  .suggestion-text {
+    font-size: 1rem;
+    line-height: 1.5;
+    font-weight: 500;
+    transition: color 0.3s ease;
+  }
+
+  .kickstart-button:hover .suggestion-text {
+    color: rgba(var(--purple-color-rgb), 1);
+  }
+
+  @keyframes fadeUpIn {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @media (max-width: 768px) {
+    .kickstart-container {
+      top: calc(100% + 15px);
+      padding: 1.2rem;
+    }
+    
+    .kickstart-button {
+      padding: 1rem 1.2rem;
+    }
+    
+    .suggestion-icon {
+      width: 34px;
+      height: 34px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .message-wrapper {
+      max-width: 90%; /* Further adjust for mobile */
+    }
+  }
+
+  /* Scroll to bottom button */
+  .scroll-to-bottom-button {
+    position: absolute;
+    bottom: 110px;
+    right: 50%;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--purple-color);
+    color: white;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    z-index: 10;
+    opacity: 0.9;
+    transition: all 0.3s ease;
+    animation: fadeIn 0.3s ease-out;
   }
   
-  .suggestion-icon {
-    width: 34px;
-    height: 34px;
+  .scroll-to-bottom-button:hover {
+    opacity: 1;
+    transform: translateY(-3px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+    background:  #8a56e5;
   }
-}
+  
+  .scroll-to-bottom-button svg {
+    transition: transform 0.2s ease;
+  }
+  
+  .scroll-to-bottom-button:hover svg {
+    transform: translateY(2px);
+  }
+  
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 0.9;
+      transform: translateY(0);
+    }
+  }
 </style>

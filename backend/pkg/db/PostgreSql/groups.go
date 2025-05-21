@@ -181,3 +181,66 @@ func (repo *GroupRepository) SaveMember(userId, groupId string) error {
 	_, err := repo.DB.Exec(query, groupId, userId)
 	return err
 }
+
+// RemoveMember removes a user from a specific group.
+func (repo *GroupRepository) RemoveMember(userId, groupId string) error {
+	// Begin a transaction to ensure all operations complete successfully
+	tx, err := repo.DB.Begin()
+	if err != nil {
+		return err
+	}
+	
+	// We can't anonymize messages as there's no sender_name column
+	// Instead, we'll just remove the user from the group
+	// Remove the user from the group
+	_, err = tx.Exec(`
+		DELETE FROM group_users 
+		WHERE group_id = $1 AND user_id = $2;
+	`, groupId, userId)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+	
+	// Commit the transaction
+	return tx.Commit()
+}
+
+// DeleteGroup deletes a group and all associated group_users entries.
+func (repo *GroupRepository) DeleteGroup(groupId string) error {
+	// Try a simpler approach - delete one by one without a transaction first
+	// This will help identify which delete is causing problems
+	
+	// 1. Delete group_messages entries
+	deleteGroupMsgsQuery := `DELETE FROM group_messages WHERE message_id IN 
+		(SELECT message_id FROM messages WHERE receiver_id = $1 AND type = 'GROUP')`
+	if _, err := repo.DB.Exec(deleteGroupMsgsQuery, groupId); err != nil {
+		return err
+	}
+	
+	// 2. Delete messages
+	deleteMsgsQuery := `DELETE FROM messages WHERE receiver_id = $1 AND type = 'GROUP'`
+	if _, err := repo.DB.Exec(deleteMsgsQuery, groupId); err != nil {
+		return err
+	}
+	
+	// 3. Delete notifications (fix column names: user_id not target_id)
+	deleteNotifsQuery := `DELETE FROM notifications WHERE user_id = $1 OR content = $1`
+	if _, err := repo.DB.Exec(deleteNotifsQuery, groupId); err != nil {
+		return err
+	}
+	
+	// 4. Delete group memberships
+	deleteUsersQuery := `DELETE FROM group_users WHERE group_id = $1`
+	if _, err := repo.DB.Exec(deleteUsersQuery, groupId); err != nil {
+		return err
+	}
+	
+	// 5. Delete the group itself
+	deleteGroupQuery := `DELETE FROM groups WHERE group_id = $1`
+	if _, err := repo.DB.Exec(deleteGroupQuery, groupId); err != nil {
+		return err
+	}
+	
+	return nil
+}

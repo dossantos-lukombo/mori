@@ -210,6 +210,13 @@ textarea {
 
 button i {
     font-size: 1.15em;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.2em;
+    height: 1.2em;
+    vertical-align: middle;
+    line-height: 1;
 }
 
 
@@ -341,7 +348,16 @@ select {
 }
 
 .btn {
-    display: flex;
+    padding: 10px 20px;
+    border-radius: 10px;
+    border: none;
+    background-color: var(--purple-color);
+    color: var(--button-content);
+    cursor: pointer;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 400;
+    transition: var(--hover-bg-transition), transform 0.2s ease, box-shadow 0.2s ease;
+    display: inline-flex;
     align-items: center;
     gap: 5px;
     padding: 10px 15px 10px 15px;

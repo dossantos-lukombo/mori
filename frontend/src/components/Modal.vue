@@ -7,7 +7,9 @@
                 </h2>
                 <i class="uil uil-times close" @click="$emit('closeModal')"></i>
             </div>
-            <slot name="body"></slot>
+            <div class="modal-body">
+                <slot name="body"></slot>
+            </div>
         </div>
     </div>
 </template>
@@ -20,44 +22,50 @@
     width: 100vw;
     top: 0;
     left: 0;
-    background-color: #9146bc7b;
+    background-color: rgba(0, 0, 0, 0.5);
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 2;
-
+    z-index: 1000;
+    animation: fadeIn 0.3s ease-out;
 }
 
 .modal-content {
     display: flex;
     flex-direction: column;
-    gap: 25px;
-    padding: 30px 50px;
-    width: 400px;
+    width: 90%;
+    max-width: 450px;
     color: var(--color-white);
     position: relative;
     background-color: var(--bg-neutral);
-    border-radius: var(--container-border-radius);
-
-
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+    animation: slideUp 0.3s ease-out;
 }
 
 .modal-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.modal-header i {
-    font-size: 1.25em;
-    cursor: pointer;
+.modal-header h2 {
+    margin: 0;
+    font-size: 1.3rem;
+}
 
+.modal-body {
+    padding: 20px;
 }
 
 .modal-content form {
     display: flex;
     flex-direction: column;
     gap: 15px;
+    width: 100%;
 }
 
 .modal-content .btn.form-submit {
@@ -67,10 +75,43 @@
 /* close icon */
 .uil-times.close {
     cursor: pointer;
-    transition: transform 0.25s ease;
+    font-size: 1.5rem;
+    color: var(--color-white);
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
+    position: absolute;
+    right: 20px;
+    top: 20px;
 }
 
 .uil-times.close:hover {
-    transform: scale(1.15);
+    opacity: 1;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideUp {
+    from { transform: translateY(30px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+/* Add these new styles to ensure icons are properly centered */
+.modal-actions .btn i,
+button i {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    vertical-align: middle;
+    width: 1.2em;
+    height: 1.2em;
+}
+
+.modal button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 </style>

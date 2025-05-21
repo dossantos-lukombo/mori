@@ -59,21 +59,41 @@ func (repo *MsgRepository) GetAll(msgIn models.ChatMessage) ([]models.ChatMessag
 
 // GetAllGroup retrieves all messages in a group for a user.
 func (repo *MsgRepository) GetAllGroup(userId, groupId string) ([]models.ChatMessage, error) {
+	// First check if user is a member or admin of the group
+	isMemberQuery := `
+		SELECT 
+			COUNT(*) > 0 
+		FROM (
+			SELECT 1 
+			FROM groups 
+			WHERE group_id = $1 AND administrator = $2
+			UNION
+			SELECT 1 
+			FROM group_users 
+			WHERE group_id = $1 AND user_id = $2
+		) AS membership
+	`
+	
+	var isMember bool
+	err := repo.DB.QueryRow(isMemberQuery, groupId, userId).Scan(&isMember)
+	if err != nil {
+		return nil, err
+	}
+	
+	// If not a member or admin, return empty result
+	if !isMember {
+		return []models.ChatMessage{}, nil
+	}
+	
+	// If member or admin, return all group messages
 	query := `
 		SELECT message_id, sender_id, receiver_id, type, content, created_at 
 		FROM messages 
 		WHERE 
-			(sender_id = $1 AND receiver_id = $2) 
-			OR (
-				receiver_id = $2 
-				AND (
-					(SELECT COUNT(*) FROM groups WHERE group_id = $2 AND administrator = $1) = 1 
-					OR (SELECT COUNT(*) FROM group_users WHERE group_id = $2 AND user_id = $1) = 1
-				)
-			) 
+			receiver_id = $1 AND type = 'GROUP'
 		ORDER BY created_at ASC;
 	`
-	rows, err := repo.DB.Query(query, userId, groupId)
+	rows, err := repo.DB.Query(query, groupId)
 	if err != nil {
 		return nil, err
 	}
@@ -140,15 +160,19 @@ func (repo *MsgRepository) GetUnread(userId string) ([]models.ChatStats, error) 
 // GetUnreadGroup retrieves unread group messages for a user.
 func (repo *MsgRepository) GetUnreadGroup(userId string) ([]models.ChatStats, error) {
 	query := `
-		SELECT receiver_id, type, COUNT(*) 
-		FROM messages 
-		WHERE type = 'GROUP' 
+		SELECT m.receiver_id, m.type, COUNT(*) 
+		FROM messages m
+		JOIN groups g ON g.group_id = m.receiver_id
+		WHERE m.type = 'GROUP' 
 			AND (
-				(SELECT administrator FROM groups WHERE group_id = messages.receiver_id) = $1 
-				OR (SELECT COUNT(*) FROM group_users WHERE group_id = messages.receiver_id AND user_id = $1) = 1
+				g.administrator = $1 
+				OR EXISTS (
+					SELECT 1 FROM group_users 
+					WHERE group_id = m.receiver_id AND user_id = $1
+				)
 			) 
-			AND (SELECT is_read FROM group_messages WHERE message_id = messages.message_id AND receiver_id = $1) = 0 
-		GROUP BY receiver_id, type;
+			AND (SELECT is_read FROM group_messages WHERE message_id = m.message_id AND receiver_id = $1) = 0 
+		GROUP BY m.receiver_id, m.type;
 	`
 	rows, err := repo.DB.Query(query, userId)
 	if err != nil {
@@ -293,23 +317,15 @@ func (repo *MsgRepository) GetConversationsMsg(userID string) ([]models.Conversa
 			  created_at
 			FROM messages
 			WHERE type = 'GROUP'
-			  AND (
-			    sender_id = $1
-			    OR (
-			      (SELECT COUNT(*) FROM group_users 
-			       WHERE group_id = messages.receiver_id 
-			         AND user_id = $1
-			      )=1
-			    )
-			    OR (
-			      (SELECT administrator FROM groups 
-			       WHERE group_id = messages.receiver_id
-			      )=$1
-			    )
-			  )
 			ORDER BY created_at DESC
 		) AS m
 		JOIN groups g ON g.group_id = m.group_id
+		WHERE 
+		   -- Only include groups where the user is an admin or a member
+		   (g.administrator = $1 OR EXISTS (
+		      SELECT 1 FROM group_users 
+		      WHERE group_id = g.group_id AND user_id = $1
+		   ))
 		ORDER BY g.group_id, m.created_at DESC
 	`
 

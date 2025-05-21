@@ -431,7 +431,7 @@ func (handler *Handler) NewGroupInvite(wsServer *ws.Server, w http.ResponseWrite
 	utils.RespondWithSuccess(w, "Invitations saved", 200)
 }
 
-// NOT TESTED
+// ResponseInviteRequest handles the response to a group invitation
 func (handler *Handler) ResponseInviteRequest(w http.ResponseWriter, r *http.Request) {
 	w = utils.ConfigHeader(w)
 	if r.Method != "POST" {
@@ -472,4 +472,102 @@ func (handler *Handler) ResponseInviteRequest(w http.ResponseWriter, r *http.Req
 	}
 	// notify websocket about notification changes
 	utils.RespondWithSuccess(w, "Response successful", 200)
+}
+
+// LeaveGroup allows a member to leave a group
+func (handler *Handler) LeaveGroup(w http.ResponseWriter, r *http.Request) {
+	w = utils.ConfigHeader(w)
+	// Access current user id
+	userId := r.Context().Value(utils.UserKey).(string)
+	
+	// Get group id from request
+	query := r.URL.Query()
+	groupId := query.Get("groupId")
+	if groupId == "" {
+		utils.RespondWithError(w, "Error: Missing group ID", 200)
+		return
+	}
+	
+	// Check if user is a member of the group
+	isMember, err := handler.repos.GroupRepo.IsMember(groupId, userId)
+	if err != nil {
+		utils.RespondWithError(w, "Error checking membership", 200)
+		return
+	}
+	
+	// Check if user is the admin (admins can't leave, they need to delete or transfer ownership)
+	isAdmin, err := handler.repos.GroupRepo.IsAdmin(groupId, userId)
+	if err != nil {
+		utils.RespondWithError(w, "Error checking admin status", 200)
+		return
+	}
+	
+	if isAdmin {
+		utils.RespondWithError(w, "Admin cannot leave group. You must delete the group or transfer ownership first.", 200)
+		return
+	}
+	
+	if !isMember {
+		utils.RespondWithError(w, "Not a member of this group", 200)
+		return
+	}
+	
+	// Remove user from group
+	err = handler.repos.GroupRepo.RemoveMember(userId, groupId)
+	if err != nil {
+		utils.RespondWithError(w, "Error leaving group", 200)
+		return
+	}
+	
+	utils.RespondWithSuccess(w, "Successfully left the group", 200)
+}
+
+// DeleteGroup allows an admin to delete a group completely
+func (handler *Handler) DeleteGroup(w http.ResponseWriter, r *http.Request) {
+	w = utils.ConfigHeader(w)
+	// Access current user id
+	userId := r.Context().Value(utils.UserKey).(string)
+	
+	// Get group id from request
+	query := r.URL.Query()
+	groupId := query.Get("groupId")
+	if groupId == "" {
+		utils.RespondWithError(w, "Error: Missing group ID", 200)
+		return
+	}
+	
+	// Log the deletion attempt
+	log.Printf("User %s attempting to delete group %s", userId, groupId)
+	
+	// Check if user is the admin of the group
+	isAdmin, err := handler.repos.GroupRepo.IsAdmin(groupId, userId)
+	if err != nil {
+		log.Printf("Error checking if user %s is admin of group %s: %v", userId, groupId, err)
+		utils.RespondWithError(w, "Error checking admin status", 200)
+		return
+	}
+	
+	if !isAdmin {
+		utils.RespondWithError(w, "Only the group admin can delete the group", 200)
+		return
+	}
+	
+	// Check if the group exists
+	_, err = handler.repos.GroupRepo.GetData(groupId)
+	if err != nil {
+		log.Printf("Error fetching group data for %s: %v", groupId, err)
+		utils.RespondWithError(w, "Group not found", 200)
+		return
+	}
+	
+	// Delete the group
+	err = handler.repos.GroupRepo.DeleteGroup(groupId)
+	if err != nil {
+		log.Printf("Error deleting group %s: %v", groupId, err)
+		utils.RespondWithError(w, "Error deleting group: " + err.Error(), 200)
+		return
+	}
+	
+	log.Printf("Group %s successfully deleted by user %s", groupId, userId)
+	utils.RespondWithSuccess(w, "Group successfully deleted", 200)
 }

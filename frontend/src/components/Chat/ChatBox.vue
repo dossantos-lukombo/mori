@@ -212,6 +212,8 @@ export default {
   box-shadow: 0 2px 10px rgb(0, 0, 0);
   border-radius: 5px 5px 0 0;
   overflow: hidden;
+  margin-left: 10px;
+  max-height: calc(100vh - 50px);
   --padding: 15px;
   --msg-border-rad: 10px;
   --msg-padding: 8px;
@@ -237,6 +239,8 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  max-height: calc(100% - 100px); /* Account for header and input form */
+  min-height: 200px; /* Ensure there's a minimum height for content */
 }
 
 .sent-message,

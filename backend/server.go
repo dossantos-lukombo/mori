@@ -108,6 +108,9 @@ func setRoutes(handler *handlers.Handler, wsServer *ws.Server) http.Handler {
 	})) // response to join request
 	mux.HandleFunc("/responseInviteRequest", handler.Auth(handler.ResponseInviteRequest)) // response to invite request
 
+	mux.HandleFunc("/leaveGroup", handler.Auth(handler.LeaveGroup)) // leave a group (for members)
+	mux.HandleFunc("/deleteGroup", handler.Auth(handler.DeleteGroup)) // delete a group (for admin)
+
 	/* ------------------------------ notifications ----------------------------- */
 	mux.HandleFunc("/notifications", handler.Auth(handler.Notifications)) // get all notifs from db on login
 
