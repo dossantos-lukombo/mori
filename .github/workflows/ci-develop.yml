@@ -1,0 +1,194 @@
+name: CI - Develop Stable
+
+on:
+  pull_request:
+    branches:
+      - develop_stable
+
+jobs:
+  # Job pour valider les Conventional Commits
+  conventional_commits:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Required for conventional-commits-action
+
+      - name: Validate Conventional Commits
+        uses: webiny/action-conventional-commits@v1.2.0 # Ou taskmedia/action-conventional-commits@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          allowed-commit-types: 'feat,fix,docs,style,refactor,perf,test,build,ci,chore,revert' # Adaptez si nécessaire
+          # require-scope: true # Décommentez si un scope est obligatoire
+          # require-footer: true # Décommentez si un footer est obligatoire
+
+  # Job pour les tests unitaires et le linting
+  build_and_test:
+    needs: conventional_commits # S'assure que les commits sont valides avant de continuer
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python # Exemple pour un projet Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x' # Spécifiez votre version de Python
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt # Adaptez pour votre gestionnaire de paquets (npm, yarn, go mod, etc.)
+
+      - name: Run linters (flake8, eslint, etc.)
+        run: |
+          # Exemple pour Python
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=120 --statistics
+          # Exemple pour JS/TS
+          # npm install
+          # npm run lint
+
+      - name: Run unit tests (pytest, etc.)
+        run: |
+          # Exemple pour Python
+          pytest # Adaptez votre commande de test
+
+  # Job pour les tests d'intégration
+  integration_tests:
+    needs: build_and_test
+    runs-on: ubuntu-latest
+    services:
+      # Exemple de service container pour une base de données PostgreSQL
+      postgres:
+        image: postgres:13
+        env:
+          POSTGRES_USER: user
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: testdb
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python # Exemple pour un projet Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt # Adaptez
+
+      - name: Wait for PostgreSQL to be ready
+        run: |
+          # Attendre que le service container soit prêt
+          # Adaptez la commande de vérification de santé si vous utilisez un autre service
+          for i in $(seq 1 10); do
+            nc -z localhost 5432 && echo "PostgreSQL ready" && exit 0
+            echo "Waiting for PostgreSQL..."
+            sleep 5
+          done
+          echo "PostgreSQL did not become ready" >&2
+          exit 1
+
+      - name: Run database migrations # Si applicable
+        run: |
+          # Commande pour appliquer les migrations de test
+          echo "Running test migrations..."
+          # Exemple: go run ./pkg/db/migration/main.go up
+
+      - name: Run integration tests
+        run: |
+          # Commande pour lancer vos tests d'intégration
+          echo "Running integration tests..."
+          # Exemple: pytest tests/integration
+
+  # Job pour les tests de performance (k6)
+  performance_tests:
+    needs: build_and_test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup k6
+        uses: grafana/setup-k6-action@v2
+
+      - name: Run k6 test
+        uses: grafana/run-k6-action@v3
+        with:
+          script: ./path/to/your/k6/script.js # Remplacez par le chemin de votre script k6
+          # options: --vus 10 --duration 30s # Adaptez les options
+
+      # Optionnel: Comparer les résultats avec les benchmarks précédents
+      # - name: Store k6 results
+      #   uses: benchmark-action/github-action-benchmark@v1
+      #   with:
+      #     name: k6 Performance Benchmark
+      #     output-file-path: k6_results.json # Adaptez
+      #     github-token: ${{ secrets.GITHUB_TOKEN }}
+      #     # Autres options pour comparer et commenter sur la PR
+
+  # Job pour les scans de sécurité (OWASP ZAP)
+  security_scan:
+    needs: build_and_test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Exemple de scan OWASP ZAP Baseline
+      - name: OWASP ZAP Baseline Scan
+        uses: zaproxy/action-baseline@v0.12.0
+        with:
+          target: 'http://localhost:8080' # Remplacez par l'URL de votre application de test
+          # rules_file: .zap/rules.conf # Optionnel: fichier de règles personnalisées
+          # cmd_options: '-addoninstall pscanrulesBeta' # Optionnel: installer des add-ons
+          # fail_action: true # Optionnel: faire échouer l'action si des alertes sont trouvées
+
+      # Exemple de scan OWASP ZAP Full Scan (nécessite que l'application soit en cours d'exécution)
+      # - name: Start your application for ZAP Full Scan
+      #   run: |
+      #     # Commandes pour démarrer votre application en arrière-plan
+      #     echo "Starting application..."
+      #     # Exemple: docker-compose up -d
+      #     # Attendre que l'application soit prête
+
+      # - name: OWASP ZAP Full Scan
+      #   uses: zaproxy/action-full-scan@v0.10.0
+      #   with:
+      #     target: 'http://localhost:8080' # Remplacez par l'URL de votre application de test
+      #     # cmd_options: '-addoninstall all' # Optionnel: installer tous les add-ons
+      #     # fail_action: true # Optionnel: faire échouer l'action si des alertes sont trouvées
+
+  # Job pour l'analyse des dépendances
+  dependency_analysis:
+    needs: build_and_test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Exemple avec Snyk (nécessite une clé API Snyk)
+      # - name: Snyk Security Scan
+      #   uses: snyk/actions/golang@master # Adaptez le langage
+      #   env:
+      #     SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      #   with:
+      #     args: --severity-threshold=high # Faire échouer pour les vulnérabilités de haute sévérité
+
+      # Activez Dependabot directement dans les paramètres de votre dépôt GitHub
+      # ou utilisez une action pour d'autres outils comme Trivy, etc.
+      - name: Placeholder for Dependency Scan
+        run: echo "Dependency scan step placeholder"
