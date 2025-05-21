@@ -27,7 +27,7 @@ jobs:
       - name: Checkout (full history)
         uses: actions/checkout@v3
         with:
-          fetch-depth: 0            # nécessaire pour lire tous les commits :contentReference[oaicite:2]{index=2}
+          fetch-depth: 1            # nécessaire pour lire tous les commits :contentReference[oaicite:2]{index=2}
       - name: Installer Node.js
         uses: actions/setup-node@v3
         with:
@@ -35,7 +35,7 @@ jobs:
       - name: Installer Commitlint
         run: npm install --no-save @commitlint/cli @commitlint/config-conventional
       - name: Linter les commits
-        run: |
+        run: 
           # Pour les PR, on compare base→head ; en push, on inclut tous les nouveaux commits
           if [[ ${{ github.event_name }} == 'pull_request' ]]; then
             npx commitlint --from ${{ github.event.pull_request.base.sha }} --to ${{ github.event.pull_request.head.sha }} --verbose

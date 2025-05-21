@@ -1,58 +1,59 @@
-version: "3"
+# docker-compose.yml (à la racine)
+version: "3.8"
 
 services:
-  postgres:
-    image: postgres:14
-    container_name: mori-postgres
-    environment:
-      POSTGRES_USER: mori
-      POSTGRES_PASSWORD: moripassword
-      POSTGRES_DB: mori
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U mori"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  backend:
-    build: 
-      context: ./backend/
+  go-backend:
+    build:
+      context: ./backend
       dockerfile: Dockerfile
-    container_name: mori-backend
-    command: ./social-network
+    container_name: mori-go-backend
+    command: ["go", "run", "."]
+    working_dir: /app
+    volumes:
+      - ./backend:/app
     ports:
       - "8081:8081"
+    env_file:
+      - .env
     environment:
-      DB_HOST: postgres
-      DB_PORT: 5432
-      DB_USER: mori
-      DB_PASSWORD: moripassword
-      DB_NAME: mori
-      ACCESS_SECRET_KEY_LLM: ${ACCESS_SECRET_KEY_LLM:-defaultsecretkey}
-      REFRESH_SECRET_KEY_LLM: ${REFRESH_SECRET_KEY_LLM:-defaultrefreshkey}
-    depends_on:
-      postgres:
-        condition: service_healthy
+      - SUPABASE_DB_URL=${SUPABASE_DB_URL}
+      - ACCESS_SECRET_KEY_LLM=${ACCESS_SECRET_KEY_LLM}
+      - REFRESH_SECRET_KEY_LLM=${REFRESH_SECRET_KEY_LLM}
+    restart: unless-stopped
+
+  llm-server:
+    build:
+      context: ./backend/logic_llm
+      dockerfile: Dockerfile
+    container_name: mori-llm-server
+    working_dir: /app
+    volumes:
+      - ./backend/logic_llm:/app
+    command: ["poetry", "run", "uvicorn", "server:app", "--host", "0.0.0.0", "--port", "3000"]
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    environment:
+      - DB_URL=${SUPABASE_DB_URL}
     restart: unless-stopped
 
   frontend:
-    build: 
-      context: ./frontend/
+    build:
+      context: ./frontend
       dockerfile: Dockerfile
     container_name: mori-frontend
-    command: ["http-server", "dist"]
+    working_dir: /app
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    command: ["npm", "run", "serve"]
     ports:
       - "8080:8080"
+    env_file:
+      - .env
     environment:
-      API_URL: http://backend:8081
-    depends_on:
-      - backend
+      - VUE_APP_API_URL=${API_URL}
     restart: unless-stopped
 
-volumes:
-  postgres_data:
+# Pas de volumes locaux définis ici, base distante Supabase
