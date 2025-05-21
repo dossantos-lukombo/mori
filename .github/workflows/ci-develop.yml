@@ -3,9 +3,11 @@ name: CI Develop Stable
 
 on:
   pull_request:
-    branches: [ develop_stable ]
+    branches:
+      - develop_stable
   push:
-    branches: [ develop_stable ]
+    branches:
+      - develop_stable
 
 jobs:
   # 1. Build de l'image Docker sans push
@@ -13,18 +15,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
+
       - name: Build image (CI)
         uses: docker/build-push-action@v6
-
         with:
           context: .
           load: true
           push: false
-          tags: ci/app:develop :contentReference[oaicite:12]{index=12}
+          tags: ci/app:develop
 
   # 2. Tests unitaires & d'intégration (pytest-postgresql example)
   test:
@@ -33,20 +37,26 @@ jobs:
     services:
       postgres:
         image: postgres:14
-        ports: ['5432:5432']
+        ports:
+          - 5432:5432
         options: >-
           --health-cmd "pg_isready -U postgres"
           --health-interval=10s
     steps:
       - uses: actions/checkout@v3
+
       - name: Setup Python
         uses: actions/setup-python@v4
-        with: 
-            python-version: '3.11'
+        with:
+          python-version: '3.11'
+
       - name: Install dependencies
-        run: pip install pytest psycopg2-binary pytest-postgresql :contentReference[oaicite:13]{index=13}
+        run: |
+          pip install pytest psycopg2-binary pytest-postgresql
+
       - name: Run Unit & Integration Tests
-        run: pytest tests/ --maxfail=1 --disable-warnings -q :contentReference[oaicite:14]{index=14}
+        run: |
+          pytest tests/ --maxfail=1 --disable-warnings -q
 
   # 3. Smoke Test basique
   smoke:
@@ -55,7 +65,7 @@ jobs:
     steps:
       - name: Smoke test
         run: |
-          docker run --rm ci/app:develop sh -c "curl -f http://localhost:8080/health || exit 1" :contentReference[oaicite:15]{index=15}
+          docker run --rm ci/app:develop sh -c "curl -f http://localhost:8080/health || exit 1"
 
   # 4. Scans de sécurité OWASP ZAP
   zap:
@@ -63,15 +73,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+
       - name: Baseline OWASP ZAP Scan
         uses: zaproxy/action-baseline-scan@v0.4.0
         with:
           target: 'http://localhost:8080'
-          rules_file_name: .zap/baseline-rules.tsv :contentReference[oaicite:16]{index=16}
+          rules_file_name: .zap/baseline-rules.tsv
+
       - name: Full OWASP ZAP Scan
         uses: zaproxy/action-full-scan@v0.4.0
         with:
-          target: 'http://localhost:8080' :contentReference[oaicite:17]{index=17}
+          target: 'http://localhost:8080'
 
   # 5. Tests de performance k6
   perf:
@@ -79,17 +91,24 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+
       - name: Set up k6
-        uses: grafana/setup-k6-action@v0.1.0 :contentReference[oaicite:18]{index=18}
+        uses: grafana/setup-k6-action@v0.1.0
+
       - name: Run k6 Performance Tests
         uses: grafana/run-k6-action@v1.0.0
         with:
-          filename: tests/load-test.js :contentReference[oaicite:19]{index=19}
+          filename: tests/load-test.js
 
   # 6. Monitorage des métriques GitHub Actions
   monitor:
-    needs: [build, test, smoke, zap, perf]
+    needs:
+      - build
+      - test
+      - smoke
+      - zap
+      - perf
     runs-on: ubuntu-latest
     steps:
       - name: Record GitHub Actions Metrics
-        run: echo "Workflows monitored via GitHub Actions Metrics" :contentReference[oaicite:20]{index=20}
+        run: echo "Workflows monitored via GitHub Actions Metrics"
