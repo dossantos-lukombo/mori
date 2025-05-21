@@ -16,8 +16,21 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Dockerfile Lint
-        uses: hadolint/hadolint-action@v3
+      - name: Lint Backend Dockerfile
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: ./backend/Dockerfile
+
+      - name: Lint LLM Dockerfile
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: ./backend/logic_llm/Dockerfile
+
+      - name: Lint Frontend Dockerfile
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: ./frontend/Dockerfile
+
 
       - name: Build image (no cache)
         uses: docker/build-push-action@v6
