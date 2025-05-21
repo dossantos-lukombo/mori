@@ -15,26 +15,27 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+
       - name: Dockerfile Lint
-        uses: hadolint/hadolint-action@v2 :contentReference[oaicite:21]{index=21}
+        uses: hadolint/hadolint-action@v2
+
       - name: Build image (no cache)
         uses: docker/build-push-action@v6
         with:
-          context: .
+          context: .               # racine du repo (docker-compose.yml y est)
           push: false
-          tags: prod/app:latest :contentReference[oaicite:22]{index=22}
+          tags: prod/app:latest
 
   # 2. Healthcheck automatisé
   healthcheck:
     needs: build-check
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
       - name: Run container for healthcheck
         run: |
           docker run -d --name prod-test -p 8080:8080 prod/app:latest
           docker run --network container:prod-test jwilder/dockerize \
-            -wait http://localhost:8080/health -timeout 60s :contentReference[oaicite:23]{index=23}
+            -wait http://localhost:8080/health -timeout 60s
           docker rm -f prod-test
 
   # 3. Scans de sécurité critiques OWASP ZAP
@@ -42,11 +43,10 @@ jobs:
     needs: healthcheck
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
       - name: Critical OWASP Full Scan
         uses: zaproxy/action-full-scan@v0.4.0
         with:
-          target: 'http://localhost:8080' :contentReference[oaicite:24]{index=24}
+          target: 'http://localhost:8080'
 
   # 4. Tests d’intégrité post-build
   integrity:
@@ -59,10 +59,11 @@ jobs:
         run: |
           python - <<EOF
           import psycopg2, os
-          conn=psycopg2.connect(os.getenv('DB_URL'))
-          print(conn.cursor().execute('SELECT 1'))
+          conn = psycopg2.connect(os.getenv("DB_URL"))
+          cur = conn.cursor()
+          cur.execute("SELECT 1")
           conn.close()
-          EOF :contentReference[oaicite:25]{index=25}
+          EOF
 
   # 5. Génération et push du tag sémantique
   release:
@@ -72,10 +73,11 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v3
+
       - name: Semantic Release (Conventional Commits)
         uses: anitvam/conventionalcommit-semantic-releasing@v1
         with:
-          token: ${{ secrets.GITHUB_TOKEN }} :contentReference[oaicite:26]{index=26}
+          token: ${{ secrets.GITHUB_TOKEN }}
 
   # 6. Push de l’image vers le registry
   deploy:
@@ -83,12 +85,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: Login to Registry
+
+      - name: Login to GitHub Container Registry
         uses: docker/login-action@v2
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Build and Push Production Image
         uses: docker/build-push-action@v6
         with:
@@ -96,4 +100,4 @@ jobs:
           push: true
           tags: |
             ghcr.io/${{ github.repository }}/app:${{ github.ref_name }}
-            ghcr.io/${{ github.repository }}/app:latest :contentReference[oaicite:27]{index=27}
+            ghcr.io/${{ github.repository }}/app:latest

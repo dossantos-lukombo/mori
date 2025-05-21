@@ -25,7 +25,7 @@ jobs:
       - name: Build image (CI)
         uses: docker/build-push-action@v6
         with:
-          context: ../backend/
+          context: ./backend       # chemin relatif au dépôt racine
           load: true
           push: false
           tags: ci/app:develop
