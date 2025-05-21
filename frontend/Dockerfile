@@ -1,9 +1,47 @@
-FROM node:18-alpine
+# frontend/Dockerfile
 
+# Étape 1: Build de l'application
+FROM node:18-alpine AS builder
+
+# Définition du répertoire de travail
 WORKDIR /app
+
+# Copie des fichiers de dépendances
 COPY package*.json ./
-RUN npm install
+
+# Installation des dépendances
+RUN npm ci
+
+# Copie du reste du code source
 COPY . .
 
+# Build de l'application
+RUN npm run build
+
+# Étape 2: Image de production
+FROM node:18-alpine
+
+# Installation de http-server
+RUN npm install -g http-server
+
+# Création d'un utilisateur non-root
+RUN adduser -D -u 1001 appuser
+
+# Définition du répertoire de travail
+WORKDIR /app
+
+# Copie des fichiers de build depuis l'étape précédente
+COPY --from=builder /app/dist /app/dist
+COPY --from=builder /app/public /app/public
+
+# Attribution des permissions
+RUN chown -R appuser:appuser /app
+
+# Changement vers l'utilisateur non-root
+USER appuser
+
+# Exposition du port
 EXPOSE 8080
-CMD ["npm", "run", "serve"]
+
+# Commande de démarrage
+CMD ["http-server", "dist", "-p", "8080"]
