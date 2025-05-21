@@ -1,19 +1,58 @@
 version: "3"
 
 services:
+  postgres:
+    image: postgres:14
+    container_name: mori-postgres
+    environment:
+      POSTGRES_USER: mori
+      POSTGRES_PASSWORD: moripassword
+      POSTGRES_DB: mori
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mori"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   backend:
-
-    build: backend/
+    build: 
+      context: ./backend/
+      dockerfile: Dockerfile
+    container_name: mori-backend
     command: ./social-network
     ports:
-      - 8081:8081
+      - "8081:8081"
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: mori
+      DB_PASSWORD: moripassword
+      DB_NAME: mori
+      ACCESS_SECRET_KEY_LLM: ${ACCESS_SECRET_KEY_LLM:-defaultsecretkey}
+      REFRESH_SECRET_KEY_LLM: ${REFRESH_SECRET_KEY_LLM:-defaultrefreshkey}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
 
   frontend:
-
-    build: frontend/ 
-    command: [ "http-server", "dist" ]
+    build: 
+      context: ./frontend/
+      dockerfile: Dockerfile
+    container_name: mori-frontend
+    command: ["http-server", "dist"]
     ports:
-      - 8080:8080
+      - "8080:8080"
+    environment:
+      API_URL: http://backend:8081
     depends_on:
       - backend
+    restart: unless-stopped
+
+volumes:
+  postgres_data:

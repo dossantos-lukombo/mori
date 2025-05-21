@@ -93,9 +93,9 @@ jobs:
       postgres:
         image: postgres:13
         env:
-          POSTGRES_USER: user
+          POSTGRES_USER: mori
           POSTGRES_PASSWORD: password
-          POSTGRES_DB: testdb
+          POSTGRES_DB: mori
         ports:
           - 5432:5432
         options: >-

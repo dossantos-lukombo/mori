@@ -1,73 +1,135 @@
-name: CI - Develop Stable
+name: CI Pipeline - Develop Branch
 
 on:
+  push:
+    branches: [ develop_stable ]
   pull_request:
-    branches:
-      - develop_stable
+    branches: [ develop_stable ]
 
 jobs:
-  # Job pour valider les Conventional Commits
-  conventional_commits:
+  lint:
+    name: Lint Code
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
         with:
-          fetch-depth: 0 # Required for conventional-commits-action
+          fetch-depth: 0
 
-      - name: Validate Conventional Commits
-        uses: webiny/action-conventional-commits@v1.2.0 # Ou taskmedia/action-conventional-commits@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
         with:
-          allowed-commit-types: 'feat,fix,docs,style,refactor,perf,test,build,ci,chore,revert' # Adaptez si nécessaire
-          # require-scope: true # Décommentez si un scope est obligatoire
-          # require-footer: true # Décommentez si un footer est obligatoire
-
-  # Job pour les tests unitaires et le linting
-  build_and_test:
-    needs: conventional_commits # S'assure que les commits sont valides avant de continuer
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Python # Exemple pour un projet Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.x' # Spécifiez votre version de Python
+          node-version: '18'
+          cache: 'npm'
 
       - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt # Adaptez pour votre gestionnaire de paquets (npm, yarn, go mod, etc.)
+        run: npm ci
 
-      - name: Run linters (flake8, eslint, etc.)
-        run: |
-          # Exemple pour Python
-          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=120 --statistics
-          # Exemple pour JS/TS
-          # npm install
-          # npm run lint
+      - name: Lint commit messages
+        run: npx commitlint --from ${{ github.event.pull_request.base.sha || 'HEAD~10' }} --to ${{ github.event.pull_request.head.sha || 'HEAD' }}
 
-      - name: Run unit tests (pytest, etc.)
-        run: |
-          # Exemple pour Python
-          pytest # Adaptez votre commande de test
-
-  # Job pour les tests d'intégration
-  integration_tests:
-    needs: build_and_test
+  test-backend:
+    name: Test Backend
     runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.24'
+
+      - name: Install Go dependencies
+        run: cd backend && go mod download
+
+      - name: Run Go tests
+        run: cd backend && go test ./test -v
+
+  test-llm:
+    name: Test LLM Service
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install Poetry
+        run: pip install poetry
+
+      - name: Install Python dependencies
+        run: poetry install
+
+      - name: Run Python tests
+        run: poetry run pytest backend/logic_llm/test_token.py -v
+
+  build-and-test-frontend:
+    name: Build and Test Frontend
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: cd frontend && npm ci
+
+      - name: Build frontend
+        run: cd frontend && npm run build
+
+  docker-build:
+    name: Build Docker Images
+    runs-on: ubuntu-latest
+    needs: [test-backend, test-llm, build-and-test-frontend]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Build backend image
+        uses: docker/build-push-action@v4
+        with:
+          context: ./backend
+          push: false
+          tags: mori-backend:develop
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build frontend image
+        uses: docker/build-push-action@v4
+        with:
+          context: ./frontend
+          push: false
+          tags: mori-frontend:develop
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  integration-test:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: docker-build
     services:
-      # Exemple de service container pour une base de données PostgreSQL
       postgres:
-        image: postgres:13
+        image: postgres:14
         env:
-          POSTGRES_USER: user
-          POSTGRES_PASSWORD: password
-          POSTGRES_DB: testdb
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: mori_test
         ports:
           - 5432:5432
         options: >-
@@ -78,117 +140,28 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Python # Exemple pour un projet Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.x'
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt # Adaptez
+        uses: actions/checkout@v3
 
       - name: Wait for PostgreSQL to be ready
         run: |
-          # Attendre que le service container soit prêt
-          # Adaptez la commande de vérification de santé si vous utilisez un autre service
-          for i in $(seq 1 10); do
-            nc -z localhost 5432 && echo "PostgreSQL ready" && exit 0
-            echo "Waiting for PostgreSQL..."
-            sleep 5
+          while ! nc -z localhost 5432; do
+            echo "Waiting for PostgreSQL to be ready..."
+            sleep 1
           done
-          echo "PostgreSQL did not become ready" >&2
-          exit 1
 
-      - name: Run database migrations # Si applicable
+      - name: Run docker-compose
+        run: docker-compose up -d
+
+      - name: Wait for services to be ready
         run: |
-          # Commande pour appliquer les migrations de test
-          echo "Running test migrations..."
-          # Exemple: go run ./pkg/db/migration/main.go up
+          echo "Waiting for services to be ready..."
+          sleep 10
 
       - name: Run integration tests
         run: |
-          # Commande pour lancer vos tests d'intégration
+          # Ajoutez ici vos commandes de test d'intégration
           echo "Running integration tests..."
-          # Exemple: pytest tests/integration
+          # Exemple: curl -f http://localhost:8081/health
 
-  # Job pour les tests de performance (k6)
-  performance_tests:
-    needs: build_and_test
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup k6
-        uses: grafana/setup-k6-action@v2
-
-      - name: Run k6 test
-        uses: grafana/run-k6-action@v3
-        with:
-          script: ./path/to/your/k6/script.js # Remplacez par le chemin de votre script k6
-          # options: --vus 10 --duration 30s # Adaptez les options
-
-      # Optionnel: Comparer les résultats avec les benchmarks précédents
-      # - name: Store k6 results
-      #   uses: benchmark-action/github-action-benchmark@v1
-      #   with:
-      #     name: k6 Performance Benchmark
-      #     output-file-path: k6_results.json # Adaptez
-      #     github-token: ${{ secrets.GITHUB_TOKEN }}
-      #     # Autres options pour comparer et commenter sur la PR
-
-  # Job pour les scans de sécurité (OWASP ZAP)
-  security_scan:
-    needs: build_and_test
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      # Exemple de scan OWASP ZAP Baseline
-      - name: OWASP ZAP Baseline Scan
-        uses: zaproxy/action-baseline@v0.12.0
-        with:
-          target: 'http://localhost:8080' # Remplacez par l'URL de votre application de test
-          # rules_file: .zap/rules.conf # Optionnel: fichier de règles personnalisées
-          # cmd_options: '-addoninstall pscanrulesBeta' # Optionnel: installer des add-ons
-          # fail_action: true # Optionnel: faire échouer l'action si des alertes sont trouvées
-
-      # Exemple de scan OWASP ZAP Full Scan (nécessite que l'application soit en cours d'exécution)
-      # - name: Start your application for ZAP Full Scan
-      #   run: |
-      #     # Commandes pour démarrer votre application en arrière-plan
-      #     echo "Starting application..."
-      #     # Exemple: docker-compose up -d
-      #     # Attendre que l'application soit prête
-
-      # - name: OWASP ZAP Full Scan
-      #   uses: zaproxy/action-full-scan@v0.10.0
-      #   with:
-      #     target: 'http://localhost:8080' # Remplacez par l'URL de votre application de test
-      #     # cmd_options: '-addoninstall all' # Optionnel: installer tous les add-ons
-      #     # fail_action: true # Optionnel: faire échouer l'action si des alertes sont trouvées
-
-  # Job pour l'analyse des dépendances
-  dependency_analysis:
-    needs: build_and_test
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      # Exemple avec Snyk (nécessite une clé API Snyk)
-      # - name: Snyk Security Scan
-      #   uses: snyk/actions/golang@master # Adaptez le langage
-      #   env:
-      #     SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-      #   with:
-      #     args: --severity-threshold=high # Faire échouer pour les vulnérabilités de haute sévérité
-
-      # Activez Dependabot directement dans les paramètres de votre dépôt GitHub
-      # ou utilisez une action pour d'autres outils comme Trivy, etc.
-      - name: Placeholder for Dependency Scan
-        run: echo "Dependency scan step placeholder"
+      - name: Stop docker-compose
+        run: docker-compose down
