@@ -1,10 +1,7 @@
-# docker-compose.yml (à la racine)
-version: "3.8"
-
 services:
   go-backend:
     build:
-      context: ./backend
+      context: .
       dockerfile: Dockerfile
     container_name: mori-go-backend
     command: ["go", "run", "."]
@@ -14,7 +11,7 @@ services:
     ports:
       - "8081:8081"
     env_file:
-      - .env
+      - backend/.env
     environment:
       - SUPABASE_DB_URL=${SUPABASE_DB_URL}
       - ACCESS_SECRET_KEY_LLM=${ACCESS_SECRET_KEY_LLM}
@@ -23,7 +20,7 @@ services:
 
   llm-server:
     build:
-      context: ./backend/logic_llm
+      context: .
       dockerfile: Dockerfile
     container_name: mori-llm-server
     working_dir: /app
@@ -33,14 +30,14 @@ services:
     ports:
       - "3000:3000"
     env_file:
-      - .env
+      - backend/.env
     environment:
       - DB_URL=${SUPABASE_DB_URL}
     restart: unless-stopped
 
   frontend:
     build:
-      context: ./frontend
+      context: .
       dockerfile: Dockerfile
     container_name: mori-frontend
     working_dir: /app
@@ -51,9 +48,7 @@ services:
     ports:
       - "8080:8080"
     env_file:
-      - .env
+      - backend/.env
     environment:
       - VUE_APP_API_URL=${API_URL}
     restart: unless-stopped
-
-# Pas de volumes locaux définis ici, base distante Supabase

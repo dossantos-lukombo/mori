@@ -54,7 +54,7 @@ func setRoutes(handler *handlers.Handler, wsServer *ws.Server) http.Handler {
 	mux.HandleFunc("/request-password-reset", handler.RequestPasswordReset)
 	mux.HandleFunc("/reset-password", handler.ResetPassword)
 
-	/* ------------------------------- LLM_conv ------------------------------- */
+	/* ------------------------------- llm_conv ------------------------------- */
 	mux.HandleFunc("/llmConvo", handler.Auth(handler.LLMHandler))
 	mux.HandleFunc("/llmConvoSave", handler.Auth(handler.LLMConvoSave))
 	mux.HandleFunc("/llmConvoGet", handler.Auth(handler.LLMConvoGet))

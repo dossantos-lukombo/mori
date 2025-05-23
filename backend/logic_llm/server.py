@@ -16,7 +16,6 @@ security = HTTPBearer()
 
 load_dotenv("../.env")
 
-
 """
 Data
 """
