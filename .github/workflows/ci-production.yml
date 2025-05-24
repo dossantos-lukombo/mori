@@ -10,34 +10,41 @@ on:
       - production
 
 jobs:
-  # 1. Build Check (Dockerfile lint + build dry-run)
   build-check:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - name: backend
+            context: backend
+            file: backend/Dockerfile
+            tag: prod/backend:latest
+          - name: llm
+            context: backend/logic_llm
+            file: backend/logic_llm/Dockerfile
+            tag: prod/llm:latest
+          - name: frontend
+            context: frontend
+            file: frontend/Dockerfile
+            tag: prod/frontend:latest
+
     steps:
       - uses: actions/checkout@v3
 
-      - name: Lint Backend Dockerfile
+      # Hadolint (un par fichier)
+      - name: Lint ${{ matrix.name }} Dockerfile
         uses: hadolint/hadolint-action@v3.1.0
         with:
-          dockerfile: ./backend/Dockerfile
+          dockerfile: ${{ matrix.file }}
 
-      - name: Lint LLM Dockerfile
-        uses: hadolint/hadolint-action@v3.1.0
-        with:
-          dockerfile: ./backend/logic_llm/Dockerfile
-
-      - name: Lint Frontend Dockerfile
-        uses: hadolint/hadolint-action@v3.1.0
-        with:
-          dockerfile: ./frontend/Dockerfile
-
-
-      - name: Build image (no cache)
+      # Build dry-run
+      - name: Build ${{ matrix.name }} image
         uses: docker/build-push-action@v6
         with:
-          context: .               # racine du repo (docker-compose.yml y est)
+          context: ${{ matrix.context }}
+          file: ${{ matrix.file }}
           push: false
-          tags: prod/app:latest
+          tags: ${{ matrix.tag }}
 
   # 2. Healthcheck automatisé
   healthcheck:
