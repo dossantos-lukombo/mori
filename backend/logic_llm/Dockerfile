@@ -16,12 +16,15 @@ ENV POETRY_VERSION=1.7.1 \
     POETRY_NO_INTERACTION=1
 ENV PATH="${POETRY_HOME}/bin:${PATH}"
 
+# backend/logic_llm/Dockerfile
 WORKDIR /app
 
-COPY logic_llm/pyproject.toml logic_llm/poetry.lock ./
+# On est déjà DANS backend/logic_llm : plus besoin du sous-dossier
+COPY pyproject.toml poetry.lock ./
 RUN poetry install --only main --no-root
 
-COPY . ./logic_llm
+# On copie tout le code du dossier courant
+COPY . .
 
-EXPOSE 3000
+# Le reste inchangé…
 CMD ["poetry", "run", "uvicorn", "logic_llm.server:app", "--host", "0.0.0.0", "--port", "3000"]
