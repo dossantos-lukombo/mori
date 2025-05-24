@@ -72,37 +72,37 @@ jobs:
           docker rm -f prod-test
 
   # ───────────────────────────── 3. Scan OWASP ZAP ─────────────────────────────
-    prod-zap:
-    needs: healthcheck
-    runs-on: ubuntu-latest
-    steps:
-      - name: Build dummy prod/app image
-        run: |
-          docker build -t prod/app:latest - <<'EOF'
-          FROM python:3.11-slim
-          WORKDIR /app
-          RUN echo 'healthy' > health
-          EXPOSE 8080
-          CMD ["python", "-m", "http.server", "8080"]
-          EOF
+  prod-zap:
+  needs: healthcheck
+  runs-on: ubuntu-latest
+  steps:
+    - name: Build dummy prod/app image
+      run: |
+        docker build -t prod/app:latest - <<'EOF'
+        FROM python:3.11-slim
+        WORKDIR /app
+        RUN echo 'healthy' > health
+        EXPOSE 8080
+        CMD ["python", "-m", "http.server", "8080"]
+        EOF
 
-      - name: Start test container
-        run: |
-          docker run -d --name zap-test -p 8080:8080 prod/app:latest
-          # Optionnel : attendre que l’endpoint réponde
-          docker run --network container:zap-test jwilder/dockerize \
-            -wait http://localhost:8080/health -timeout 30s
+    - name: Start test container
+      run: |
+        docker run -d --name zap-test -p 8080:8080 prod/app:latest
+        # Optionnel : attendre que l’endpoint réponde
+        docker run --network container:zap-test jwilder/dockerize \
+          -wait http://localhost:8080/health -timeout 30s
 
-      - name: Critical OWASP Full Scan
-        uses: zaproxy/action-full-scan@v0.4.0
-        with:
-          target: 'http://localhost:8080'
-          # Laisse "fail_action" à true si tu veux échouer la CI en cas de findings critiques
-          fail_action: false
+    - name: Critical OWASP Full Scan
+      uses: zaproxy/action-full-scan@v0.4.0
+      with:
+        target: 'http://localhost:8080'
+        # Laisse "fail_action" à true si tu veux échouer la CI en cas de findings critiques
+        fail_action: false
 
-      - name: Stop container
-        if: always()
-        run: docker rm -f zap-test
+    - name: Stop container
+      if: always()
+      run: docker rm -f zap-test
 
   # ───────────────────────────── 4. Intégrité DB ─────────────────────────────
   integrity:
