@@ -13,10 +13,10 @@ RUN CGO_ENABLED=0 GOOS=linux go build -o mori_backend .
 FROM debian:bullseye-slim
 # Installation des certificats et dépendances nécessaires
 RUN apt-get update && \
-    apt-cache policy tzdata=2024c-0+deb11u1 ca-certificates=20230311~deb11u2 && \
+    apt-cache policy  && \
     apt-get install -y --no-install-recommends \
-      ca-certificates \
-      tzdata \
+    ca-certificates=20230311~deb11u2 \
+      tzdata=2024c-0+deb11u1  \
       && rm -rf /var/lib/apt/lists/*
 # Création d'un utilisateur non-root pour plus de sécurité
 RUN useradd -u 1001 -r -s /bin/false appuser
