@@ -1,27 +1,18 @@
-# Étape 1 : build
+# ===== Étape build =====
 FROM node:18.17.1-alpine3.18 AS builder
 WORKDIR /app
-
 COPY package*.json ./
-RUN npm install
-
+RUN npm ci
 COPY . .
 RUN npm run build
 
-# Étape 2 : image de production
+# ===== Étape prod =====
 FROM node:18.17.1-alpine3.18
+RUN adduser -D -u 1001 appuser
 WORKDIR /app
 
-#  Une seule couche RUN pour tout faire :
-RUN adduser -D -u 1001 appuser \
- && apk add --no-cache --virtual .tmp-chown shadow \
- && chown -R appuser:appuser /app \
- && apk del .tmp-chown
-
-COPY package*.json ./
-USER root            # on reste root le temps d’installer
-RUN npm install --omit=dev \
- && chown -R appuser:appuser /app
+# On évite apk + chown en copiant directement avec les bons UID/GID
+COPY --from=builder --chown=appuser:appuser /app ./
 
 USER appuser
 EXPOSE 8080
