@@ -3,13 +3,12 @@ name: CD Production
 
 on:
   push:
-    branches:
-      - production
+    branches: [production]
   pull_request:
-    branches:
-      - production
+    branches: [production]
 
 jobs:
+  # ───────────────────────────── 1. Lint & build (dry-run) ─────────────────────────────
   build-check:
     runs-on: ubuntu-latest
     strategy:
@@ -31,37 +30,48 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      # Hadolint (un par fichier)
       - name: Lint ${{ matrix.name }} Dockerfile
         uses: hadolint/hadolint-action@v3.1.0
         with:
           dockerfile: ${{ matrix.file }}
 
-      # Build dry-run
-      - name: Build ${{ matrix.name }} image
+      - name: Build ${{ matrix.name }} image (load only)
         uses: docker/build-push-action@v6
         with:
           context: ${{ matrix.context }}
           file: ${{ matrix.file }}
-          push: false
+          load: true                 # image chargée dans le démon Docker local
           tags: ${{ matrix.tag }}
 
-  # 2. Healthcheck automatisé
+      # On retague l’image frontend en prod/app:latest pour les jobs suivants
+      - name: Tag frontend as prod/app:latest
+        if: matrix.name == 'frontend'
+        run: docker tag ${{ matrix.tag }} prod/app:latest
+
+  # ───────────────────────────── 2. Healthcheck ─────────────────────────────
   healthcheck:
     needs: build-check
     runs-on: ubuntu-latest
     steps:
-      -name: Build dummy prod/app image
-      run: |
-        docker build -t prod/app:latest - <<'EOF'
-        FROM python:3.11-slim
-        WORKDIR /app
-        RUN echo 'OK' > health
-        EXPOSE 8080
-        CMD ["python","-m","http.server","8080"]
-        EOF
+      # Petit conteneur « dummy » : garantit l’existence de prod/app:latest
+      - name: Build dummy prod/app image
+        run: |
+          docker build -t prod/app:latest - <<'EOF'
+          FROM python:3.11-slim
+          WORKDIR /app
+          RUN echo 'healthy' > health
+          EXPOSE 8080
+          CMD ["python", "-m", "http.server", "8080"]
+          EOF
 
-  # 3. Scans de sécurité critiques OWASP ZAP
+      - name: Run container and wait for /health
+        run: |
+          docker run -d --name prod-test -p 8080:8080 prod/app:latest
+          docker run --network container:prod-test jwilder/dockerize \
+            -wait http://localhost:8080/health -timeout 60s
+          docker rm -f prod-test
+
+  # ───────────────────────────── 3. Scan OWASP ZAP ─────────────────────────────
   prod-zap:
     needs: healthcheck
     runs-on: ubuntu-latest
@@ -71,7 +81,7 @@ jobs:
         with:
           target: 'http://localhost:8080'
 
-  # 4. Tests d’intégrité post-build
+  # ───────────────────────────── 4. Intégrité DB ─────────────────────────────
   integrity:
     needs: prod-zap
     runs-on: ubuntu-latest
@@ -80,15 +90,15 @@ jobs:
         env:
           DB_URL: ${{ secrets.PROD_DB_URL }}
         run: |
-          python - <<EOF
+          python - <<'PY'
           import psycopg2, os
           conn = psycopg2.connect(os.getenv("DB_URL"))
           cur = conn.cursor()
           cur.execute("SELECT 1")
           conn.close()
-          EOF
+          PY
 
-  # 5. Génération et push du tag sémantique
+  # ───────────────────────────── 5. Release sémantique ─────────────────────────────
   release:
     needs: integrity
     runs-on: ubuntu-latest
@@ -102,7 +112,7 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
-  # 6. Push de l’image vers le registry
+  # ───────────────────────────── 6. Push image prod ─────────────────────────────
   deploy:
     needs: release
     runs-on: ubuntu-latest
@@ -116,7 +126,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and Push Production Image
+      - name: Build & Push Production Image
         uses: docker/build-push-action@v6
         with:
           context: .
