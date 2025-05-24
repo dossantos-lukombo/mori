@@ -13,7 +13,7 @@ RUN CGO_ENABLED=0 GOOS=linux go build -o mori_backend .
 FROM debian:bullseye-slim
 # Installation des certificats et dépendances nécessaires
 RUN apt-get update && \
-    apt-cache policy tzdata ca-certificates && \
+    apt-cache policy tzdata=2024c-0+deb11u1 ca-certificates=20230311~deb11u2 && \
     apt-get install -y --no-install-recommends \
       ca-certificates \
       tzdata \
