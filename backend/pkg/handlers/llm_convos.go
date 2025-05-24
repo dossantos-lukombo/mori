@@ -380,7 +380,7 @@ func isValidResponseContent(content []byte) bool {
 // Fonction pour générer un JWT
 func GenerateJWT(username, conversationID, message string) (string, error) {
 	// Définir les claims
-	err := godotenv.Load()
+	err := godotenv.Load(".env")
 	if err != nil {
 		log.Printf("Erreur lors du chargement du fichier .env : %v", err)
 	}
@@ -412,7 +412,7 @@ func GenerateJWT(username, conversationID, message string) (string, error) {
 }
 
 func GenerateRefreshJWT(username, conversationID, message string) (string, error) {
-	err := godotenv.Load()
+	err := godotenv.Load(".env")
 	if err != nil {
 		log.Printf("Erreur lors du chargement du fichier .env : %v", err)
 	}

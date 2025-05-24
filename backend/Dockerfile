@@ -1,6 +1,6 @@
 # backend/Dockerfile
 # Étape 1 : builder sur une image Golang
-FROM golang:1.23 AS builder
+FROM golang:1.24 AS builder
 WORKDIR /app
 # 1. Copier les fichiers de modules pour profiter du cache
 COPY go.mod go.sum ./
@@ -13,6 +13,7 @@ RUN CGO_ENABLED=0 GOOS=linux go build -o mori_backend .
 FROM debian:bullseye-slim
 # Installation des certificats et dépendances nécessaires
 RUN apt-get update && \
+    apt-cache policy tzdata ca-certificates && \
     apt-get install -y --no-install-recommends \
       ca-certificates \
       tzdata \
@@ -31,6 +32,7 @@ WORKDIR /app
 RUN mkdir -p /app/fileUploads && chown appuser:appuser /app/fileUploads
 # Exposition du port
 EXPOSE 8081
-# Point d'entrée
-ENTRYPOINT ["/app/mori_backend"]
+
+# Use the compiled binary instead of trying to run Go
+CMD ["/app/mori_backend"]
 

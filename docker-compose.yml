@@ -1,44 +1,38 @@
 services:
   go-backend:
     build:
-      context: .
+      context: ./backend
       dockerfile: Dockerfile
     container_name: mori-go-backend
-    command: ["go", "run", "."]
+    # Remove the command override to use the one from Dockerfile
     working_dir: /app
-    volumes:
-      - ./backend:/app
+    # Be careful with volumes as they can override the binary
     ports:
       - "8081:8081"
     env_file:
-      - backend/.env
+      - ./backend/.env
     environment:
-      - SUPABASE_DB_URL=${SUPABASE_DB_URL}
       - ACCESS_SECRET_KEY_LLM=${ACCESS_SECRET_KEY_LLM}
       - REFRESH_SECRET_KEY_LLM=${REFRESH_SECRET_KEY_LLM}
     restart: unless-stopped
 
   llm-server:
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ./backend
+      dockerfile: ./logic_llm/Dockerfile
     container_name: mori-llm-server
     working_dir: /app
     volumes:
-      - ./backend/logic_llm:/app
-    command: ["poetry", "run", "uvicorn", "server:app", "--host", "0.0.0.0", "--port", "3000"]
+      - ./backend/logic_llm:/app/logic_llm
+    command: ["poetry", "run", "uvicorn", "logic_llm.server:app", "--host", "0.0.0.0", "--port", "3000"]
     ports:
       - "3000:3000"
-    env_file:
-      - backend/.env
-    environment:
-      - DB_URL=${SUPABASE_DB_URL}
     restart: unless-stopped
 
   frontend:
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ./frontend
+      dockerfile: ./Dockerfile
     container_name: mori-frontend
     working_dir: /app
     volumes:
@@ -47,8 +41,5 @@ services:
     command: ["npm", "run", "serve"]
     ports:
       - "8080:8080"
-    env_file:
-      - backend/.env
-    environment:
-      - VUE_APP_API_URL=${API_URL}
+
     restart: unless-stopped

@@ -18,12 +18,13 @@ ENV PATH="${POETRY_HOME}/bin:${PATH}"
 # Répertoire de travail
 WORKDIR /app
 
-COPY ../pyproject.toml ../poetry.lock* ./
+COPY logic_llm/pyproject.toml logic_llm/poetry.lock ./
 
 # Installer uniquement les dépendances “main”, sans installer le projet
 RUN poetry install --only main --no-root
 
 COPY . ./logic_llm
+
 # Exposition & lancement
 EXPOSE 3000
 CMD ["poetry", "run", "uvicorn", "logic_llm.server:app", "--host", "0.0.0.0", "--port", "3000"]
