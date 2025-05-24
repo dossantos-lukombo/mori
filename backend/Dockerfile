@@ -18,6 +18,9 @@ RUN apt-get update && \
     ca-certificates=20230311~deb11u2 \
       tzdata=2024c-0+deb11u1  \
       && rm -rf /var/lib/apt/lists/*
+
+# Pour Debian/Ubuntu, où Bash est présent
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 # Création d'un utilisateur non-root pour plus de sécurité
 RUN useradd -u 1001 -r -s /bin/false appuser
 # Configuration du fuseau horaire
