@@ -51,16 +51,15 @@ jobs:
     needs: build-check
     runs-on: ubuntu-latest
     steps:
-      - name: Run container for healthcheck
-        - name: Build dummy prod/app image
-        run: |
-          docker build -t prod/app:latest - <<'EOF'
-          FROM python:3.11-slim
-          WORKDIR /app
-          RUN echo 'OK' > health
-          EXPOSE 8080
-          CMD ["python","-m","http.server","8080"]
-          EOF
+      -name: Build dummy prod/app image
+      run: |
+        docker build -t prod/app:latest - <<'EOF'
+        FROM python:3.11-slim
+        WORKDIR /app
+        RUN echo 'OK' > health
+        EXPOSE 8080
+        CMD ["python","-m","http.server","8080"]
+        EOF
 
   # 3. Scans de sécurité critiques OWASP ZAP
   prod-zap:
