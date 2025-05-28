@@ -14,12 +14,13 @@ RUN CGO_ENABLED=0 GOOS=linux go build -o mori_backend .
 # Étape 2 : image de production légère
 FROM debian:bullseye-slim
 
-# Installation des certificats et dépendances nécessaires
+ENV DEBIAN_FRONTEND=noninteractive \
+    TZ=Europe/Paris
+
 RUN apt-get update && \
-    apt-cache policy && \
     apt-get install -y --no-install-recommends \
-      ca-certificates=20230311~deb11u2 \
-      tzdata=2024c-0+deb11u1 && \
+      ca-certificates \
+      tzdata && \
     rm -rf /var/lib/apt/lists/*
 
 # Utiliser Bash pour une meilleure robustesse des scripts
