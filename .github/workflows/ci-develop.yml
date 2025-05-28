@@ -7,7 +7,7 @@ on:
       - develop
   push:
     branches:
-      - develop
+      - test_ci
 
 jobs:
   # 1. Build de l'image Docker sans push
