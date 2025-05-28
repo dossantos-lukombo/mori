@@ -1,5 +1,5 @@
 # MORI
 
 
-Test CI develop_stable
+Test CI develop_stable branch
 
