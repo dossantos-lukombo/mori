@@ -34,18 +34,20 @@ jobs:
   test:
     needs: build
     runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:14.14
-        env:
-          POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
-          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
-          # POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U postgres"
-          --health-interval=20s
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+    # services:
+    #   postgres:
+    #     image: postgres:14.14
+    #     env:
+    #       POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+    #       POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+    #       # POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
+    #     ports:
+    #       - 5432:5432
+    #     options: >-
+    #       --health-cmd "pg_isready -U postgres"
+    #       --health-interval=20s
     steps:
       - uses: actions/checkout@v3
 
