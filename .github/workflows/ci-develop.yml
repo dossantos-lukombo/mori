@@ -4,10 +4,10 @@ name: CI Develop Stable
 on:
   pull_request:
     branches:
-      - develop_stable
+      - develop
   push:
     branches:
-      - develop_stable
+      - develop
 
 jobs:
   # 1. Build de l'image Docker sans push
@@ -61,7 +61,6 @@ jobs:
       - name: Run Unit & Integration Tests
         run: |
           pytest tests/ --maxfail=1 --disable-warnings -q
-
   # 3. Smoke Test basique
   smoke:
     needs: build
@@ -70,7 +69,6 @@ jobs:
       - name: Smoke test
         run: |
           docker run --rm ci/app:develop sh -c "curl -f http://localhost:8080/health || exit 1"
-
   # 4. Scans de sécurité OWASP ZAP
   zap:
     needs: smoke
@@ -91,7 +89,6 @@ jobs:
         uses: zaproxy/action-full-scan@v0.4.0
         with:
           target: 'http://localhost:8080'
-
   # 5. Tests de performance k6
   perf:
     needs: smoke
@@ -108,16 +105,15 @@ jobs:
         uses: grafana/run-k6-action@v1.0.0
         with:
           filename: tests/load-test.js
-
   # 6. Monitorage des métriques GitHub Actions
-  monitor:
-    needs:
-      - build
-      - test
-      - smoke
-      - zap
-      - perf
-    runs-on: ubuntu-latest
-    steps:
-      - name: Record GitHub Actions Metrics
-        run: echo "Workflows monitored via GitHub Actions Metrics"
+  # monitor:
+  #   needs:
+  #     - build
+  #     - test
+  #     - smoke
+  #     - zap
+  #     - perf
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Record GitHub Actions Metrics
+  #       run: echo "Workflows monitored via GitHub Actions Metrics"

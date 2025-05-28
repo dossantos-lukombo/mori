@@ -1,19 +1,20 @@
+version: "3.8"
 services:
   go-backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
     container_name: mori-go-backend
-    # Remove the command override to use the one from Dockerfile
     working_dir: /app
-    # Be careful with volumes as they can override the binary
     ports:
       - "8081:8081"
     env_file:
-      - ./backend/.env
+      - ./backend/.env        # récupère tes secrets SSO LLM et ceux de Supabase
     environment:
       - ACCESS_SECRET_KEY_LLM=${ACCESS_SECRET_KEY_LLM}
       - REFRESH_SECRET_KEY_LLM=${REFRESH_SECRET_KEY_LLM}
+      - DATABASE_URL=${DATABASE_URL}                          # URL PostgreSQL Supabase
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}# clé service-role pour opérations server-side
     restart: unless-stopped
 
   llm-server:
@@ -41,5 +42,4 @@ services:
     command: ["npm", "run", "serve"]
     ports:
       - "8080:8080"
-
     restart: unless-stopped
