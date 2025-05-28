@@ -27,7 +27,7 @@ jobs:
         with:
           context: ./backend       # chemin relatif au dépôt racine
           load: true
-          push: false
+          push: true
           tags: ci/app:develop
 
   # 2. Tests unitaires & d'intégration (pytest-postgresql example)
@@ -37,18 +37,22 @@ jobs:
     services:
       postgres:
         image: postgres:14.14
+        env:
+          POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          # POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
         ports:
           - 5432:5432
         options: >-
           --health-cmd "pg_isready -U postgres"
-          --health-interval=10s
+          --health-interval=20s
     steps:
       - uses: actions/checkout@v3
 
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.11'
+          python-version: '3.12'
 
       - name: Install dependencies
         run: |
