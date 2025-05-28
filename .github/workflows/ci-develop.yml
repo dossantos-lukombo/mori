@@ -4,10 +4,10 @@ name: CI Develop Stable
 on:
   pull_request:
     branches:
-      - develop
+      - develop_stable
   push:
     branches:
-      - test_ci
+      - [test_ci,develop_stable]
 
 jobs:
   # 1. Build de l'image Docker sans push
