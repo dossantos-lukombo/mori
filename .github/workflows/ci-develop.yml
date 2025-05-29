@@ -70,11 +70,11 @@ jobs:
           cd backend/logic_llm
           poetry install --no-root
           
-      
       - name: Activate Poetry environment
         run: poetry env activate
 
       - name: Run tests
+        working-directory: backend/logic_llm
         run: pytest . --maxfail=1 --disable-warnings -q
   # 3. Smoke Test basique
   smoke:
