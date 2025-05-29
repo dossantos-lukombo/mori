@@ -2,9 +2,9 @@
 name: CI Develop Stable
 
 on:
-  # pull_request_target:
-  #   branches:
-  #     - develop_stable
+  pull_request_target:
+    branches:
+      - develop_stable
   push:
     branches:
       - test_ci
