@@ -69,7 +69,7 @@ jobs:
         run: poetry install
 
       - name: Run tests
-        run: poetry run pytest . --maxfail=1 --disable-warnings -q
+        run: pytest . --maxfail=1 --disable-warnings -q
   # 3. Smoke Test basique
   smoke:
     needs: test
