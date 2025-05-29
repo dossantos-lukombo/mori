@@ -68,7 +68,7 @@ jobs:
       - name: Install project dependencies
         run: |
           cd backend/logic_llm
-          poetry install
+          poetry install --no-root
 
       - name: Run tests
         run: pytest . --maxfail=1 --disable-warnings -q
