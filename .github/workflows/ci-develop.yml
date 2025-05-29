@@ -40,6 +40,8 @@ jobs:
     runs-on: ubuntu-latest
     env:
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      ACCESS_SECRET_KEY_LLM: ${{ secrets.ACCESS_SECRET_KEY_LLM }}
+      REFRESH_SECRET_KEY_LLM: ${{ secrets.REFRESH_SECRET_KEY_LLM }}
     # services:
     #   postgres:
     #     image: postgres:14.14
@@ -61,6 +63,14 @@ jobs:
         with:
           python-version: '3.12'
 
+
+      - name: Create .env file
+        run: |
+          cat <<EOF > backend/logic_llm/.env
+          ACCESS_SECRET_KEY_LLM=${{ secrets.ACCESS_SECRET_KEY_LLM }}
+          REFRESH_SECRET_KEY_LLM=${{ secrets.REFRESH_SECRET_KEY_LLM }}
+          EOF
+
       # Installer Poetry
       - name: Install Poetry
         run: curl -sSL https://install.python-poetry.org | python3 -
@@ -70,7 +80,6 @@ jobs:
         working-directory: backend/logic_llm
         run: |
           poetry install --with test --no-root
-
       - name: Run tests
         working-directory: backend/logic_llm
         run: poetry run pytest . --maxfail=1 --disable-warnings -q
