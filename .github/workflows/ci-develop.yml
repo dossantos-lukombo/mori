@@ -10,11 +10,20 @@ on:
       - test_ci
 
 jobs:
+
   # 1. Build de l'image Docker sans push
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+
+      # 1️⃣ Connexion à Docker Hub
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          registry: docker.io
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -26,9 +35,9 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: ./backend       # chemin relatif au dépôt racine
-          load: true
+          load: false
           push: true
-          tags: ci/app:develop
+          tags: docker.io/${{ secrets.DOCKERHUB_USERNAME }}/mori-backend:develop
 
   # 2. Tests unitaires & d'intégration (pytest-postgresql example)
   test:
@@ -68,9 +77,20 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
+     # 1️⃣ Auth sur Docker Hub
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          registry: docker.io
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # 2️⃣ (Optionnel) Pull explicite
+      - name: Pull latest image
+        run: docker pull docker.io/${{ secrets.DOCKERHUB_USERNAME }}/mori-backend:develop
       - name: Smoke test
         run: |
-          docker run --rm ci/app:develop sh -c "curl -f http://localhost:8080/health || exit 1"
+          docker run --rm docker.io/${{ secrets.DOCKERHUB_USERNAME }}/mori-backend:develop sh -c "curl -f http://localhost:8080/health || exit 1"
   # 4. Scans de sécurité OWASP ZAP
   zap:
     needs: smoke
