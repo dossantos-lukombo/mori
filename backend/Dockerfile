@@ -21,6 +21,7 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends \
       ca-certificates \
       tzdata && \
+      curl\
     rm -rf /var/lib/apt/lists/*
 
 # Utiliser Bash pour une meilleure robustesse des scripts
