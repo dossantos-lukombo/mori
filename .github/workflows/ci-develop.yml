@@ -2,18 +2,17 @@
 name: CI Develop Stable
 
 on:
-  pull_request_target:
-    branches: []
   push:
-    branches: [test_ci]
+    branches:
+      - test_ci
 
 jobs:
+  env:
+    DATABASE_URL:       ${{ secrets.DATABASE_URL }}
+    DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+    DOCKERHUB_TOKEN:    ${{ secrets.DOCKERHUB_TOKEN }}
   build:
     runs-on: ubuntu-latest
-    env:
-      DATABASE_URL:       ${{ secrets.DATABASE_URL }}
-      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-      DOCKERHUB_TOKEN:    ${{ secrets.DOCKERHUB_TOKEN }}
     steps:
       - uses: actions/checkout@v3
 
