@@ -69,6 +69,7 @@ jobs:
         run: |
           cd backend/logic_llm
           poetry install --no-root
+          poetry env activate
 
       - name: Run tests
         run: pytest . --maxfail=1 --disable-warnings -q
