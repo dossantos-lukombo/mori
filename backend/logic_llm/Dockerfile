@@ -21,7 +21,7 @@ WORKDIR /app
 
 # On est déjà DANS backend/logic_llm : plus besoin du sous-dossier
 COPY pyproject.toml poetry.lock ./
-RUN poetry install --no-root
+RUN poetry install --no-root 
 
 # On copie tout le code du dossier courant
 COPY . .
