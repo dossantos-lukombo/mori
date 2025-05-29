@@ -9,4 +9,4 @@ def load_env():
     # print("🔄 Chargement du fichier .env")
     # print(f"🔍 Fichier.env trouvé à: {env_path}")
     if not load_dotenv('../.env'):
-        pytest.exit(f"❌ Impossible de charger le .env env_path={env_path}", returncode=1)
+        pytest.exit(f"❌ Impossible de charger le .env", returncode=1)
