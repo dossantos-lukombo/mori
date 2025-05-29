@@ -8,7 +8,7 @@ from jose import jwt
 
 if not load_dotenv("../.env"):
     print("Could not load .env file")
-    exit(1)
+    pytest.skip("Could not load .env file", allow_module_level=True)
 
 client = TestClient(app,"http://127.0.0.1:3000")
 
