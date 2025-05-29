@@ -83,25 +83,44 @@ jobs:
       - name: Run tests
         working-directory: backend/logic_llm
         run: poetry run pytest . --maxfail=1 --disable-warnings -q
+
+  
   # 3. Smoke Test basique
   smoke:
     needs: test
     runs-on: ubuntu-latest
     steps:
-     # 1️⃣ Auth sur Docker Hub
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
-          registry: docker.io       # optionnel, Docker Hub par défaut
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # 2️⃣ (Optionnel) Pull explicite
       - name: Pull latest image
         run: docker pull docker.io/${{ secrets.DOCKERHUB_USERNAME }}/mori-backend:develop
-      - name: Smoke test
+
+      - name: Start app container
         run: |
-          docker run --rm docker.io/${{ secrets.DOCKERHUB_USERNAME }}/mori-backend:develop sh -c "curl -f http://localhost:8080/health || exit 1"
+          docker run -d --name smoke \
+            -p 8081:8081 \
+            docker.io/${{ secrets.DOCKERHUB_USERNAME }}/mori-backend:develop
+
+      - name: Wait for service
+        run: |
+          for i in {1..10}; do
+            if curl -fs http://localhost:8081/health; then
+              echo "Service is up!" && exit 0
+            fi
+            echo "Waiting for service…"
+            sleep 2
+          done
+          echo "❌ Service did not start in time" && exit 1
+
+      - name: Cleanup
+        run: docker rm -f smoke
+    
+  
+  
   # 4. Scans de sécurité OWASP ZAP
   zap:
     needs: smoke
