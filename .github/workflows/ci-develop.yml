@@ -69,7 +69,7 @@ jobs:
       - name: Install project dependencies
         working-directory: backend/logic_llm
         run: |
-          poetry install --with test
+          poetry install --with test --no-root
 
       - name: Run tests
         working-directory: backend/logic_llm
