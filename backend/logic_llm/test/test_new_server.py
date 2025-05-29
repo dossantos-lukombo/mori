@@ -1,6 +1,6 @@
 import pytest
 from fastapi.testclient import TestClient
-from logic_llm.server import app
+from ..server import app
 import os
 from dotenv import load_dotenv,get_key
 from datetime import datetime, timedelta, timezone
