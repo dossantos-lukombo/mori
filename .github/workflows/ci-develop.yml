@@ -60,16 +60,19 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Install dependencies
-        run: |
-          pip install pytest psycopg2-binary pytest-postgresql
+      # Installer Poetry
+      - name: Install Poetry
+        run: curl -sSL https://install.python-poetry.org | python3 -
 
-      - name: Run Unit & Integration Tests
-        run: |
-          pytest . --maxfail=1 --disable-warnings -q
+      # Installer toutes les dépendances, y compris FastAPI
+      - name: Install project dependencies
+        run: poetry install
+
+      - name: Run tests
+        run: poetry run pytest . --maxfail=1 --disable-warnings -q
   # 3. Smoke Test basique
   smoke:
-    needs: build
+    needs: test
     runs-on: ubuntu-latest
     steps:
      # 1️⃣ Auth sur Docker Hub
