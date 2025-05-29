@@ -72,6 +72,7 @@ jobs:
           poetry install --no-root
 
       - name: Run tests
+        working-directory: backend/logic_llm
         run: poetry run pytest . --maxfail=1 --disable-warnings -q
   # 3. Smoke Test basique
   smoke:
