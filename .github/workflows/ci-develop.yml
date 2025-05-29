@@ -69,13 +69,11 @@ jobs:
       - name: Install project dependencies
         working-directory: backend/logic_llm
         run: |
-          cd backend/logic_llm
           poetry install --no-root
           
       - name: Activate Poetry environment
         working-directory: backend/logic_llm
         run: |
-          cd backend/logic_llm
           poetry env activate
 
       - name: Run tests
