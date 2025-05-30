@@ -152,7 +152,10 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Pull latest image
-        run: docker pull docker.io/${{ secrets.DOCKERHUB_USERNAME }}/mori_dev_repo:develop
+        run: | 
+          docker pull docker.io/${{ secrets.DOCKERHUB_USERNAME }}/mori_dev_repo:develop
+          docker pull docker.io/${{ secrets.DOCKERHUB_USERNAME }}/mori_front_dev_repo:develop
+          docker pull docker.io/${{ secrets.DOCKERHUB_USERNAME }}/mori_llm_server_dev_repo:develop
 
       - name: Start app container
         run: |
@@ -169,6 +172,7 @@ jobs:
           EOF
   
       - name: Docker Compose up
+        working-directory: .
         run: docker compose up -d --build
 
       - name: Wait for service
