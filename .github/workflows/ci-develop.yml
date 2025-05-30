@@ -145,6 +145,10 @@ jobs:
     needs: test
     runs-on: ubuntu-latest
     steps:
+    # 0️⃣ On clone le repo (nécessaire avant toute commande qui lit des fichiers)
+      - name: Checkout code
+        uses: actions/checkout@v3
+
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
