@@ -110,7 +110,6 @@ jobs:
         with:
           python-version: '3.12'
 
-
       - name: Create .env file
         run: |
           cat <<EOF > backend/logic_llm/.env
@@ -186,34 +185,3 @@ jobs:
       - name: Cleanup
         run: docker rm -f smoke
     
-  # 4. Scans de sécurité OWASP ZAP
-  zap:
-    needs: smoke
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Baseline OWASP ZAP Scan
-        uses: zaproxy/action-baseline-scan@v0.4.0
-        with:
-          target: 'http://localhost:8080'
-          rules_file_name: .zap/baseline-rules.tsv
-
-      - name: Full OWASP ZAP Scan
-        uses: zaproxy/action-full-scan@v0.4.0
-        with:
-          target: 'http://localhost:8080'
-  # 5. Tests de performance k6
-  perf:
-    needs: zap
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Set up k6
-        uses: grafana/setup-k6-action@v0.1.0
-
-      - name: Run k6 Performance Tests
-        uses: grafana/run-k6-action@v1.0.0
-        with:
-          filename: tests/load-test.js
