@@ -6,7 +6,7 @@ from dotenv import load_dotenv,get_key
 from datetime import datetime, timedelta, timezone
 from jose import jwt 
 
-if not load_dotenv("../.env"):
+if not load_dotenv():
     print("Could not load .env file")
     pytest.skip("Could not load .env file", allow_module_level=True)
 
