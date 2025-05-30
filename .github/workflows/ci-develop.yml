@@ -169,7 +169,8 @@ jobs:
           REFRESH_SECRET_KEY_LLM=${{ secrets.REFRESH_SECRET_KEY_LLM }}
           EOF
   
-          docker compose -f docker-compose.yml up -d --build
+      - name: Docker Compose up
+        run: docker compose -f docker-compose.yml up -d --build
 
       - name: Wait for service
         run: |
