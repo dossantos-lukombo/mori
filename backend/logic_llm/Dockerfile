@@ -28,7 +28,7 @@ RUN poetry install --no-root
 COPY . .
 
 # Le reste inchangé…
-CMD ["poetry", "run", "uvicorn", "logic_llm.server:app", "--host", "0.0.0.0", "--port", "3000"]
+CMD ["poetry", "run", "uvicorn", "server:app", "--host", "0.0.0.0", "--port", "3000"]
 
 # backend/Dockerfile
 # Image factice : ne sert qu’à valider la CI

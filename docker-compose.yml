@@ -1,22 +1,32 @@
-version: "3.8"
 services:
+  postgres:
+    image: postgres:14-alpine
+    environment:
+      POSTGRES_USER:    "${DB_USER}"
+      POSTGRES_PASSWORD: "${DB_PASSWORD}"
+      POSTGRES_DB:      "${DB_NAME}"
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "mori"]
+      interval: 5s
+      retries: 5
+    volumes:
+      - pgdata:/var/lib/postgresql/data
   go-backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
     container_name: mori-go-backend
+    depends_on:
+     postgres:
+       condition: service_healthy
     working_dir: /app
     ports:
-      - "8081:8081"
+      - "8081:8081"  
     env_file:
-      - ./backend/.env   
-    volumes:
-      - ./backend/.env:/app/.env        
-    environment: # récupère tes secrets SSO LLM et ceux de Supabase
-      - ACCESS_SECRET_KEY_LLM=${ACCESS_SECRET_KEY_LLM}
-      - REFRESH_SECRET_KEY_LLM=${REFRESH_SECRET_KEY_LLM}
-      - DATABASE_URL=${DATABASE_URL}                          # URL PostgreSQL Supabase
-      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}# clé service-role pour opérations server-side
+      - ./backend/.env 
+
     restart: unless-stopped
 
   llm-server:
@@ -26,8 +36,8 @@ services:
     container_name: mori-llm-server
     working_dir: /app
     volumes:
-      - .:/app/logic_llm
-    command: ["poetry", "run", "uvicorn", "logic_llm.server:app", "--host", "0.0.0.0", "--port", "3000"]
+      - ./backend/logic_llm:/app
+    command: ["poetry", "run", "uvicorn", "server:app", "--host", "0.0.0.0", "--port", "3000","--reload"]
     ports:
       - "3000:3000"
     restart: unless-stopped
@@ -45,3 +55,5 @@ services:
     ports:
       - "8080:8080"
     restart: unless-stopped
+volumes:
+  pgdata:

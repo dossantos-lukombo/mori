@@ -21,7 +21,7 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends \
       ca-certificates \
       tzdata \
-      curl &&\
+      curl && \
     rm -rf /var/lib/apt/lists/*
 
 # Utiliser Bash pour une meilleure robustesse des scripts
@@ -31,12 +31,12 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN useradd -u 1001 -r -s /bin/false appuser
 
 # Configuration du fuseau horaire
-ENV TZ=Europe/Paris
+ENV TZ = Europe/Paris
 
 # Variables d'environnement pour la connexion Supabase
 # À surcharger au runtime avec -e ou via Docker Compose / Secrets
-ENV DATABASE_URL="" \
-    SUPABASE_SERVICE_ROLE_KEY=""
+# ENV DATABASE_URL="" \
+#     SUPABASE_SERVICE_ROLE_KEY=""
 
 # Copie des fichiers de migration SQL
 COPY --from=builder /app/pkg/db/migration/PostgreSql /app/pkg/db/migration/PostgreSql

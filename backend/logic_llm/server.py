@@ -2,7 +2,7 @@ from fastapi import FastAPI,Request, HTTPException, Depends
 from pydantic import BaseModel
 
 # Par celle-ci
-from .llm_manager import treating_user_request
+from llm_manager import treating_user_request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from typing import Literal
 from datetime import datetime
