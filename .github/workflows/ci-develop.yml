@@ -61,7 +61,7 @@ jobs:
         with:
           context: ./backend
           push: true
-          tags: docker.io/${{ secrets.DOCKERHUB_USERNAME }}/mori-backend:develop
+          tags: docker.io/${{ secrets.DOCKERHUB_USERNAME }}/moridevteam:backend
 
       # ⚙️ Build & push Frontend
       - name: Build and push frontend image
@@ -69,7 +69,7 @@ jobs:
         with:
           context: ./frontend
           push: true
-          tags: docker.io/${{ secrets.DOCKERHUB_USERNAME }}/mori-frontend:develop
+          tags: docker.io/${{ secrets.DOCKERHUB_USERNAME }}/moridevteam:frontend
 
       # ⚙️ Build & push LLM-server
       - name: Build and push llm-server image
@@ -78,7 +78,7 @@ jobs:
           context: ./backend/logic_llm
           dockerfile: Dockerfile
           push: true
-          tags: docker.io/${{ secrets.DOCKERHUB_USERNAME }}/mori-llm-server:develop
+          tags: docker.io/${{ secrets.DOCKERHUB_USERNAME }}/moridevteam:llm-server
 
 
   # 2. Tests unitaires & d'intégration (pytest-postgresql example)
