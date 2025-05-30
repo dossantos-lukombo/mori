@@ -176,7 +176,6 @@ jobs:
           EOF
   
       - name: Docker Compose up
-        working-directory: .
         run: docker compose up -d --build
 
       - name: Wait for service
