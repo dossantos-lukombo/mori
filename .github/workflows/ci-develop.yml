@@ -79,10 +79,10 @@ jobs:
       - name: Install project dependencies
         working-directory: backend/logic_llm
         run: |
-          poetry install --with test --no-root
+          poetry install --with test
       - name: Run tests
         working-directory: backend/logic_llm
-        run: poetry run pytest . --maxfail=1 --disable-warnings -q
+        run: poetry run pytest test/ --maxfail=1 --disable-warnings -q
 
   
   # 3. Smoke Test basique
