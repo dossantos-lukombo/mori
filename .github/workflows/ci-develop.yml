@@ -97,13 +97,13 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Pull latest image
-        run: docker pull ${{ secrets.DOCKERHUB_USERNAME }}/mori_dev_repo:develop
+        run: docker pull docker.io/${{ secrets.DOCKERHUB_USERNAME }}/mori_dev_repo:develop
 
       - name: Start app container
         run: |
-          docker run -d --name smoke \
+          docker run --name smoke \
             -p 8081:8081 \
-            ${{ secrets.DOCKERHUB_USERNAME }}/mori_dev_repo:develop
+            docker.io/${{ secrets.DOCKERHUB_USERNAME }}/mori_dev_repo:develop
 
       - name: Wait for service
         run: |
