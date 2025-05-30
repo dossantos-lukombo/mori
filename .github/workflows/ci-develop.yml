@@ -1,187 +1,262 @@
-# .github/workflows/ci-develop_stable.yml
-name: CI Develop Stable
-
+# .github/workflows/cd-production.yml
+name: CD Production
 on:
   push:
-    branches:
-      - test_ci
+    branches: [ test_ci ]
 
 jobs:
-  build:
+  deploy:
     runs-on: ubuntu-latest
-    env:
-      DB_USER:     ${{ secrets.DB_USER }}
-      DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-      DB_NAME:     ${{ secrets.DB_NAME }}
-      ACCESS_SECRET_KEY_LLM:  ${{ secrets.ACCESS_SECRET_KEY_LLM }}
-      REFRESH_SECRET_KEY_LLM: ${{ secrets.REFRESH_SECRET_KEY_LLM }}
+    permissions:
+      contents: read
+
     steps:
-      - name: Checkout
+      # 1️⃣ Checkout
+      - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Préparer backend/.env pour Compose
-        run: |
-          cat <<EOF > backend/.env
-          DB_HOST=postgres
-          DB_PORT=5432
-          DB_USER=${{ secrets.DB_USER }}
-          DB_PASSWORD=${{ secrets.DB_PASSWORD }}
-          DB_NAME=${{ secrets.DB_NAME }}
-          DB_SSLMODE=disable
-          ACCESS_SECRET_KEY_LLM=${{ secrets.ACCESS_SECRET_KEY_LLM }}
-          REFRESH_SECRET_KEY_LLM=${{ secrets.REFRESH_SECRET_KEY_LLM }}
-          EOF
-
-      - name: Docker Compose up (Postgres + Go + LLM + Front)
-        run: docker compose -f docker-compose.yml up -d --build
-
-      - name: Attendre Go-backend
-        run: |
-          for i in {1..10}; do
-            if curl -fs http://localhost:8081/health; then exit 0; fi
-            sleep 2
-          done
-          exit 1
-
-      - name: Docker Compose down
-        run: docker compose -f docker-compose.yml down
-
-      # ────────────────────────────────────────────────────────────
-      # 🔑 Connexion à Docker Hub
+      # 2️⃣ Login sur Docker Hub
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # ────────────────────────────────────────────────────────────
-      # ⚙️ Build & push Backend
-      - name: Build and push backend image
+      # 3️⃣ Lint de tous les Dockerfiles
+      - name: Hadolint Dockerfiles
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: |
+            backend/Dockerfile
+            backend/logic_llm/Dockerfile
+            frontend/Dockerfile
+
+      # 4️⃣ Build & push de TOUTES les images
+      - name: Build & Push images to Docker Hub
         uses: docker/build-push-action@v6
         with:
-          context: ./backend
+          context: .
           push: true
-          tags: docker.io/${{ secrets.DOCKERHUB_USERNAME }}/mori-backend:develop
+          tags: |
+            docker.io/${{ secrets.DOCKERHUB_USERNAME }}/backend:latest
+            docker.io/${{ secrets.DOCKERHUB_USERNAME }}/llm:latest
+            docker.io/${{ secrets.DOCKERHUB_USERNAME }}/frontend:latest
 
-      # ⚙️ Build & push Frontend
-      - name: Build and push frontend image
-        uses: docker/build-push-action@v6
-        with:
-          context: ./frontend
-          push: true
-          tags: docker.io/${{ secrets.DOCKERHUB_USERNAME }}/mori-frontend:develop
-
-      # ⚙️ Build & push LLM-server
-      - name: Build and push llm-server image
-        uses: docker/build-push-action@v6
-        with:
-          context: ./backend/logic_llm
-          dockerfile: Dockerfile
-          push: true
-          tags: docker.io/${{ secrets.DOCKERHUB_USERNAME }}/mori-llm-server:develop
-
-
-  # 2. Tests unitaires & d'intégration (pytest-postgresql example)
-  test:
-    needs: build
-    runs-on: ubuntu-latest
-    env:
-      DATABASE_URL: ${{ secrets.DATABASE_URL }}
-      ACCESS_SECRET_KEY_LLM: ${{ secrets.ACCESS_SECRET_KEY_LLM }}
-      REFRESH_SECRET_KEY_LLM: ${{ secrets.REFRESH_SECRET_KEY_LLM }}
-    # services:
-    #   postgres:
-    #     image: postgres:14.14
-    #     env:
-    #       POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
-    #       POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
-    #       # POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
-    #     ports:
-    #       - 5432:5432
-    #     options: >-
-    #       --health-cmd "pg_isready -U postgres"
-    #       --health-interval=20s
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Setup Python
-        
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.12'
-
-      - name: Create .env file
+      # 5️⃣ Health-check rapide du backend
+      - name: Healthcheck Backend
         run: |
-          cat <<EOF > backend/logic_llm/.env
-          ACCESS_SECRET_KEY_LLM=${{ secrets.ACCESS_SECRET_KEY_LLM }}
-          REFRESH_SECRET_KEY_LLM=${{ secrets.REFRESH_SECRET_KEY_LLM }}
-          EOF
-
-      # Installer Poetry
-      - name: Install Poetry
-        run: curl -sSL https://install.python-poetry.org | python3 -
-
-      # Installer toutes les dépendances, y compris FastAPI
-      - name: Install project dependencies
-        working-directory: backend/logic_llm
-        run: |
-          poetry install --with test
-      - name: Run tests
-        working-directory: backend/logic_llm
-        run: poetry run pytest test/ --maxfail=1 --disable-warnings -q
-
-      - name: Setup Go (for backend tests)
-        uses: actions/setup-go@v4
-        with:
-          go-version: '1.24'
-
-      - name: Run Go-backend tests
-        working-directory: backend
-        run: |
-          go test ./test -v
-
-  # 3. Smoke Test basique
-  smoke:
-    needs: test
-    runs-on: ubuntu-latest
-    steps:
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Pull latest image
-        run: docker pull docker.io/${{ secrets.DOCKERHUB_USERNAME }}/mori_dev_repo:develop
-
-      - name: Start app container
-        run: |
-          # on génère un .env identique à celui utilisé en dev/local
-          cat <<EOF > .env
-          DB_HOST=mori
-          DB_PORT=5432
-          DB_USER=${{ secrets.DB_USER }}
-          DB_PASSWORD=${{ secrets.DB_PASSWORD }}
-          DB_NAME=${{ secrets.DB_NAME }}
-          DB_SSLMODE=disable
-          ACCESS_SECRET_KEY_LLM=${{ secrets.ACCESS_SECRET_KEY_LLM }}
-          REFRESH_SECRET_KEY_LLM=${{ secrets.REFRESH_SECRET_KEY_LLM }}
-          EOF
-  
-      - name: Docker Compose up
-        run: docker compose up -d --build
-
-      - name: Wait for service
-        run: |
+          CONTAINER=$(docker run -d -p 8081:8081 \
+            docker.io/${{ secrets.DOCKERHUB_USERNAME }}/backend:latest)
+          # on attend que /health réponde
           for i in {1..10}; do
             if curl -fs http://localhost:8081/health; then
-              echo "Service is up!" && exit 0
+              echo "✅ Backend is healthy" && break
             fi
-            echo "Waiting for service…"
             sleep 2
           done
-          echo "❌ Service did not start in time" && exit 1
+          docker rm -f $CONTAINER
 
-      - name: Cleanup
-        run: docker rm -f smoke
+      # 6️⃣ Déploiement sur le VPS via SSH
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@v0.1.8
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            cd /path/to/your/stack
+            # Met à jour toutes les images
+            docker pull docker.io/${{ secrets.DOCKERHUB_USERNAME }}/backend:latest
+            docker pull docker.io/${{ secrets.DOCKERHUB_USERNAME }}/llm:latest
+            docker pull docker.io/${{ secrets.DOCKERHUB_USERNAME }}/frontend:latest
+            # Re­déploie
+            docker compose pull
+            docker compose up -d
+
+# # .github/workflows/ci-develop_stable.yml
+# name: CI Develop Stable
+
+# on:
+#   push:
+#     branches:
+#       - test_ci
+
+# jobs:
+#   build:
+#     runs-on: ubuntu-latest
+#     env:
+#       DB_USER:     ${{ secrets.DB_USER }}
+#       DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+#       DB_NAME:     ${{ secrets.DB_NAME }}
+#       ACCESS_SECRET_KEY_LLM:  ${{ secrets.ACCESS_SECRET_KEY_LLM }}
+#       REFRESH_SECRET_KEY_LLM: ${{ secrets.REFRESH_SECRET_KEY_LLM }}
+#     steps:
+#       - name: Checkout
+#         uses: actions/checkout@v3
+
+#       - name: Préparer backend/.env pour Compose
+#         run: |
+#           cat <<EOF > backend/.env
+#           DB_HOST=postgres
+#           DB_PORT=5432
+#           DB_USER=${{ secrets.DB_USER }}
+#           DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+#           DB_NAME=${{ secrets.DB_NAME }}
+#           DB_SSLMODE=disable
+#           ACCESS_SECRET_KEY_LLM=${{ secrets.ACCESS_SECRET_KEY_LLM }}
+#           REFRESH_SECRET_KEY_LLM=${{ secrets.REFRESH_SECRET_KEY_LLM }}
+#           EOF
+
+#       - name: Docker Compose up (Postgres + Go + LLM + Front)
+#         run: docker compose -f docker-compose.yml up -d --build
+
+#       - name: Attendre Go-backend
+#         run: |
+#           for i in {1..10}; do
+#             if curl -fs http://localhost:8081/health; then exit 0; fi
+#             sleep 2
+#           done
+#           exit 1
+
+#       - name: Docker Compose down
+#         run: docker compose -f docker-compose.yml down
+
+#       # ────────────────────────────────────────────────────────────
+#       # 🔑 Connexion à Docker Hub
+#       - name: Log in to Docker Hub
+#         uses: docker/login-action@v3
+#         with:
+#           username: ${{ secrets.DOCKERHUB_USERNAME }}
+#           password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+#       # ────────────────────────────────────────────────────────────
+#       # ⚙️ Build & push Backend
+#       - name: Build and push backend image
+#         uses: docker/build-push-action@v6
+#         with:
+#           context: ./backend
+#           push: true
+#           tags: docker.io/${{ secrets.DOCKERHUB_USERNAME }}/mori-backend:develop
+
+#       # ⚙️ Build & push Frontend
+#       - name: Build and push frontend image
+#         uses: docker/build-push-action@v6
+#         with:
+#           context: ./frontend
+#           push: true
+#           tags: docker.io/${{ secrets.DOCKERHUB_USERNAME }}/mori-frontend:develop
+
+#       # ⚙️ Build & push LLM-server
+#       - name: Build and push llm-server image
+#         uses: docker/build-push-action@v6
+#         with:
+#           context: ./backend/logic_llm
+#           dockerfile: Dockerfile
+#           push: true
+#           tags: docker.io/${{ secrets.DOCKERHUB_USERNAME }}/mori-llm-server:develop
+
+
+#   # 2. Tests unitaires & d'intégration (pytest-postgresql example)
+#   test:
+#     needs: build
+#     runs-on: ubuntu-latest
+#     env:
+#       DATABASE_URL: ${{ secrets.DATABASE_URL }}
+#       ACCESS_SECRET_KEY_LLM: ${{ secrets.ACCESS_SECRET_KEY_LLM }}
+#       REFRESH_SECRET_KEY_LLM: ${{ secrets.REFRESH_SECRET_KEY_LLM }}
+#     # services:
+#     #   postgres:
+#     #     image: postgres:14.14
+#     #     env:
+#     #       POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+#     #       POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+#     #       # POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
+#     #     ports:
+#     #       - 5432:5432
+#     #     options: >-
+#     #       --health-cmd "pg_isready -U postgres"
+#     #       --health-interval=20s
+#     steps:
+#       - uses: actions/checkout@v3
+
+#       - name: Setup Python
+        
+#         uses: actions/setup-python@v4
+#         with:
+#           python-version: '3.12'
+
+#       - name: Create .env file
+#         run: |
+#           cat <<EOF > backend/logic_llm/.env
+#           ACCESS_SECRET_KEY_LLM=${{ secrets.ACCESS_SECRET_KEY_LLM }}
+#           REFRESH_SECRET_KEY_LLM=${{ secrets.REFRESH_SECRET_KEY_LLM }}
+#           EOF
+
+#       # Installer Poetry
+#       - name: Install Poetry
+#         run: curl -sSL https://install.python-poetry.org | python3 -
+
+#       # Installer toutes les dépendances, y compris FastAPI
+#       - name: Install project dependencies
+#         working-directory: backend/logic_llm
+#         run: |
+#           poetry install --with test
+#       - name: Run tests
+#         working-directory: backend/logic_llm
+#         run: poetry run pytest test/ --maxfail=1 --disable-warnings -q
+
+#       - name: Setup Go (for backend tests)
+#         uses: actions/setup-go@v4
+#         with:
+#           go-version: '1.24'
+
+#       - name: Run Go-backend tests
+#         working-directory: backend
+#         run: |
+#           go test ./test -v
+
+#   # 3. Smoke Test basique
+#   smoke:
+#     needs: test
+#     runs-on: ubuntu-latest
+#     steps:
+#       - name: Log in to Docker Hub
+#         uses: docker/login-action@v3
+#         with:
+#           username: ${{ secrets.DOCKERHUB_USERNAME }}
+#           password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+#       - name: Pull latest image
+#         run: docker pull docker.io/${{ secrets.DOCKERHUB_USERNAME }}/mori_dev_repo:develop
+
+#       - name: Start app container
+#         run: |
+#           # on génère un .env identique à celui utilisé en dev/local
+#           cat <<EOF > .env
+#           DB_HOST=mori
+#           DB_PORT=5432
+#           DB_USER=${{ secrets.DB_USER }}
+#           DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+#           DB_NAME=${{ secrets.DB_NAME }}
+#           DB_SSLMODE=disable
+#           ACCESS_SECRET_KEY_LLM=${{ secrets.ACCESS_SECRET_KEY_LLM }}
+#           REFRESH_SECRET_KEY_LLM=${{ secrets.REFRESH_SECRET_KEY_LLM }}
+#           EOF
+  
+#       - name: Docker Compose up
+#         run: docker compose up -d --build
+
+#       - name: Wait for service
+#         run: |
+#           for i in {1..10}; do
+#             if curl -fs http://localhost:8081/health; then
+#               echo "Service is up!" && exit 0
+#             fi
+#             echo "Waiting for service…"
+#             sleep 2
+#           done
+#           echo "❌ Service did not start in time" && exit 1
+
+#       - name: Cleanup
+#         run: docker rm -f smoke
     
