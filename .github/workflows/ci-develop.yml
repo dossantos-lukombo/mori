@@ -71,7 +71,7 @@ jobs:
 
       # 5️⃣ Teardown de la stack locale avant la suite
       - name: Docker Compose down
-        run: docker-compose -f docker-compose.yml down
+        run: docker compose -f docker-compose.yml down
 
       # 6️⃣ (Optionnel) Connexion à Docker Hub pour push d’images
       - name: Log in to Docker Hub
