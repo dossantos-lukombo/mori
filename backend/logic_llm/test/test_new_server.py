@@ -1,6 +1,6 @@
 import pytest
 from fastapi.testclient import TestClient
-from ..server import app
+from mori.server import app
 import os
 from dotenv import load_dotenv,get_key
 from datetime import datetime, timedelta, timezone
