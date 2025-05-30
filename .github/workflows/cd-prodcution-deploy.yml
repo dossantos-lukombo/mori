@@ -1,0 +1,29 @@
+# .github/workflows/cd-production-push.yml
+name: Deploy → Production
+
+on:
+  push:
+    branches: [ production ]
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: SSH to VPS & deploy
+        uses: appleboy/ssh-action@v0.1.8
+        with:
+          host:       ${{ secrets.SSH_HOST }}
+          username:   ${{ secrets.SSH_USER }}
+          key:        ${{ secrets.SSH_KEY }}
+          script: |
+            cd /path/to/compose
+            # Pull toutes les images versionnées
+            docker pull docker.io/${{ secrets.DOCKERHUB_USERNAME }}/mori-backend:latest
+            docker pull docker.io/${{ secrets.DOCKERHUB_USERNAME }}/mori-llm:latest
+            docker pull docker.io/${{ secrets.DOCKERHUB_USERNAME }}/mori-frontend:latest
+            # Déploiement
+            docker compose pull
+            docker compose up -d

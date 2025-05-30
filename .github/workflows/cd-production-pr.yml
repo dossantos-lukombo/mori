@@ -1,0 +1,93 @@
+# .github/workflows/cd-production-pr.yml
+name: PR → Production (final checks)
+
+on:
+  pull_request:
+    branches: [ production ]
+
+env:
+  SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+  ACCESS_SECRET_KEY_LLM: ${{ secrets.ACCESS_SECRET_KEY_LLM }}
+  REFRESH_SECRET_KEY_LLM: ${{ secrets.REFRESH_SECRET_KEY_LLM }}
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: 🛎️ Checkout code
+      uses: actions/checkout@v3
+
+    # ─── Frontend ───────────────────────────────────
+    - name: 🎨 Setup Node.js
+      uses: actions/setup-node@v4
+      with: node-version: '18'
+    - name: 🚧 Install & Build Frontend
+      working-directory: frontend
+      run: |
+        npm ci
+        npm run build
+    - name: 🔍 Smoke‐test Frontend
+      run: |
+        docker build -t mori-frontend:pr-test frontend
+        docker run -d --name smoke-frontend -p 8080:8080 mori-frontend:pr-test
+        curl -fs http://localhost:8080/health
+
+    # ─── Go‐Backend ──────────────────────────────────
+    - name: 🚀 Setup Go
+      uses: actions/setup-go@v4
+      with: go-version: '1.24'
+    - name: 🧪 Run Go‐backend unit tests
+      working-directory: backend
+      run: go test ./... -v
+    - name: 🔍 Smoke‐test Go‐backend
+      run: |
+        docker build -t mori-backend:pr-test backend
+        docker run -d --name smoke-backend -p 8081:8081 mori-backend:pr-test
+        curl -fs http://localhost:8081/health
+
+    # ─── LLM‐Server ─────────────────────────────────
+    - name: 🐍 Setup Python
+      uses: actions/setup-python@v4
+      with: python-version: '3.11'
+    - name: 📦 Install Poetry & LLM deps
+      run: |
+        curl -sSL https://install.python-poetry.org | python3 -
+        poetry config virtualenvs.create false
+        cd backend/logic_llm
+        poetry install --no-root --with test
+    - name: 🧪 Run LLM‐server tests
+      working-directory: backend/logic_llm
+      run: poetry run pytest --maxfail=1 --disable-warnings -q
+    - name: 🔍 Smoke‐test LLM‐server
+      run: |
+        docker build -t mori-llm:pr-test backend/logic_llm
+        docker run -d --name smoke-llm -p 3000:3000 mori-llm:pr-test
+        curl -fs http://localhost:3000/health
+
+    # ─── Supabase DB ────────────────────────────────
+    - name: 🗄️ Test Supabase connectivity
+      run: |
+        pip install psycopg2-binary
+        python - <<EOF
+        import os, psycopg2
+        conn = psycopg2.connect(os.getenv("SUPABASE_DB_URL"))
+        conn.cursor().execute("SELECT 1")
+        print("✅ Supabase reachable")
+        conn.close()
+        EOF
+
+    - name: ⚙️ Install Supabase CLI
+      run: |
+        # Installe le binaire officiel
+        curl -fsSL https://raw.githubusercontent.com/supabase/cli/master/install.sh | sh
+
+    - name: 🔄 Supabase migrations status (dry-run)
+      run: |
+        supabase db remote set "$SUPABASE_DB_URL"
+        supabase migrations status
+
+    # ─── Cleanup containers ─────────────────────────
+    - name: 🧹 Teardown all smoke‐test containers
+      run: |
+        docker rm -f smoke-frontend smoke-backend smoke-llm || true

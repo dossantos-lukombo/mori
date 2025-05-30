@@ -1,0 +1,21 @@
+# .github/workflows/commit-lint.yml
+name: Commit Lint
+
+on:
+  push:
+    branches:
+      - 'feature/**'
+      - 'bugfix/**'
+      - 'hotfix/**'
+      - 'chore/**'
+      - 'release/**'
+
+jobs:
+  commitlint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Lint commits with commitlint
+        uses: wagoid/commitlint-github-action@v4
+        with:
+          configFile: .commitlintrc.js
