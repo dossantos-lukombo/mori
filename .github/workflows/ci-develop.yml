@@ -101,7 +101,18 @@ jobs:
 
       - name: Start app container
         run: |
-          docker run --name smoke \
+          # on génère un .env identique à celui utilisé en dev/local
+          cat <<EOF > .env
+          DB_HOST=postgres
+          DB_PORT=5432
+          DB_USER=${{ secrets.DB_USER }}
+          DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+          DB_NAME=${{ secrets.DB_NAME }}
+          DB_SSLMODE=disable
+          ACCESS_SECRET_KEY_LLM=${{ secrets.ACCESS_SECRET_KEY_LLM }}
+          REFRESH_SECRET_KEY_LLM=${{ secrets.REFRESH_SECRET_KEY_LLM }}
+          EOF
+          docker run --rm --name smoke \
             -p 8081:8081 \
             docker.io/${{ secrets.DOCKERHUB_USERNAME }}/mori_dev_repo:develop
 
