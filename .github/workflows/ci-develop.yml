@@ -97,13 +97,13 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Pull latest image
-        run: docker pull docker.io/${{ secrets.DOCKERHUB_USERNAME }}/mori_dev_repo:develop
+        run: docker pull ${{ secrets.DOCKERHUB_USERNAME }}/mori_dev_repo:develop
 
       - name: Start app container
         run: |
           docker run -d --name smoke \
             -p 8081:8081 \
-            docker.io/${{ secrets.DOCKERHUB_USERNAME }}/mori_dev_repo:develop
+            ${{ secrets.DOCKERHUB_USERNAME }}/mori_dev_repo:develop
 
       - name: Wait for service
         run: |
@@ -150,15 +150,3 @@ jobs:
         uses: grafana/run-k6-action@v1.0.0
         with:
           filename: tests/load-test.js
-  # 6. Monitorage des métriques GitHub Actions
-  # monitor:
-  #   needs:
-  #     - build
-  #     - test
-  #     - smoke
-  #     - zap
-  #     - perf
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Record GitHub Actions Metrics
-  #       run: echo "Workflows monitored via GitHub Actions Metrics"
