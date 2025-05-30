@@ -2,29 +2,31 @@ import pytest
 import os
 import json
 from fastapi.testclient import TestClient
-from mori.server import app
-from mori.llm_manager import treating_user_request
+import mori.server as server_mod
 from datetime import datetime, timedelta, timezone
 from jose import jwt
 from dotenv import load_dotenv
 
-# Stub pour éviter l'appel réel à Ollama en CI\ n@pytest.fixture(autouse=True)
+# Stub Ollama via patch dans server_mod
+@pytest.fixture(autouse=True)
 def stub_chat(monkeypatch):
     def fake_treating_user_request(entry_data):
-        # Renvoie un chunk factice
+        # Renvoie un chunk factice pour tests
         yield {
             "message": {"content": "Dummy response"},
             "created_at": datetime.now(timezone.utc).isoformat()
         }
-    monkeypatch.setattr("mori.llm_manager.treating_user_request", fake_treating_user_request)
+    # Patch dans le module server pour que generate_stream utilise fake
+    monkeypatch.setattr(server_mod, 'treating_user_request', fake_treating_user_request)
 
-# Charge le .env pour les secrets
+# Charge les variables d'env depuis .env
 if not load_dotenv():
     pytest.skip("Could not load .env file", allow_module_level=True)
 
-client = TestClient(app, base_url="http://test")
+# Client FastAPI
+client = TestClient(server_mod.app, base_url="http://test")
 
-# Fonction utilitaire pour créer un JWT valide
+# Utilitaire pour créer un JWT valide
 
 def create_jwt_token():
     payload = {
@@ -45,13 +47,16 @@ def test_health_check():
 
 def test_receive_data():
     token = create_jwt_token()
-    data = {"user_id": "test_user", "conversation_id": "test_convo", "message": "Hello, how are you?"}
+    data = {
+        "user_id": "test_user",
+        "conversation_id": "test_convo",
+        "message": "Hello, how are you?"
+    }
     headers = {"Authorization": f"Bearer {token}"}
     response = client.post("/llm-protected", json=data, headers=headers)
     assert response.status_code == 200
-    # Vérifie que le SSE contient notre chunk factice
+    # Vérifie que la réponse SSE contient notre chunk factice
     assert "data:" in response.text
-    # Parse le JSON du premier chunk
     chunk = response.text.split("data: ")[1].strip()
     payload = json.loads(chunk)
     assert payload["status"] == "success"
