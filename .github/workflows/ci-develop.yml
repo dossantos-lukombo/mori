@@ -9,9 +9,29 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      DB_USER:     ${{ secrets.DB_USER }}
+      DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+      DB_NAME:     ${{ secrets.DB_NAME }}
+      ACCESS_SECRET_KEY_LLM:  ${{ secrets.ACCESS_SECRET_KEY_LLM }}
+      REFRESH_SECRET_KEY_LLM: ${{ secrets.REFRESH_SECRET_KEY_LLM }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+      
+      - name: Create backend/.env for Compose
+        run: |
+          cat <<EOF > backend/.env
+          DB_HOST=postgres
+          DB_PORT=5432
+          DB_USER=${{ secrets.DB_USER }}
+          DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+          DB_NAME=${{ secrets.DB_NAME }}
+          DB_SSLMODE=disable
+          ACCESS_SECRET_KEY_LLM=${{ secrets.ACCESS_SECRET_KEY_LLM }}
+          REFRESH_SECRET_KEY_LLM=${{ secrets.REFRESH_SECRET_KEY_LLM }}
+          EOF
+
 
       # 1️⃣ Builder et démarrer la stack locale
       - name: Docker Compose up
