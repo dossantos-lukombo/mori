@@ -37,7 +37,7 @@ services:
     working_dir: /app
     volumes:
       - ./backend/logic_llm:/app
-    command: ["uvicorn", "mori.server:app", "--host", "0.0.0.0", "--port", "3000","--reload"]
+    command: ["uvicorn", "mori.server:app", "--host", "localhost", "--port", "3000","--reload"]
     ports:
       - "3000:3000"
     restart: unless-stopped
