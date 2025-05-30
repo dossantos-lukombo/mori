@@ -33,7 +33,6 @@ jobs:
           push: true
           tags: docker.io/${{ secrets.DOCKERHUB_USERNAME }}/mori_dev_repo:develop
 
-
   # 2. Tests unitaires & d'intégration (pytest-postgresql example)
   test:
     needs: build
@@ -84,7 +83,6 @@ jobs:
         working-directory: backend/logic_llm
         run: poetry run pytest test/ --maxfail=1 --disable-warnings -q
 
-  
   # 3. Smoke Test basique
   smoke:
     needs: test
@@ -114,6 +112,7 @@ jobs:
           EOF
           docker run --rm --name smoke \
             -p 8081:8081 \
+            --env-file .env \
             docker.io/${{ secrets.DOCKERHUB_USERNAME }}/mori_dev_repo:develop
 
       - name: Wait for service
