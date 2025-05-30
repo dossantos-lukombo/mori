@@ -119,8 +119,6 @@ jobs:
       - name: Cleanup
         run: docker rm -f smoke
     
-  
-  
   # 4. Scans de sécurité OWASP ZAP
   zap:
     needs: smoke
@@ -140,7 +138,7 @@ jobs:
           target: 'http://localhost:8080'
   # 5. Tests de performance k6
   perf:
-    needs: smoke
+    needs: zap
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3

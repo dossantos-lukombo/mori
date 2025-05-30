@@ -44,6 +44,10 @@ func setRoutes(handler *handlers.Handler, wsServer *ws.Server) http.Handler {
 	fs := http.FileServer(http.Dir("./"))
 	// mux.Handle("/imageUpload/", http.StripPrefix("/imageUpload/", utils.ConfigFSHeader(fs)))
 	mux.Handle("/", fs)
+	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.Write([]byte(`{"status":"ok"}`))
+	})
 	/* ------------------------------- auth route ------------------------------- */
 	mux.HandleFunc("/register", handler.Register)
 	mux.HandleFunc("/signin", handler.Signin)
