@@ -28,19 +28,4 @@ RUN poetry install --no-root
 COPY . .
 
 # Le reste inchangé…
-CMD ["poetry", "run", "uvicorn", "server:app", "--host", "0.0.0.0", "--port", "3000"]
-
-# backend/Dockerfile
-# Image factice : ne sert qu’à valider la CI
-
-# FROM python:3.11.9-slim
-
-# WORKDIR /app
-
-# # Création d’un utilisateur non-root sans dépendances APT
-# RUN adduser --disabled-password --gecos "" appuser \
-#  && chown -R appuser:appuser /app
-
-# USER appuser
-
-# CMD ["python", "-c", "print('LLM image OK')"]
+CMD ["uvicorn", "mori.server:app", "--host", "0.0.0.0", "--port", "3000"]

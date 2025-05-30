@@ -5,6 +5,10 @@ description = "Project with Daryl & Quentin for the rncp"
 authors = ["Santos <santoslukombo@gmail.com>"]
 readme = "README.md"
 
+packages = [
+  { include = "mori" }
+]
+
 [tool.poetry.dependencies]
 python = "^3.11"
 fastapi = "^0.115.5"
