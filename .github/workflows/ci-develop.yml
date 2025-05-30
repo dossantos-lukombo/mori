@@ -18,8 +18,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-      
-      - name: Create backend/.env for Compose
+
+      - name: Préparer backend/.env pour Compose
         run: |
           cat <<EOF > backend/.env
           DB_HOST=postgres
@@ -32,61 +32,54 @@ jobs:
           REFRESH_SECRET_KEY_LLM=${{ secrets.REFRESH_SECRET_KEY_LLM }}
           EOF
 
+      - name: Docker Compose up (Postgres + Go + LLM + Front)
+        run: docker compose -f docker-compose.yml up -d --build
 
-      # 1️⃣ Builder et démarrer la stack locale
-      - name: Docker Compose up
-        run: |
-          # remplace par ton fichier compose local ou un override dédié
-          docker compose -f docker-compose.yml up -d --build
-
-      # 2️⃣ Attendre et tester LLM-server
-      - name: Wait for LLM-server (port 3000)
+      - name: Attendre Go-backend
         run: |
           for i in {1..10}; do
-            if curl -fs http://localhost:3000/health; then
-              echo "✅ LLM-server ready" && break
-            fi
-            echo "⏳ Waiting for LLM-server…" && sleep 2
+            if curl -fs http://localhost:8081/health; then exit 0; fi
+            sleep 2
           done
+          exit 1
 
-      # 3️⃣ Attendre et tester Go-backend
-      - name: Wait for Go-backend (port 8081)
-        run: |
-          for i in {1..10}; do
-            if curl -fs http://localhost:8081/health; then
-              echo "✅ Go-backend ready" && break
-            fi
-            echo "⏳ Waiting for Go-backend…" && sleep 2
-          done
-
-      # 4️⃣ Tester Postgres
-      - name: Wait for Postgres
-        run: |
-          for i in {1..10}; do
-            if docker exec $(docker ps -qf "name=postgres") pg_isready -U ${{ secrets.DB_USER }}; then
-              echo "✅ Postgres ready" && break
-            fi
-            echo "⏳ Waiting for Postgres…" && sleep 2
-          done
-
-      # 5️⃣ Teardown de la stack locale avant la suite
       - name: Docker Compose down
         run: docker compose -f docker-compose.yml down
 
-      # 6️⃣ (Optionnel) Connexion à Docker Hub pour push d’images
+      # ────────────────────────────────────────────────────────────
+      # 🔑 Connexion à Docker Hub
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # 7️⃣ Build & push de ton image Go-backend
-      - name: Build and push image (CI)
+      # ────────────────────────────────────────────────────────────
+      # ⚙️ Build & push Backend
+      - name: Build and push backend image
         uses: docker/build-push-action@v6
         with:
           context: ./backend
           push: true
           tags: docker.io/${{ secrets.DOCKERHUB_USERNAME }}/mori-backend:develop
+
+      # ⚙️ Build & push Frontend
+      - name: Build and push frontend image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./frontend
+          push: true
+          tags: docker.io/${{ secrets.DOCKERHUB_USERNAME }}/mori-frontend:develop
+
+      # ⚙️ Build & push LLM-server
+      - name: Build and push llm-server image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./backend/logic_llm
+          dockerfile: Dockerfile
+          push: true
+          tags: docker.io/${{ secrets.DOCKERHUB_USERNAME }}/mori-llm-server:develop
+
 
   # 2. Tests unitaires & d'intégration (pytest-postgresql example)
   test:
