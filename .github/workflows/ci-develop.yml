@@ -17,7 +17,7 @@ jobs:
       - name: Docker Compose up
         run: |
           # remplace par ton fichier compose local ou un override dédié
-          docker-compose -f ./docker-compose.yml up -d --build
+          docker compose -f docker-compose.yml up -d --build
 
       # 2️⃣ Attendre et tester LLM-server
       - name: Wait for LLM-server (port 3000)
