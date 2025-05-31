@@ -4,12 +4,7 @@ name: CI Develop Stable
 on:
   push:
     branches:
-      - test_ci_cd
-  pull_request:
-    types: 
-      - closed
-    branches:
-      - test_ci_cd
+      - test_ci
 
 jobs:
   build:
@@ -63,16 +58,18 @@ jobs:
           done
           echo "❌ Le LLM-server n'a pas démarré dans les temps" && exit 1
 
-      - name: Attendre Frontend (/health)
+      - name: Attendre Frontend (/)
         run: |
           for i in {1..10}; do
-            if curl -fs http://localhost:8080/health; then
+            # On teste la racine du frontend plutôt que /health
+            status=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/)
+            if [ "$status" = "200" ]; then
               echo "Frontend est prêt !" && exit 0
             fi
             echo "Attente Frontend…"
             sleep 2
           done
-          echo "❌ Le Frontend n'a pas démarré dans les temps" && exit 1
+          echo "❌ Le Frontend n'a pas démarré dans les temps (status != 200)" && exit 1
 
       - name: Docker Compose down
         run: docker compose -f docker-compose.yml down -v
@@ -110,6 +107,7 @@ jobs:
           dockerfile: Dockerfile
           push: true
           tags: docker.io/${{ secrets.DOCKERHUB_USERNAME }}/mori_dev_repo:llm-server
+
 
   test:
     needs: build
@@ -233,16 +231,17 @@ jobs:
           done
           echo "❌ Le LLM-server n'a pas démarré dans les temps" && exit 1
 
-      - name: Attendre Frontend (/health)
+      - name: Attendre Frontend (/)
         run: |
           for i in {1..10}; do
-            if curl -fs http://localhost:8080/health; then
+            status=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/)
+            if [ "$status" = "200" ]; then
               echo "Frontend est prêt !" && exit 0
             fi
             echo "Attente Frontend…"
             sleep 2
           done
-          echo "❌ Le Frontend n'a pas démarré dans les temps" && exit 1
+          echo "❌ Le Frontend n'a pas démarré dans les temps (status != 200)" && exit 1
 
       - name: Cleanup
         run: docker compose -f docker-compose.yml down -v
