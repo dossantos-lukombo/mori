@@ -1,0 +1,38 @@
+#### `.github/workflows/version-bump.yml`
+name: Bump version automatique
+
+# Lorsqu’une PR vers develop est fermée (closed)
+on:
+  pull_request:
+    types:
+      - closed
+    branches:
+      - develop
+
+jobs:
+  bump-version:
+    # N’exécute le job que si la PR est mergée
+    if: ${{ github.event.pull_request.merged == true }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout develop
+        uses: actions/checkout@v3
+        with:
+          ref: develop
+          fetch-depth: 0     # Nécessaire pour récupérer l’historique des commits et tags
+
+      - name: Installer Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Installer les dépendances
+        run: npm install       # Adaptez si votre projet n’utilise pas npm
+
+      - name: Lancer semantic-release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          npx semantic-release
