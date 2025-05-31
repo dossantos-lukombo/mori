@@ -28,6 +28,7 @@ jobs:
           DB_PASSWORD=${{ secrets.DB_PASSWORD }}
           DB_NAME=${{ secrets.DB_NAME }}
           DB_SSLMODE=disable
+          RATE_LIMIT_ENABLED=false
           ACCESS_SECRET_KEY_LLM=${{ secrets.ACCESS_SECRET_KEY_LLM }}
           REFRESH_SECRET_KEY_LLM=${{ secrets.REFRESH_SECRET_KEY_LLM }}
           EOF
@@ -158,6 +159,7 @@ jobs:
           DB_USER=${{ secrets.DB_USER }}
           DB_PASSWORD=${{ secrets.DB_PASSWORD }}
           DB_NAME=${{ secrets.DB_NAME }}
+          RATE_LIMIT_ENABLED=false
           DB_SSLMODE=disable
           EOF
         
@@ -170,6 +172,7 @@ jobs:
               DB_USER=${{ secrets.DB_USER }}
               DB_PASSWORD=${{ secrets.DB_PASSWORD }}
               DB_NAME=${{ secrets.DB_NAME }}
+              RATE_LIMIT_ENABLED=false
               DB_SSLMODE=disable
               ACCESS_SECRET_KEY_LLM=${{ secrets.ACCESS_SECRET_KEY_LLM }}
               REFRESH_SECRET_KEY_LLM=${{ secrets.REFRESH_SECRET_KEY_LLM }}

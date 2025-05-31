@@ -44,3 +44,6 @@ imageUploads/*
 db_tables.md
 
 .env
+perf_infra/results/*
+
+token_generator.py

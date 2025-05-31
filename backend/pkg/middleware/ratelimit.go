@@ -14,20 +14,20 @@ import (
 
 // IPRateLimiter stores rate limiters for different IP addresses
 type IPRateLimiter struct {
-	ips map[string]*rate.Limiter
-	mu  *sync.RWMutex
-	r   rate.Limit
-	b   int
+	ips      map[string]*rate.Limiter
+	mu       *sync.RWMutex
+	r        rate.Limit
+	b        int
 	lastSeen map[string]time.Time
 }
 
 // NewIPRateLimiter creates a new rate limiter for IP addresses
 func NewIPRateLimiter(r rate.Limit, b int) *IPRateLimiter {
 	limiter := &IPRateLimiter{
-		ips: make(map[string]*rate.Limiter),
-		mu:  &sync.RWMutex{},
-		r:   r,
-		b:   b,
+		ips:      make(map[string]*rate.Limiter),
+		mu:       &sync.RWMutex{},
+		r:        r,
+		b:        b,
 		lastSeen: make(map[string]time.Time),
 	}
 
@@ -65,7 +65,7 @@ func (i *IPRateLimiter) GetLimiter(ip string) *rate.Limiter {
 		limiter = rate.NewLimiter(i.r, i.b)
 		i.ips[ip] = limiter
 	}
-	
+
 	// Update last seen time
 	i.lastSeen[ip] = time.Now()
 
@@ -108,12 +108,16 @@ func shouldSkipRateLimit(r *http.Request) bool {
 
 	// Skip rate limiting for specific endpoints
 	skipEndpoints := []string{
-		"/messageRead",  // Skip rate limiting for message read endpoint
-		"/messages",     // Skip rate limiting for message endpoints
+		"/messageRead", // Skip rate limiting for message read endpoint
+		"/messages",    // Skip rate limiting for message endpoints
 		"/unreadMessages",
 		"/newMessage",
 		"/chatList",
 		"/conversationsMsg",
+		"/llmConvo",
+		"/llmConvoGet",
+		"/llmConvoGetLast",
+		"//llmConvoSelected",
 	}
 
 	for _, endpoint := range skipEndpoints {
@@ -128,7 +132,7 @@ func shouldSkipRateLimit(r *http.Request) bool {
 // RateLimit is a middleware that limits requests based on IP address
 func RateLimit(next http.Handler) http.Handler {
 	// Create rate limiter for normal endpoints
-	normalLimiter := NewIPRateLimiter(20, 30)    // 20 req/sec, burst 30
+	normalLimiter := NewIPRateLimiter(20, 30) // 20 req/sec, burst 30
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Skip rate limiting for certain endpoints
@@ -146,7 +150,7 @@ func RateLimit(next http.Handler) http.Handler {
 		// Check if the request is allowed
 		if !ipLimiter.Allow() {
 			log.Printf("Rate limit exceeded for IP: %s on path: %s", ip, r.URL.Path)
-			
+
 			// Set CORS headers
 			w.Header().Set("Access-Control-Allow-Origin", "http://localhost:8080")
 			w.Header().Set("Access-Control-Allow-Credentials", "true")
@@ -158,7 +162,7 @@ func RateLimit(next http.Handler) http.Handler {
 
 			// Send JSON error response
 			errorResponse := map[string]string{
-				"error": fmt.Sprintf("Rate limit exceeded. Please wait before trying again. (Path: %s)", r.URL.Path),
+				"error":       fmt.Sprintf("Rate limit exceeded. Please wait before trying again. (Path: %s)", r.URL.Path),
 				"retry_after": "1",
 			}
 			json.NewEncoder(w).Encode(errorResponse)
@@ -167,4 +171,4 @@ func RateLimit(next http.Handler) http.Handler {
 
 		next.ServeHTTP(w, r)
 	})
-} 
+}

@@ -17,6 +17,8 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
+    environment:
+      - RATE_LIMIT_ENABLED=false 
     container_name: mori-go-backend
     depends_on:
      postgres:
@@ -37,7 +39,7 @@ services:
     working_dir: /app
     volumes:
       - ./backend/logic_llm:/app
-    command: ["uvicorn", "mori.server:app", "--host", "localhost", "--port", "3000","--reload"]
+    command: ["uvicorn", "mori.server:app", "--host", "0.0.0.0", "--port", "3000","--reload"]
     ports:
       - "3000:3000"
     restart: unless-stopped
@@ -55,5 +57,33 @@ services:
     ports:
       - "8080:8080"
     restart: unless-stopped
+  
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.52.1    # nouvelle image officielle :contentReference[oaicite:0]{index=0}
+    container_name: cadvisor
+    privileged: true                             # accès aux cgroups :contentReference[oaicite:1]{index=1}
+    volumes:
+      - /:/rootfs:ro                             # système de fichiers racine :contentReference[oaicite:2]{index=2}
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /sys:/sys:ro
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro         # monte explicitement cgroup v1 & v2 :contentReference[oaicite:3]{index=3}
+      - /var/lib/docker:/var/lib/docker:ro
+    ports:
+      - "4194:8080"
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:latest
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "9090:9090"
+    depends_on:
+      - cadvisor
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "4000:3000"
+
 volumes:
   pgdata:

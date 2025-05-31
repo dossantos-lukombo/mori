@@ -28,4 +28,4 @@ RUN poetry install --no-root
 COPY . .
 
 # Le reste inchangé…
-CMD ["uvicorn", "mori.server:app", "--host", "localhost", "--port", "3000"]
+CMD ["uvicorn", "mori.server:app", "--host", "0.0.0.0", "--port", "3000"]

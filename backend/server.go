@@ -23,10 +23,27 @@ func main() {
 	// initialize wsServer
 	wsServer := ws.StartServer(repos)
 
+	// rateLimitEnabled := true
+	// if val := os.Getenv("RATE_LIMIT_ENABLED"); val == "false" {
+	// 	rateLimitEnabled = false
+	// }
+
+	// // On construit le handler final en fonction de l’activation du rate-limit
+	// var finalHandler http.Handler
+	baseHandler := setRoutes(handler, wsServer)
+
+	// if rateLimitEnabled {
+	// 	finalHandler = middleware.RateLimit(baseHandler)
+	// 	fmt.Println("🔒 Rate limit activé")
+	// } else {
+	// 	finalHandler = baseHandler
+	// 	fmt.Println("🔓 Rate limit désactivé (mode TEST/CI)")
+	// }
+
 	// set up server address and routes
 	server := &http.Server{
 		Addr:         ":8081",
-		Handler:      middleware.RateLimit(setRoutes(handler, wsServer)),
+		Handler:      middleware.RateLimit(baseHandler),
 		ReadTimeout:  5 * time.Second, // limite de lecture requête
 		WriteTimeout: 2 * time.Minute,
 	}
