@@ -3,7 +3,8 @@ package db
 import (
 	"database/sql"
 	"encoding/json"
-	"mori/pkg/models"
+
+	"github.com/dossantos-lukombo/mori/backend/pkg/models"
 
 	"github.com/lib/pq"
 	_ "github.com/lib/pq"

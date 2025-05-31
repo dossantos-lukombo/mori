@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"log"
 
-	"mori/pkg/models"
+	"github.com/dossantos-lukombo/mori/backend/pkg/models"
 )
 
 /* --------------------- actions for websocket messages --------------------- */

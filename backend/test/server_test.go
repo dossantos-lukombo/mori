@@ -5,7 +5,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	ws "mori/pkg/wsServer"
+	ws "github.com/dossantos-lukombo/mori/backend/pkg/wsServer"
 )
 
 // FullHandlerInterface defines all the methods used by setRoutes.

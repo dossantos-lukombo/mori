@@ -1,6 +1,6 @@
 import pytest
 from fastapi.testclient import TestClient
-from logic_llm.server import app, verify_token
+from mori.server import app, verify_token
 from fastapi import HTTPException, Depends
 from fastapi.security import HTTPAuthorizationCredentials
 

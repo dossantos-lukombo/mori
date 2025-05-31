@@ -3,7 +3,7 @@ package handlers
 import (
 	"net/http"
 
-	"mori/pkg/utils"
+	"github.com/dossantos-lukombo/mori/backend/pkg/utils"
 )
 
 func (handler *Handler) VerifyEmail(w http.ResponseWriter, r *http.Request) {

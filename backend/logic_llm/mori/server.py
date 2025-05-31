@@ -1,6 +1,8 @@
 from fastapi import FastAPI,Request, HTTPException, Depends
 from pydantic import BaseModel
-from llm_manager import treating_user_request
+
+# Par celle-ci
+from mori.llm_manager import treating_user_request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from typing import Literal
 from datetime import datetime
@@ -14,8 +16,7 @@ app = FastAPI()
 
 security = HTTPBearer()
 
-load_dotenv("../.env")
-
+load_dotenv()
 
 """
 Data

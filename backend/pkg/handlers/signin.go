@@ -2,10 +2,11 @@ package handlers
 
 import (
 	"encoding/json"
-	"mori/pkg/models"
-	"mori/pkg/utils"
 	"net/http"
 	"time"
+
+	"github.com/dossantos-lukombo/mori/backend/pkg/models"
+	"github.com/dossantos-lukombo/mori/backend/pkg/utils"
 
 	"golang.org/x/crypto/bcrypt"
 )

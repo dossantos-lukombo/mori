@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"mori/pkg/utils"
+	"github.com/dossantos-lukombo/mori/backend/pkg/utils"
 )
 
 // Define the upload path – adjust as needed.

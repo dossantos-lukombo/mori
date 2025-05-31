@@ -6,7 +6,7 @@ import (
 	"log"
 	"os"
 
-	"mori/pkg/models"
+	"github.com/dossantos-lukombo/mori/backend/pkg/models"
 
 	_ "github.com/lib/pq" // PostgreSQL driver
 	migrate "github.com/rubenv/sql-migrate"
@@ -16,35 +16,43 @@ import (
 
 // InitDB initializes the PostgreSQL database connection.
 func InitDB() *sql.DB {
-	// Load environment variables
-	err := godotenv.Load(".env")
-	if err != nil {
-		log.Fatalf("Error loading .env file: %v", err)
+	// En dev : charge .env, mais ignore l’erreur si c’est en prod
+	_ = godotenv.Load("../.env")
+
+	// 1) Cas Supabase / prod : DATABASE_URL complet
+	if dbURL := os.Getenv("DATABASE_URL"); dbURL != "" {
+		db, err := sql.Open("postgres", dbURL)
+		if err != nil {
+			log.Fatalf("Failed to connect via DATABASE_URL: %v", err)
+		}
+		if err := Migrations(db); err != nil {
+			log.Fatalf("Failed to apply migrations for prod db: %v", err)
+		}
+		return db
 	}
 
-	// Get database connection details from .env
+	// 2) Sinon : mode local Dev
 	host := os.Getenv("DB_HOST")
 	port := os.Getenv("DB_PORT")
 	user := os.Getenv("DB_USER")
 	password := os.Getenv("DB_PASSWORD")
 	dbname := os.Getenv("DB_NAME")
+	sslmode := os.Getenv("DB_SSLMODE")
+	if host == "" || port == "" || user == "" || password == "" || dbname == "" || sslmode == "" {
+		log.Fatal("Missing required environment variables for local Postgres connection.")
+	}
 
-	// Build connection string
-	connStr := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
-		host, port, user, password, dbname)
-
-	// Connect to the PostgreSQL database
+	connStr := fmt.Sprintf(
+		"host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
+		host, port, user, password, dbname, sslmode,
+	)
 	db, err := sql.Open("postgres", connStr)
 	if err != nil {
-		log.Fatalf("Failed to connect to PostgreSQL: %v", err)
+		log.Fatalf("Failed to connect to local Postgres: %v", err)
 	}
-
-	// Run migrations
-	err = Migrations(db)
-	if err != nil {
-		log.Fatalf("Failed to apply migrations: %v", err)
+	if err := Migrations(db); err != nil {
+		log.Fatalf("Failed to apply migrations for dev db: %v", err)
 	}
-
 	return db
 }
 

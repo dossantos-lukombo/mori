@@ -3,7 +3,7 @@ package db
 import (
 	"database/sql"
 
-	"mori/pkg/models"
+	"github.com/dossantos-lukombo/mori/backend/pkg/models"
 )
 
 type GroupRepository struct {

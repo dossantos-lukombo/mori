@@ -6,9 +6,9 @@ import (
 	"net/http"
 	"strings"
 
-	"mori/pkg/models"
-	"mori/pkg/utils"
-	ws "mori/pkg/wsServer"
+	"github.com/dossantos-lukombo/mori/backend/pkg/models"
+	"github.com/dossantos-lukombo/mori/backend/pkg/utils"
+	ws "github.com/dossantos-lukombo/mori/backend/pkg/wsServer"
 )
 
 /* -------------------------------------------------------------------------- */
@@ -124,7 +124,6 @@ func (handler *Handler) GroupMembers(w http.ResponseWriter, r *http.Request) {
 	}
 	utils.RespondWithUsers(w, members, 200)
 }
-
 
 // returns pending requests to join to group, only for admin
 // for others respond with error

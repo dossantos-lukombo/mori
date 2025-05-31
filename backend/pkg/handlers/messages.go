@@ -6,9 +6,9 @@ import (
 	"net/http"
 	"strings"
 
-	"mori/pkg/models"
-	"mori/pkg/utils"
-	ws "mori/pkg/wsServer"
+	"github.com/dossantos-lukombo/mori/backend/pkg/models"
+	"github.com/dossantos-lukombo/mori/backend/pkg/utils"
+	ws "github.com/dossantos-lukombo/mori/backend/pkg/wsServer"
 )
 
 // get all previous messages for chat
@@ -337,8 +337,8 @@ func (handler *Handler) ConversationsMsg(w http.ResponseWriter, r *http.Request)
 	}
 
 	type response struct {
-        ConversationsMsg []models.ConversationMsg `json:"conversationsMsg"`
-    }
-    // On envoie un VRAI JSON qui contient un tableau dans "conversationsMsg"
-    utils.RespondWithJSON(w, response{convs}, 200)
+		ConversationsMsg []models.ConversationMsg `json:"conversationsMsg"`
+	}
+	// On envoie un VRAI JSON qui contient un tableau dans "conversationsMsg"
+	utils.RespondWithJSON(w, response{convs}, 200)
 }

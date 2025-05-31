@@ -5,10 +5,10 @@ import (
 	"net/http"
 	"time"
 
-	sqlite "mori/pkg/db/PostgreSql"
-	"mori/pkg/handlers"
-	"mori/pkg/middleware"
-	ws "mori/pkg/wsServer"
+	sqlite "github.com/dossantos-lukombo/mori/backend/pkg/db/PostgreSql"
+	"github.com/dossantos-lukombo/mori/backend/pkg/handlers"
+	"github.com/dossantos-lukombo/mori/backend/pkg/middleware"
+	ws "github.com/dossantos-lukombo/mori/backend/pkg/wsServer"
 )
 
 func main() {
@@ -23,10 +23,27 @@ func main() {
 	// initialize wsServer
 	wsServer := ws.StartServer(repos)
 
+	// rateLimitEnabled := true
+	// if val := os.Getenv("RATE_LIMIT_ENABLED"); val == "false" {
+	// 	rateLimitEnabled = false
+	// }
+
+	// // On construit le handler final en fonction de l’activation du rate-limit
+	// var finalHandler http.Handler
+	baseHandler := setRoutes(handler, wsServer)
+
+	// if rateLimitEnabled {
+	// 	finalHandler = middleware.RateLimit(baseHandler)
+	// 	fmt.Println("🔒 Rate limit activé")
+	// } else {
+	// 	finalHandler = baseHandler
+	// 	fmt.Println("🔓 Rate limit désactivé (mode TEST/CI)")
+	// }
+
 	// set up server address and routes
 	server := &http.Server{
 		Addr:         ":8081",
-		Handler:      middleware.RateLimit(setRoutes(handler, wsServer)),
+		Handler:      middleware.RateLimit(baseHandler),
 		ReadTimeout:  5 * time.Second, // limite de lecture requête
 		WriteTimeout: 2 * time.Minute,
 	}
@@ -44,6 +61,10 @@ func setRoutes(handler *handlers.Handler, wsServer *ws.Server) http.Handler {
 	fs := http.FileServer(http.Dir("./"))
 	// mux.Handle("/imageUpload/", http.StripPrefix("/imageUpload/", utils.ConfigFSHeader(fs)))
 	mux.Handle("/", fs)
+	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.Write([]byte(`{"status":"ok"}`))
+	})
 	/* ------------------------------- auth route ------------------------------- */
 	mux.HandleFunc("/register", handler.Register)
 	mux.HandleFunc("/signin", handler.Signin)
@@ -54,7 +75,7 @@ func setRoutes(handler *handlers.Handler, wsServer *ws.Server) http.Handler {
 	mux.HandleFunc("/request-password-reset", handler.RequestPasswordReset)
 	mux.HandleFunc("/reset-password", handler.ResetPassword)
 
-	/* ------------------------------- LLM_conv ------------------------------- */
+	/* ------------------------------- llm_conv ------------------------------- */
 	mux.HandleFunc("/llmConvo", handler.Auth(handler.LLMHandler))
 	mux.HandleFunc("/llmConvoSave", handler.Auth(handler.LLMConvoSave))
 	mux.HandleFunc("/llmConvoGet", handler.Auth(handler.LLMConvoGet))

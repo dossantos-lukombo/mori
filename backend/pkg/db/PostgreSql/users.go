@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"mori/pkg/models"
+	"github.com/dossantos-lukombo/mori/backend/pkg/models"
 )
 
 type UserRepository struct {
@@ -67,9 +67,9 @@ func (repo *UserRepository) Add(user models.User) error {
 
 func (repo *UserRepository) sendVerificationEmail(user models.User) error {
 	from := "mori.team.contact@gmail.com"
-	password := "qeey kngz gmyn bzwi" // Put this in env variables for production
-	smtpHost := "smtp.gmail.com"
-	smtpPort := "587"
+	password := "qeey kngz gmyn bzwi" // TODO: Put this in .env variables for production
+	smtpHost := "smtp.gmail.com"      // TODO: Put this in .env
+	smtpPort := "587"                 // TODO: Put this in.env
 
 	toList := []string{user.Email}
 	subject := "Verify Your Email Address"

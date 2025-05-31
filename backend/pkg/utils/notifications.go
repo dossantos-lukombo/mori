@@ -1,6 +1,6 @@
 package utils
 
-import "mori/pkg/models"
+import "github.com/dossantos-lukombo/mori/backend/pkg/models"
 
 // replace notification message content based on type
 func DefineNotificationMsg(notif *models.Notification) {

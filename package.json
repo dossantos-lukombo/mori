@@ -1,6 +1,12 @@
 {
   "devDependencies": {
+    "@babel/preset-env": "^7.27.2",
     "@commitlint/cli": "^19.8.1",
-    "@commitlint/config-conventional": "^19.8.1"
+    "@commitlint/config-conventional": "^19.8.1",
+    "@vue/test-utils": "^2.4.6",
+    "babel-jest": "^29.7.0",
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0",
+    "vue-jest": "^3.0.7"
   }
 }

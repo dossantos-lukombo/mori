@@ -3,8 +3,8 @@ package handlers
 import (
 	"net/http"
 
-	"mori/pkg/models"
-	"mori/pkg/utils"
+	"github.com/dossantos-lukombo/mori/backend/pkg/models"
+	"github.com/dossantos-lukombo/mori/backend/pkg/utils"
 
 	"golang.org/x/crypto/bcrypt"
 )
