@@ -32,27 +32,25 @@ Vous avez trois services Docker qui tournent dans un seul dépôt :
 - **llm-server** (sur le port 3000)  
 - **frontend** (sur le port 8080)  
 
-Vous voulez :
-
 1. **Ne jamais pousser directement** sur `develop` ni sur `production` (branches protégées).  
 2. Bumper la version **automatiquement** dès qu’une PR vers `develop` est mergée.  
 3. Déclencher le déploiement en production **uniquement** quand une PR fusionne `develop` → `production`.  
 4. Tester en CI le bon fonctionnement de chaque container avant tout merge.  
 5. Garder un historique clair des versions (`vX.Y.Z`) et des releases GitHub.  
 
-> Pour faire simple : on MARGE via PR, on laisse GitHub Actions faire le reste.  
+> Pour faire simple : on MERGE via PR, on laisse GitHub Actions faire le reste.  
 
 ---
 
 ## 2. Stratégie de branches et protections
 
-1. **Branche `develop`**  
+1. **Branche `develop`** 
    - Protégée : on ne peut pas y pousser directement.  
-   - Seule façon d’y faire des modifications : PR validée.  
+   - Seule façon d’y faire des modifications : PR validée.
    - Quand une PR vers `develop` est **fermée** (event `pull_request.closed`) **ET** mergée, on déclenche le **bump de version automatique**.  
 
 2. **Branche `production`**  
-   - Protégée : on ne peut pas y pousser directement.  
+   - Protégée : on ne peut pas y pousser directement.
    - Seule façon d’y faire des modifications : PR validée venant de `develop`.  
    - Quand une PR `develop` → `production` est **fermée** (event `pull_request.closed`) **ET** mergée, on déclenche le **CD** (build Docker → push sur Docker Hub → déploiement sur le VPS).  
 
@@ -68,10 +66,10 @@ Vous voulez :
 
 ### 3.1 Principe et prérequis
 
-1. **Commits “Conventional Commits”**  
+1. **Commits “Conventional Commits”** 
    - **feat(scope): description** → bump MINOR ( X.Y.Z → X.(Y+1).0 ).  
    - **fix(scope): description** → bump PATCH ( X.Y.Z → X.Y.(Z+1) ).  
-   - **BREAKING CHANGE** (dans le corps du commit) → bump MAJOR ( X.Y.Z → (X+1).0.0 ).  
+   - **BREAKING CHANGE** (dans le corps du commit) → bump MAJOR ( X.Y.Z → (X+1).0.0 ). 
 
 2. **semantic-release**  
    - Outil Node.js qui analyse l’historique des commits depuis le dernier tag, détermine automatiquement la nouvelle version sémantique (MAJOR/MINOR/PATCH), met à jour le `CHANGELOG.md` et le fichier de version (`package.json` ou `VERSION`), crée le commit `chore(release): vX.Y.Z` et le tag `vX.Y.Z`, puis pousse tout sur la branche.  

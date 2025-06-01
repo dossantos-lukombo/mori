@@ -8,6 +8,8 @@ on:
       - closed
     branches:
       - develop
+      - develop_stable
+      - develop_test
 
 jobs:
   bump-version:

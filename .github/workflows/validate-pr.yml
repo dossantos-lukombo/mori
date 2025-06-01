@@ -1,0 +1,87 @@
+name: Validate PR vers develop
+
+# On ne déclenche cette action QUE quand quelqu'un ouvre ou met à jour une PR vers `develop`
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+    branches:
+      - develop
+
+jobs:
+  validate-branch-and-commits:
+    runs-on: ubuntu-latest
+    steps:
+
+      # 1️⃣ On récupère le code complet et les commits (depth: 0)
+      - name: Checkout du code (full history)
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      # 2️⃣ On vérifie le nom de la branche source de la PR
+      - name: Vérifier le nom de la branche (feature/ | fix/ | hotfix/ | chore/)
+        id: branch_check
+        run: |
+          echo "Nom de la branche : ${{ github.head_ref }}"
+          if [[ ! "${{ github.head_ref }}" =~ ^(feature|fix|hotfix|chore)\/.+$ ]]; then
+            echo "🚫 Le nom de votre branche ne respecte pas le format requis."
+            echo "Elle doit commencer par feature/, fix/, hotfix/ ou chore/."
+            exit 1
+          fi
+          echo "✅ Branch name OK."
+
+      # 3️⃣ (Optionnel) Installer Node.js & commitlint si vous avez mis en place commitlint
+      - name: Setup Node.js (pour commitlint)
+        if: fileExists('package.json')
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Installer les dépendances (commitlint)
+        if: fileExists('package.json')
+        run: npm install
+
+      # 4️⃣ Vérifier chaque commit de la PR avec commitlint, ou via un script bash si pas de Node
+      - name: Vérifier les messages de commit (Conventional Commits)
+        run: |
+          # On récupère la liste des commits de la PR (depuis develop jusqu’au HEAD)
+          RANGE="origin/develop..${{ github.sha }}"
+          echo "Liste des commits dans le range : $RANGE"
+          
+          # Si package.json existe, on utilise commitlint
+          if [ -f package.json ]; then
+            echo "Utilisation de commitlint pour valider les messages…"
+            npx commitlint --from=origin/develop --to=HEAD || exit 1
+            echo "✅ Tous les commits respectent Conventional Commits."
+            exit 0
+          fi
+          
+          # Sinon, on fait un bash fallback pour vérifier chaque sujet de commit
+          echo "Aucun package.json détecté, fallback bash : on valide chaque message"
+          ERR=0
+          for commit in $(git rev-list origin/develop..HEAD); do
+            MSG=$(git log -1 --format="%s" $commit)
+            if [[ ! "$MSG" =~ ^(feat|fix|chore|docs|style|refactor|perf|test|ci|build)(\([a-zA-Z0-9_-]+\))?:\ .+ ]]; then
+              echo "🚫 Commit \"$commit\" n'est pas en Conventional Commit :" 
+              echo "   Sujet: \"$MSG\""
+              ERR=1
+            else
+              echo "✔️  $MSG"
+            fi
+          done
+
+          if [ $ERR -ne 0 ]; then
+            echo "❌ Au moins un commit ne respecte pas le Conventional Commits."
+            exit 1
+          else
+            echo "✅ Tous les commits sont valides."
+          fi
+
+      # 5️⃣ Si tout va bien, on ajoute un label ou on commente pour dire "OK" (optionnel)
+      - name: Confirmer la validation
+        if: success()
+        run: echo "✅ Branch name & commit messages OK, la PR peut être mergée."

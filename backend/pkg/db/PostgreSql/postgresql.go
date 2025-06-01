@@ -17,7 +17,10 @@ import (
 // InitDB initializes the PostgreSQL database connection.
 func InitDB() *sql.DB {
 	// En dev : charge .env, mais ignore l’erreur si c’est en prod
-	_ = godotenv.Load("../.env")
+	err := godotenv.Load()
+	if err != nil {
+		log.Println("Failed to load .env file in dev mode, ignoring error: ", err)
+	}
 
 	// 1) Cas Supabase / prod : DATABASE_URL complet
 	if dbURL := os.Getenv("DATABASE_URL"); dbURL != "" {
@@ -32,6 +35,9 @@ func InitDB() *sql.DB {
 	}
 
 	// 2) Sinon : mode local Dev
+	if os.Getenv("DB_HOST") != "localhost" {
+		os.Setenv("DB_HOST", "localhost")
+	}
 	host := os.Getenv("DB_HOST")
 	port := os.Getenv("DB_PORT")
 	user := os.Getenv("DB_USER")
